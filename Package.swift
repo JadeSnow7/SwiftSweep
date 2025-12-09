@@ -2,14 +2,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "MoleKit",
+    name: "SwiftSweep",
     platforms: [
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "molekit", targets: ["MoleKitCLI"]),
-        .library(name: "MoleKitCore", targets: ["MoleKitCore"]),
-        .library(name: "MoleKitUI", targets: ["MoleKitUI"]),
+        .executable(name: "swiftsweep", targets: ["SwiftSweepCLI"]),
+        .library(name: "SwiftSweepCore", targets: ["SwiftSweepCore"]),
+        .library(name: "SwiftSweepUI", targets: ["SwiftSweepUI"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
@@ -18,11 +18,11 @@ let package = Package(
     targets: [
         // Core Framework
         .target(
-            name: "MoleKitCore",
+            name: "SwiftSweepCore",
             dependencies: [
                 .product(name: "Logging", package: "swift-log"),
             ],
-            path: "Sources/MoleKitCore",
+            path: "Sources/SwiftSweepCore",
             sources: [
                 "CleanupEngine",
                 "AnalyzerEngine", 
@@ -33,26 +33,27 @@ let package = Package(
         
         // CLI Tool
         .executableTarget(
-            name: "MoleKitCLI",
+            name: "SwiftSweepCLI",
             dependencies: [
-                "MoleKitCore",
+                "SwiftSweepCore",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
-            path: "Sources/MoleKitCLI"
+            path: "Sources/SwiftSweepCLI"
         ),
         
         // GUI Application Framework
         .target(
-            name: "MoleKitUI",
-            dependencies: ["MoleKitCore"],
-            path: "Sources/MoleKitUI"
+            name: "SwiftSweepUI",
+            dependencies: ["SwiftSweepCore"],
+            path: "Sources/SwiftSweepUI"
         ),
         
         // Tests
         .testTarget(
-            name: "MoleKitTests",
-            dependencies: ["MoleKitCore"],
+            name: "SwiftSweepTests",
+            dependencies: ["SwiftSweepCore"],
             path: "Tests"
         ),
     ]
 )
+

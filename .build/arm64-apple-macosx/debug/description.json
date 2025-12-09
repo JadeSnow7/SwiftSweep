@@ -1,9 +1,9 @@
 {
   "builtTestProducts" : [
     {
-      "binaryPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.xctest/Contents/MacOS/MoleKitPackageTests",
+      "binaryPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.xctest/Contents/MacOS/SwiftSweepPackageTests",
       "packagePath" : "/Users/huaodong/Mole/MoleKit_Dev",
-      "productName" : "MoleKitPackageTests"
+      "productName" : "SwiftSweepPackageTests"
     }
   ],
   "copyCommands" : {
@@ -1663,14 +1663,14 @@
       "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Logging.build",
       "wholeModuleOptimization" : false
     },
-    "C.MoleKitCLI-arm64-apple-macosx15.0-debug.module" : {
+    "C.SwiftSweepCLI-arm64-apple-macosx15.0-debug.module" : {
       "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
-      "fileList" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/sources",
+      "fileList" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCLI.build/sources",
       "importPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules",
       "inputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCLI/MoleKit.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCLI/SwiftSweep.swift"
         },
         {
           "kind" : "file",
@@ -1678,7 +1678,7 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitCore.swiftmodule"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepCore.swiftmodule"
         },
         {
           "kind" : "file",
@@ -1686,14 +1686,14 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/sources"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCLI.build/sources"
         }
       ],
       "isLibrary" : false,
-      "moduleName" : "MoleKitCLI",
-      "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitCLI.swiftmodule",
+      "moduleName" : "SwiftSweepCLI",
+      "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepCLI.swiftmodule",
       "objects" : [
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit.swift.o"
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCLI.build/SwiftSweep.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -1715,7 +1715,7 @@
         "-Xfrontend",
         "-entry-point-function-name",
         "-Xfrontend",
-        "MoleKitCLI_main",
+        "SwiftSweepCLI_main",
         "-parse-as-library",
         "-color-diagnostics",
         "-swift-version",
@@ -1752,36 +1752,36 @@
         "-package-name",
         "molekit_dev"
       ],
-      "outputFileMapPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/output-file-map.json",
+      "outputFileMapPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCLI.build/output-file-map.json",
       "outputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCLI.build/SwiftSweep.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitCLI.swiftmodule"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepCLI.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
-        "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCLI/MoleKit.swift"
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCLI/SwiftSweep.swift"
       ],
-      "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build",
+      "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCLI.build",
       "wholeModuleOptimization" : false
     },
-    "C.MoleKitCore-arm64-apple-macosx15.0-debug.module" : {
+    "C.SwiftSweepCore-arm64-apple-macosx15.0-debug.module" : {
       "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
-      "fileList" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/sources",
+      "fileList" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/sources",
       "importPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules",
       "inputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCore/CleanupEngine/CleanupEngine.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/CleanupEngine/CleanupEngine.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCore/SystemMonitor/SystemMonitor.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/SystemMonitor/SystemMonitor.swift"
         },
         {
           "kind" : "file",
@@ -1793,15 +1793,15 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/sources"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/sources"
         }
       ],
       "isLibrary" : true,
-      "moduleName" : "MoleKitCore",
-      "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitCore.swiftmodule",
+      "moduleName" : "SwiftSweepCore",
+      "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepCore.swiftmodule",
       "objects" : [
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/CleanupEngine.swift.o",
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/SystemMonitor.swift.o"
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/CleanupEngine.swift.o",
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SystemMonitor.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -1823,7 +1823,7 @@
         "-parse-as-library",
         "-emit-objc-header",
         "-emit-objc-header-path",
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/include/MoleKitCore-Swift.h",
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/include/SwiftSweepCore-Swift.h",
         "-color-diagnostics",
         "-swift-version",
         "5",
@@ -1859,37 +1859,37 @@
         "-package-name",
         "molekit_dev"
       ],
-      "outputFileMapPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/output-file-map.json",
+      "outputFileMapPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/output-file-map.json",
       "outputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/CleanupEngine.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/CleanupEngine.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/SystemMonitor.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SystemMonitor.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitCore.swiftmodule"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepCore.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
-        "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCore/CleanupEngine/CleanupEngine.swift",
-        "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCore/SystemMonitor/SystemMonitor.swift"
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/CleanupEngine/CleanupEngine.swift",
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/SystemMonitor/SystemMonitor.swift"
       ],
-      "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build",
+      "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build",
       "wholeModuleOptimization" : false
     },
-    "C.MoleKitPackageTests-arm64-apple-macosx15.0-debug.module" : {
+    "C.SwiftSweepPackageTests-arm64-apple-macosx15.0-debug.module" : {
       "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
-      "fileList" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.build/sources",
+      "fileList" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.build/sources",
       "importPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules",
       "inputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.derived/runner.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.derived/runner.swift"
         },
         {
           "kind" : "file",
@@ -1897,18 +1897,18 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitTests.swiftmodule"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepTests.swiftmodule"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.build/sources"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.build/sources"
         }
       ],
       "isLibrary" : true,
-      "moduleName" : "MoleKitPackageTests",
-      "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitPackageTests.swiftmodule",
+      "moduleName" : "SwiftSweepPackageTests",
+      "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepPackageTests.swiftmodule",
       "objects" : [
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.build/runner.swift.o"
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.build/runner.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -1932,7 +1932,7 @@
         "-parse-as-library",
         "-emit-objc-header",
         "-emit-objc-header-path",
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.build/include/MoleKitPackageTests-Swift.h",
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.build/include/SwiftSweepPackageTests-Swift.h",
         "-color-diagnostics",
         "-plugin-path",
         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
@@ -1966,32 +1966,32 @@
         "-package-name",
         "molekit_dev"
       ],
-      "outputFileMapPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.build/output-file-map.json",
+      "outputFileMapPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.build/output-file-map.json",
       "outputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.build/runner.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.build/runner.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitPackageTests.swiftmodule"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepPackageTests.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.derived/runner.swift"
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.derived/runner.swift"
       ],
-      "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.build",
+      "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.build",
       "wholeModuleOptimization" : false
     },
-    "C.MoleKitTests-arm64-apple-macosx15.0-debug.module" : {
+    "C.SwiftSweepTests-arm64-apple-macosx15.0-debug.module" : {
       "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
-      "fileList" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitTests.build/sources",
+      "fileList" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepTests.build/sources",
       "importPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules",
       "inputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Tests/MoleKitTests/MoleKitTests.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Tests/SwiftSweepTests/SwiftSweepTests.swift"
         },
         {
           "kind" : "file",
@@ -1999,18 +1999,18 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitCore.swiftmodule"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepCore.swiftmodule"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitTests.build/sources"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepTests.build/sources"
         }
       ],
       "isLibrary" : true,
-      "moduleName" : "MoleKitTests",
-      "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitTests.swiftmodule",
+      "moduleName" : "SwiftSweepTests",
+      "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepTests.swiftmodule",
       "objects" : [
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitTests.build/MoleKitTests.swift.o"
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepTests.build/SwiftSweepTests.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -2067,40 +2067,40 @@
         "-package-name",
         "molekit_dev"
       ],
-      "outputFileMapPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitTests.build/output-file-map.json",
+      "outputFileMapPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepTests.build/output-file-map.json",
       "outputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitTests.build/MoleKitTests.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepTests.build/SwiftSweepTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitTests.swiftmodule"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepTests.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
-        "/Users/huaodong/Mole/MoleKit_Dev/Tests/MoleKitTests/MoleKitTests.swift"
+        "/Users/huaodong/Mole/MoleKit_Dev/Tests/SwiftSweepTests/SwiftSweepTests.swift"
       ],
-      "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitTests.build",
+      "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepTests.build",
       "wholeModuleOptimization" : false
     },
-    "C.MoleKitUI-arm64-apple-macosx15.0-debug.module" : {
+    "C.SwiftSweepUI-arm64-apple-macosx15.0-debug.module" : {
       "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
-      "fileList" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/sources",
+      "fileList" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/sources",
       "importPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules",
       "inputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitUI/CleanView.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/CleanView.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitUI/MoleKitApp.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/StatusView.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitUI/StatusView.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SwiftSweepApp.swift"
         },
         {
           "kind" : "file",
@@ -2108,20 +2108,20 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitCore.swiftmodule"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepCore.swiftmodule"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/sources"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/sources"
         }
       ],
       "isLibrary" : true,
-      "moduleName" : "MoleKitUI",
-      "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitUI.swiftmodule",
+      "moduleName" : "SwiftSweepUI",
+      "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepUI.swiftmodule",
       "objects" : [
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/CleanView.swift.o",
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/MoleKitApp.swift.o",
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/StatusView.swift.o"
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/CleanView.swift.o",
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/StatusView.swift.o",
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/SwiftSweepApp.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -2143,7 +2143,7 @@
         "-parse-as-library",
         "-emit-objc-header",
         "-emit-objc-header-path",
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/include/MoleKitUI-Swift.h",
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/include/SwiftSweepUI-Swift.h",
         "-color-diagnostics",
         "-swift-version",
         "5",
@@ -2179,32 +2179,32 @@
         "-package-name",
         "molekit_dev"
       ],
-      "outputFileMapPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/output-file-map.json",
+      "outputFileMapPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/output-file-map.json",
       "outputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/CleanView.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/CleanView.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/MoleKitApp.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/StatusView.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/StatusView.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/SwiftSweepApp.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/MoleKitUI.swiftmodule"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepUI.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
-        "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitUI/CleanView.swift",
-        "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitUI/MoleKitApp.swift",
-        "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitUI/StatusView.swift"
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/CleanView.swift",
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/StatusView.swift",
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SwiftSweepApp.swift"
       ],
-      "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build",
+      "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build",
       "wholeModuleOptimization" : false
     },
     "C.generate-docc-reference-arm64-apple-macosx15.0-debug-tool.module" : {
@@ -3581,14 +3581,14 @@
       "-driver-use-frontend-path",
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
     ],
-    "MoleKitCLI" : [
+    "SwiftSweepCLI" : [
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
       "-module-name",
-      "MoleKitCLI",
+      "SwiftSweepCLI",
       "-package-name",
       "molekit_dev",
       "-c",
-      "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCLI/MoleKit.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCLI/SwiftSweep.swift",
       "-I",
       "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -3610,7 +3610,7 @@
       "-Xfrontend",
       "-entry-point-function-name",
       "-Xfrontend",
-      "MoleKitCLI_main",
+      "SwiftSweepCLI_main",
       "-parse-as-library",
       "-color-diagnostics",
       "-swift-version",
@@ -3649,15 +3649,15 @@
       "-driver-use-frontend-path",
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
     ],
-    "MoleKitCore" : [
+    "SwiftSweepCore" : [
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
       "-module-name",
-      "MoleKitCore",
+      "SwiftSweepCore",
       "-package-name",
       "molekit_dev",
       "-c",
-      "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCore/CleanupEngine/CleanupEngine.swift",
-      "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCore/SystemMonitor/SystemMonitor.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/CleanupEngine/CleanupEngine.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/SystemMonitor/SystemMonitor.swift",
       "-I",
       "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -3679,7 +3679,7 @@
       "-parse-as-library",
       "-emit-objc-header",
       "-emit-objc-header-path",
-      "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/include/MoleKitCore-Swift.h",
+      "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/include/SwiftSweepCore-Swift.h",
       "-color-diagnostics",
       "-swift-version",
       "5",
@@ -3717,14 +3717,14 @@
       "-driver-use-frontend-path",
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
     ],
-    "MoleKitPackageTests" : [
+    "SwiftSweepPackageTests" : [
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
       "-module-name",
-      "MoleKitPackageTests",
+      "SwiftSweepPackageTests",
       "-package-name",
       "molekit_dev",
       "-c",
-      "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.derived/runner.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.derived/runner.swift",
       "-I",
       "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -3748,7 +3748,7 @@
       "-parse-as-library",
       "-emit-objc-header",
       "-emit-objc-header-path",
-      "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.build/include/MoleKitPackageTests-Swift.h",
+      "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.build/include/SwiftSweepPackageTests-Swift.h",
       "-color-diagnostics",
       "-plugin-path",
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
@@ -3784,14 +3784,14 @@
       "-driver-use-frontend-path",
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
     ],
-    "MoleKitTests" : [
+    "SwiftSweepTests" : [
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
       "-module-name",
-      "MoleKitTests",
+      "SwiftSweepTests",
       "-package-name",
       "molekit_dev",
       "-c",
-      "/Users/huaodong/Mole/MoleKit_Dev/Tests/MoleKitTests/MoleKitTests.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/Tests/SwiftSweepTests/SwiftSweepTests.swift",
       "-I",
       "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -3850,16 +3850,16 @@
       "-driver-use-frontend-path",
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
     ],
-    "MoleKitUI" : [
+    "SwiftSweepUI" : [
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
       "-module-name",
-      "MoleKitUI",
+      "SwiftSweepUI",
       "-package-name",
       "molekit_dev",
       "-c",
-      "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitUI/CleanView.swift",
-      "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitUI/MoleKitApp.swift",
-      "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitUI/StatusView.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/CleanView.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/StatusView.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SwiftSweepApp.swift",
       "-I",
       "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -3881,7 +3881,7 @@
       "-parse-as-library",
       "-emit-objc-header",
       "-emit-objc-header-path",
-      "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/include/MoleKitUI-Swift.h",
+      "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/include/SwiftSweepUI-Swift.h",
       "-color-diagnostics",
       "-swift-version",
       "5",
@@ -4092,26 +4092,26 @@
     "Logging" : [
 
     ],
-    "MoleKitCLI" : [
+    "SwiftSweepCLI" : [
       "ArgumentParser",
       "ArgumentParserToolInfo",
-      "MoleKitCore",
+      "SwiftSweepCore",
       "Logging"
     ],
-    "MoleKitCore" : [
+    "SwiftSweepCore" : [
       "Logging"
     ],
-    "MoleKitPackageTests" : [
-      "MoleKitTests",
-      "MoleKitCore",
+    "SwiftSweepPackageTests" : [
+      "SwiftSweepTests",
+      "SwiftSweepCore",
       "Logging"
     ],
-    "MoleKitTests" : [
-      "MoleKitCore",
+    "SwiftSweepTests" : [
+      "SwiftSweepCore",
       "Logging"
     ],
-    "MoleKitUI" : [
-      "MoleKitCore",
+    "SwiftSweepUI" : [
+      "SwiftSweepCore",
       "Logging"
     ],
     "generate_docc_reference" : [
@@ -4127,14 +4127,14 @@
 
   },
   "testEntryPointCommands" : {
-    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.derived/runner.swift" : {
+    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.derived/runner.swift" : {
       "inputs" : [
 
       ],
       "outputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.derived/runner.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.derived/runner.swift"
         }
       ]
     }
@@ -4625,7 +4625,7 @@
       ],
       "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Logging.build/sources"
     },
-    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/sources" : {
+    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCLI.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -4634,12 +4634,12 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCLI/MoleKit.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCLI/SwiftSweep.swift"
         }
       ],
-      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/sources"
+      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCLI.build/sources"
     },
-    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/sources" : {
+    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -4648,16 +4648,16 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCore/CleanupEngine/CleanupEngine.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/CleanupEngine/CleanupEngine.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCore/SystemMonitor/SystemMonitor.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/SystemMonitor/SystemMonitor.swift"
         }
       ],
-      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/sources"
+      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/sources"
     },
-    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.build/sources" : {
+    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -4666,12 +4666,12 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.derived/runner.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.derived/runner.swift"
         }
       ],
-      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.build/sources"
+      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.build/sources"
     },
-    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.product/Objects.LinkFileList" : {
+    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.product/Objects.LinkFileList" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -4696,24 +4696,24 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/CleanupEngine.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/CleanupEngine.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/SystemMonitor.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SystemMonitor.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.build/runner.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.build/runner.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitTests.build/MoleKitTests.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepTests.build/SwiftSweepTests.swift.o"
         }
       ],
-      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitPackageTests.product/Objects.LinkFileList"
+      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepPackageTests.product/Objects.LinkFileList"
     },
-    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitTests.build/sources" : {
+    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepTests.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -4722,12 +4722,12 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Tests/MoleKitTests/MoleKitTests.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Tests/SwiftSweepTests/SwiftSweepTests.swift"
         }
       ],
-      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitTests.build/sources"
+      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepTests.build/sources"
     },
-    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/sources" : {
+    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -4736,18 +4736,18 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitUI/CleanView.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/CleanView.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitUI/MoleKitApp.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/StatusView.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitUI/StatusView.swift"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SwiftSweepApp.swift"
         }
       ],
-      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitUI.build/sources"
+      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/sources"
     },
     "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/generate-docc-reference-entitlement.plist" : {
       "alwaysOutOfDate" : false,
@@ -6213,7 +6213,21 @@
       ],
       "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/generate_manual.build/sources"
     },
-    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/molekit-entitlement.plist" : {
+    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    },
+    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/swiftsweep-entitlement.plist" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -6225,9 +6239,9 @@
           "name" : "<com.apple.security.get-task-allow>"
         }
       ],
-      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/molekit-entitlement.plist"
+      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/swiftsweep-entitlement.plist"
     },
-    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/molekit.product/Objects.LinkFileList" : {
+    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/swiftsweep.product/Objects.LinkFileList" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -6452,32 +6466,18 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCLI.build/SwiftSweep.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/CleanupEngine.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/CleanupEngine.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/SystemMonitor.swift.o"
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SystemMonitor.swift.o"
         }
       ],
-      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/molekit.product/Objects.LinkFileList"
-    },
-    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
-      "alwaysOutOfDate" : true,
-      "inputs" : [
-        {
-          "kind" : "virtual",
-          "name" : "<swift-get-version>"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
-        }
-      ],
-      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/swiftsweep.product/Objects.LinkFileList"
     }
   }
 }
