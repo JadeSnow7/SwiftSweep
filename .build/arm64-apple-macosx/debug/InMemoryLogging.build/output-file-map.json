@@ -1,12 +1,12 @@
 {
   "": {
-    "swift-dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/InMemoryLogging.build/master.swiftdeps"
+    "swift-dependencies": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/InMemoryLogging.build/master.swiftdeps"
   },
-  "/Users/huaodong/MoleKit/.build/checkouts/swift-log/Sources/InMemoryLogging/InMemoryLogHandler.swift": {
-    "dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/InMemoryLogging.build/InMemoryLogHandler.d",
-    "object": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/InMemoryLogging.build/InMemoryLogHandler.swift.o",
-    "swiftmodule": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/InMemoryLogging.build/InMemoryLogHandler~partial.swiftmodule",
-    "swift-dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/InMemoryLogging.build/InMemoryLogHandler.swiftdeps",
-    "diagnostics": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/InMemoryLogging.build/InMemoryLogHandler.dia"
+  "/Users/huaodong/Mole/MoleKit_Dev/.build/checkouts/swift-log/Sources/InMemoryLogging/InMemoryLogHandler.swift": {
+    "dependencies": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/InMemoryLogging.build/InMemoryLogHandler.d",
+    "object": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/InMemoryLogging.build/InMemoryLogHandler.swift.o",
+    "swiftmodule": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/InMemoryLogging.build/InMemoryLogHandler~partial.swiftmodule",
+    "swift-dependencies": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/InMemoryLogging.build/InMemoryLogHandler.swiftdeps",
+    "diagnostics": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/InMemoryLogging.build/InMemoryLogHandler.dia"
   }
 }

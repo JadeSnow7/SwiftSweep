@@ -1,3 +1,3 @@
 module MoleKitCore {
-    header "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCore.build/include/MoleKitCore-Swift.h"
+    header "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCore.build/include/MoleKitCore-Swift.h"
 }

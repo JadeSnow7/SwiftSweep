@@ -1,6 +1,6 @@
 ---
 triple:          'arm64-apple-darwin'
-binary-path:     '/Users/huaodong/MoleKit/.build/plugins/cache/GenerateManual'
+binary-path:     '/Users/huaodong/Mole/MoleKit_Dev/.build/plugins/cache/GenerateManual'
 relocations:
   - { offset: 0x88C42, size: 0x8, addend: 0x0, symName: '_$s14GenerateManual0aB6PluginV14performCommand7context9argumentsy07PackageC00C7ContextV_SaySSGtYaKF', symObjAddr: 0x0, symBinAddr: 0x100000ED0, symSize: 0x36C }
   - { offset: 0x88DC9, size: 0x8, addend: 0x0, symName: ___swift_instantiateConcreteTypeFromMangledNameV2, symObjAddr: 0x1DF8, symBinAddr: 0x100002CC8, symSize: 0x68 }

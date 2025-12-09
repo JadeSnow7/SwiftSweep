@@ -1,12 +1,12 @@
 {
   "": {
-    "swift-dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/master.swiftdeps"
+    "swift-dependencies": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/master.swiftdeps"
   },
-  "/Users/huaodong/MoleKit/.build/checkouts/swift-argument-parser/Sources/ArgumentParserToolInfo/ToolInfo.swift": {
-    "dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/ToolInfo.d",
-    "object": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/ToolInfo.swift.o",
-    "swiftmodule": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/ToolInfo~partial.swiftmodule",
-    "swift-dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/ToolInfo.swiftdeps",
-    "diagnostics": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/ToolInfo.dia"
+  "/Users/huaodong/Mole/MoleKit_Dev/.build/checkouts/swift-argument-parser/Sources/ArgumentParserToolInfo/ToolInfo.swift": {
+    "dependencies": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/ToolInfo.d",
+    "object": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/ToolInfo.swift.o",
+    "swiftmodule": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/ToolInfo~partial.swiftmodule",
+    "swift-dependencies": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/ToolInfo.swiftdeps",
+    "diagnostics": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/ToolInfo.dia"
   }
 }

@@ -10,7 +10,7 @@ public final class SystemMonitor {
     
     private let logger = Logger(label: "com.molekit.systemmonitor")
     
-    public struct SystemMetrics {
+    public struct SystemMetrics: Sendable {
         public var cpuUsage: Double
         public var memoryUsage: Double
         public var memoryUsed: Int64  // 字节
@@ -58,9 +58,26 @@ public final class SystemMonitor {
         // 获取电池信息
         metrics.batteryLevel = try getBatteryLevel()
         
+        // 获取网络速度
+        let (down, up) = getNetworkSteps()
+        metrics.networkDownload = down
+        metrics.networkUpload = up
+        
         logger.debug("Metrics fetched successfully")
         return metrics
     }
+    
+    // MARK: - Private Methods
+    
+    // MARK: - Network State
+    
+    private struct NetworkState {
+        var timestamp: TimeInterval
+        var bytesIn: UInt64
+        var bytesOut: UInt64
+    }
+    
+    private var lastNetworkState: NetworkState?
     
     // MARK: - Private Methods
     
@@ -133,5 +150,56 @@ public final class SystemMonitor {
         
         // 台式机或无电池设备返回 100
         return 100.0
+    }
+    
+    private func getNetworkSteps() -> (down: Double, up: Double) {
+        var ifaddr: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&ifaddr) == 0 else { return (0, 0) }
+        defer { freeifaddrs(ifaddr) }
+        
+        var totalBytesIn: UInt64 = 0
+        var totalBytesOut: UInt64 = 0
+        
+        var ptr = ifaddr
+        while ptr != nil {
+            defer { ptr = ptr?.pointee.ifa_next }
+            
+            guard let interface = ptr?.pointee else { continue }
+            let _ = String(cString: interface.ifa_name)
+            
+            // 忽略非活跃或回环接口
+            if (interface.ifa_flags & UInt32(IFF_UP)) == 0 || (interface.ifa_flags & UInt32(IFF_LOOPBACK)) != 0 {
+                continue
+            }
+            
+            // 确保是链路层 (AF_LINK)
+            if interface.ifa_addr.pointee.sa_family == UInt8(AF_LINK) {
+                if let data = interface.ifa_data {
+                    let networkData = data.assumingMemoryBound(to: if_data.self).pointee
+                     totalBytesIn += UInt64(networkData.ifi_ibytes)
+                     totalBytesOut += UInt64(networkData.ifi_obytes)
+                }
+            }
+        }
+        
+        let now = Date().timeIntervalSince1970
+        var downSpeed: Double = 0
+        var upSpeed: Double = 0
+        
+        if let last = lastNetworkState {
+            let timeDiff = now - last.timestamp
+            if timeDiff > 0 {
+                 // 计算字节差并转换为 MB/s
+                 let bytesInDiff = totalBytesIn >= last.bytesIn ? totalBytesIn - last.bytesIn : 0
+                 let bytesOutDiff = totalBytesOut >= last.bytesOut ? totalBytesOut - last.bytesOut : 0
+                 
+                 downSpeed = Double(bytesInDiff) / 1024.0 / 1024.0 / timeDiff
+                 upSpeed = Double(bytesOutDiff) / 1024.0 / 1024.0 / timeDiff
+            }
+        }
+        
+        lastNetworkState = NetworkState(timestamp: now, bytesIn: totalBytesIn, bytesOut: totalBytesOut)
+        
+        return (downSpeed, upSpeed)
     }
 }

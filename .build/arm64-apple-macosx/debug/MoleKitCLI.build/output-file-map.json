@@ -1,12 +1,12 @@
 {
   "": {
-    "swift-dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCLI.build/master.swiftdeps"
+    "swift-dependencies": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/master.swiftdeps"
   },
-  "/Users/huaodong/MoleKit/Sources/MoleKitCLI/MoleKit.swift": {
-    "dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit.d",
-    "object": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit.swift.o",
-    "swiftmodule": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit~partial.swiftmodule",
-    "swift-dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit.swiftdeps",
-    "diagnostics": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit.dia"
+  "/Users/huaodong/Mole/MoleKit_Dev/Sources/MoleKitCLI/MoleKit.swift": {
+    "dependencies": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit.d",
+    "object": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit.swift.o",
+    "swiftmodule": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit~partial.swiftmodule",
+    "swift-dependencies": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit.swiftdeps",
+    "diagnostics": "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/MoleKitCLI.build/MoleKit.dia"
   }
 }

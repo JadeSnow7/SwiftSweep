@@ -80,9 +80,9 @@ struct ContentView: View {
             Group {
                 switch selection {
                 case .status:
-                    Text("Status View - Coming Soon")
+                    StatusView()
                 case .clean:
-                    Text("Clean View - Coming Soon")
+                    CleanView()
                 case .uninstall:
                     Text("Uninstall View - Coming Soon")
                 case .optimize:
