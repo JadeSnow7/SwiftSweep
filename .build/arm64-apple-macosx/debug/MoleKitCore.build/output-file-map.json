@@ -1,0 +1,19 @@
+{
+  "": {
+    "swift-dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCore.build/master.swiftdeps"
+  },
+  "/Users/huaodong/MoleKit/Sources/MoleKitCore/CleanupEngine/CleanupEngine.swift": {
+    "dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCore.build/CleanupEngine.d",
+    "object": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCore.build/CleanupEngine.swift.o",
+    "swiftmodule": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCore.build/CleanupEngine~partial.swiftmodule",
+    "swift-dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCore.build/CleanupEngine.swiftdeps",
+    "diagnostics": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCore.build/CleanupEngine.dia"
+  },
+  "/Users/huaodong/MoleKit/Sources/MoleKitCore/SystemMonitor/SystemMonitor.swift": {
+    "dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCore.build/SystemMonitor.d",
+    "object": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCore.build/SystemMonitor.swift.o",
+    "swiftmodule": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCore.build/SystemMonitor~partial.swiftmodule",
+    "swift-dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCore.build/SystemMonitor.swiftdeps",
+    "diagnostics": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitCore.build/SystemMonitor.dia"
+  }
+}

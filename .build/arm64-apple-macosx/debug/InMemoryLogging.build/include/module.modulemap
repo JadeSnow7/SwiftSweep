@@ -1,0 +1,3 @@
+module InMemoryLogging {
+    header "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/InMemoryLogging.build/include/InMemoryLogging-Swift.h"
+}

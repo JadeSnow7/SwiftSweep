@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitUI.build/master.swiftdeps"
+  },
+  "/Users/huaodong/MoleKit/Sources/MoleKitUI/MoleKitApp.swift": {
+    "dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitUI.build/MoleKitApp.d",
+    "object": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitUI.build/MoleKitApp.swift.o",
+    "swiftmodule": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitUI.build/MoleKitApp~partial.swiftmodule",
+    "swift-dependencies": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitUI.build/MoleKitApp.swiftdeps",
+    "diagnostics": "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitUI.build/MoleKitApp.dia"
+  }
+}

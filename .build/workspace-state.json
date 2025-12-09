@@ -1,0 +1,47 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "swift-argument-parser",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/apple/swift-argument-parser",
+          "name" : "swift-argument-parser"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "cdd0ef3755280949551dc26dee5de9ddeda89f54",
+            "version" : "1.6.2"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "swift-argument-parser"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "swift-log",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/apple/swift-log",
+          "name" : "swift-log"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "b1fa4ef41fe21b13120c034854042d12c43f66b2",
+            "version" : "1.7.1"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "swift-log"
+      }
+    ],
+    "prebuilts" : [
+
+    ]
+  },
+  "version" : 7
+}

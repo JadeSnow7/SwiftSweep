@@ -1,0 +1,3 @@
+module MoleKitUI {
+    header "/Users/huaodong/MoleKit/.build/arm64-apple-macosx/debug/MoleKitUI.build/include/MoleKitUI-Swift.h"
+}
