@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftSweepCore
 
 struct OptimizeView: View {
     @StateObject private var viewModel = OptimizeViewModel()
@@ -22,44 +21,19 @@ struct OptimizeView: View {
                         Label("Run All", systemImage: "bolt.fill")
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(!viewModel.helperInstalled)
                 }
                 .padding()
                 
-                // Helper Status
-                if !viewModel.helperInstalled {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange)
-                            VStack(alignment: .leading) {
-                                Text("Privileged Helper Required")
-                                    .fontWeight(.medium)
-                                Text("System optimization requires administrator privileges.")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                        }
-                        
-                        Button(action: { Task { await viewModel.installHelper() }}) {
-                            Label(viewModel.isInstallingHelper ? "Installing..." : "Install Helper", 
-                                  systemImage: "lock.shield")
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(viewModel.isInstallingHelper)
-                        
-                        if let error = viewModel.installError {
-                            Text(error)
-                                .font(.caption)
-                                .foregroundColor(.red)
-                        }
-                    }
-                    .padding()
-                    .background(Color.orange.opacity(0.1))
-                    .cornerRadius(10)
-                    .padding(.horizontal)
+                // Info banner explaining password prompt
+                HStack {
+                    Image(systemName: "info.circle.fill")
+                        .foregroundColor(.blue)
+                    Text("Privileged tasks will prompt for your password when run.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
                 }
+                .padding(.horizontal)
                 
                 // Optimization Tasks
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 280))], spacing: 16) {
@@ -125,7 +99,6 @@ struct OptimizationCard: View {
                     viewModel.runTask(task)
                 }
                 .buttonStyle(.bordered)
-                .disabled(!viewModel.helperInstalled && task.requiresPrivilege)
             }
         }
         .padding()
@@ -199,42 +172,14 @@ class OptimizeViewModel: ObservableObject {
         ),
     ]
     
-    @Published var helperInstalled = false
-    @Published var isInstallingHelper = false
-    @Published var installError: String?
-    
-    init() {
-        checkHelperStatus()
-    }
-    
-    func checkHelperStatus() {
-        helperInstalled = SMJobBlessClient.shared.isHelperInstalled()
-    }
-    
-    func installHelper() async {
-        isInstallingHelper = true
-        installError = nil
-        
-        do {
-            try SMJobBlessClient.shared.installHelper()
-            checkHelperStatus()
-        } catch {
-            installError = error.localizedDescription
-        }
-        
-        isInstallingHelper = false
-    }
-    
     func runTask(_ task: OptimizationTask) {
         guard let index = tasks.firstIndex(where: { $0.id == task.id }) else { return }
         
-        if task.requiresPrivilege && !helperInstalled {
-            return
-        }
-        
-        tasks[index].isRunning = true
-        
-        if !task.requiresPrivilege {
+        if task.requiresPrivilege {
+            // 使用 AppleScript 弹出密码框运行特权命令
+            runPrivilegedTask(task, at: index)
+        } else {
+            tasks[index].isRunning = true
             DispatchQueue.global().async { [weak self] in
                 let process = Process()
                 process.executableURL = URL(fileURLWithPath: "/bin/bash")
@@ -255,29 +200,48 @@ class OptimizeViewModel: ObservableObject {
                     }
                 }
             }
-        } else {
-            // 使用 SMJobBlessClient 运行特权任务
-            Task {
-                do {
-                    switch task.title {
-                    case "Flush DNS Cache":
-                        _ = try await SMJobBlessClient.shared.flushDNS()
-                    case "Rebuild Spotlight":
-                        _ = try await SMJobBlessClient.shared.rebuildSpotlight()
-                    case "Clear Memory":
-                        _ = try await SMJobBlessClient.shared.clearMemory()
-                    default:
-                        break
+        }
+    }
+    
+    private func runPrivilegedTask(_ task: OptimizationTask, at index: Int) {
+        tasks[index].isRunning = true
+        
+        let command: String
+        switch task.title {
+        case "Flush DNS Cache":
+            command = "dscacheutil -flushcache && killall -HUP mDNSResponder"
+        case "Rebuild Spotlight":
+            command = "mdutil -E /"
+        case "Clear Memory":
+            command = "purge"
+        case "Clear Font Cache":
+            command = "atsutil databases -remove"
+        default:
+            tasks[index].isRunning = false
+            return
+        }
+        
+        DispatchQueue.global().async { [weak self] in
+            let script = """
+            do shell script "\(command)" with administrator privileges
+            """
+            
+            var error: NSDictionary?
+            if let appleScript = NSAppleScript(source: script) {
+                let result = appleScript.executeAndReturnError(&error)
+                
+                DispatchQueue.main.async {
+                    self?.tasks[index].isRunning = false
+                    self?.tasks[index].lastResult = (error == nil)
+                    
+                    if error == nil {
+                        // 可选: 显示成功消息
                     }
-                    await MainActor.run {
-                        self.tasks[index].isRunning = false
-                        self.tasks[index].lastResult = true
-                    }
-                } catch {
-                    await MainActor.run {
-                        self.tasks[index].isRunning = false
-                        self.tasks[index].lastResult = false
-                    }
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self?.tasks[index].isRunning = false
+                    self?.tasks[index].lastResult = false
                 }
             }
         }
@@ -285,9 +249,8 @@ class OptimizeViewModel: ObservableObject {
     
     func runAll() {
         for task in tasks {
-            if !task.requiresPrivilege || helperInstalled {
-                runTask(task)
-            }
+            runTask(task)
         }
     }
 }
+

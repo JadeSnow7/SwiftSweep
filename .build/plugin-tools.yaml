@@ -25,9 +25,9 @@ targets:
   "generate-manual-arm64-apple-macosx15.0-debug-tool.module": ["<generate-manual-arm64-apple-macosx15.0-debug-tool.module>"]
   "generate-manual-arm64-apple-macosx15.0-debug.exe": ["<generate-manual-arm64-apple-macosx15.0-debug.exe>"]
   "generate-manual-arm64-apple-macosx15.0-debug.module": ["<generate-manual-arm64-apple-macosx15.0-debug.module>"]
-  "main": ["<SwiftSweepApp-arm64-apple-macosx15.0-debug.exe>","<SwiftSweepCLI-arm64-apple-macosx15.0-debug.module>","<SwiftSweepCore-arm64-apple-macosx15.0-debug.module>","<SwiftSweepUI-arm64-apple-macosx15.0-debug.module>","<swiftsweep-arm64-apple-macosx15.0-debug.exe>"]
+  "main": ["<SwiftSweepApp-arm64-apple-macosx15.0-debug.exe>","<SwiftSweepCLI-arm64-apple-macosx15.0-debug.module>","<SwiftSweepCore-arm64-apple-macosx15.0-debug.module>","<SwiftSweepUI-arm64-apple-macosx15.0-debug.module>","<generate-docc-reference-arm64-apple-macosx15.0-debug-tool.exe>","<generate-docc-reference-arm64-apple-macosx15.0-debug.exe>","<generate-manual-arm64-apple-macosx15.0-debug-tool.exe>","<generate-manual-arm64-apple-macosx15.0-debug.exe>","<swiftsweep-arm64-apple-macosx15.0-debug.exe>"]
   "swiftsweep-arm64-apple-macosx15.0-debug.exe": ["<swiftsweep-arm64-apple-macosx15.0-debug.exe>"]
-  "test": ["<SwiftSweepApp-arm64-apple-macosx15.0-debug.exe>","<SwiftSweepCLI-arm64-apple-macosx15.0-debug.module>","<SwiftSweepCore-arm64-apple-macosx15.0-debug.module>","<SwiftSweepPackageTests-arm64-apple-macosx15.0-debug.test>","<SwiftSweepTests-arm64-apple-macosx15.0-debug.module>","<SwiftSweepUI-arm64-apple-macosx15.0-debug.module>","<swiftsweep-arm64-apple-macosx15.0-debug.exe>"]
+  "test": ["<SwiftSweepApp-arm64-apple-macosx15.0-debug.exe>","<SwiftSweepCLI-arm64-apple-macosx15.0-debug.module>","<SwiftSweepCore-arm64-apple-macosx15.0-debug.module>","<SwiftSweepPackageTests-arm64-apple-macosx15.0-debug.test>","<SwiftSweepTests-arm64-apple-macosx15.0-debug.module>","<SwiftSweepUI-arm64-apple-macosx15.0-debug.module>","<generate-docc-reference-arm64-apple-macosx15.0-debug-tool.exe>","<generate-docc-reference-arm64-apple-macosx15.0-debug.exe>","<generate-manual-arm64-apple-macosx15.0-debug-tool.exe>","<generate-manual-arm64-apple-macosx15.0-debug.exe>","<swiftsweep-arm64-apple-macosx15.0-debug.exe>"]
 default: "main"
 nodes:
   "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCLI/":
