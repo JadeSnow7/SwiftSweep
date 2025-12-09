@@ -282,13 +282,14 @@ class AnalyzeViewModel: ObservableObject {
             at: URL(fileURLWithPath: path),
             includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey, .isDirectoryKey],
             options: [.skipsHiddenFiles],
-            errorHandler: { _, _ in true }  // 忽略错误继续
+            errorHandler: { _, _ in true }
         ) else {
             await MainActor.run { self.isAnalyzing = false }
             return
         }
         
-        for case let fileURL as URL in enumerator {
+        // 使用 while 循环而非 for-in 以避免 Swift 6 警告
+        while let fileURL = enumerator.nextObject() as? URL {
             // 检查取消
             if Task.isCancelled { break }
             
