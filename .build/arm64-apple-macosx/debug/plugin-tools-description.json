@@ -15,8 +15,8 @@
     }
   },
   "generatedSourceTargetSet" : [
-    "GenerateManual",
-    "GenerateDoccReference"
+    "GenerateDoccReference",
+    "GenerateManual"
   ],
   "pluginDescriptions" : [
     {
@@ -2151,7 +2151,7 @@
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/sources"
         }
       ],
-      "isLibrary" : true,
+      "isLibrary" : false,
       "moduleName" : "SwiftSweepUI",
       "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepUI.swiftmodule",
       "objects" : [
@@ -2180,10 +2180,10 @@
         "-module-cache-path",
         "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/ModuleCache",
         "-parseable-output",
-        "-parse-as-library",
-        "-emit-objc-header",
-        "-emit-objc-header-path",
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/include/SwiftSweepUI-Swift.h",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "SwiftSweepUI_main",
         "-color-diagnostics",
         "-swift-version",
         "5",
@@ -3944,10 +3944,10 @@
       "-module-cache-path",
       "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/ModuleCache",
       "-parseable-output",
-      "-parse-as-library",
-      "-emit-objc-header",
-      "-emit-objc-header-path",
-      "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/include/SwiftSweepUI-Swift.h",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "SwiftSweepUI_main",
       "-color-diagnostics",
       "-swift-version",
       "5",
@@ -4690,6 +4690,90 @@
         }
       ],
       "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Logging.build/sources"
+    },
+    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepApp-entitlement.plist" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<entitlement-plist>"
+        },
+        {
+          "kind" : "virtual",
+          "name" : "<com.apple.security.get-task-allow>"
+        }
+      ],
+      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepApp-entitlement.plist"
+    },
+    "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepApp.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Logging.build/Locks.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Logging.build/LogHandler.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Logging.build/Logging.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Logging.build/MetadataProvider.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/CleanupEngine.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/HelperClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SystemMonitor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/UninstallEngine.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/AnalyzeView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/CleanView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/OptimizeView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/SettingsView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/StatusView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/SwiftSweepApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/UninstallView.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepApp.product/Objects.LinkFileList"
     },
     "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCLI.build/sources" : {
       "alwaysOutOfDate" : false,

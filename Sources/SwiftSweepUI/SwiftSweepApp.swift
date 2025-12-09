@@ -1,5 +1,6 @@
 import SwiftUI
 
+@main
 struct SwiftSweepApp: App {
     init() {
         // Ensure the app appears in the Dock and has a UI

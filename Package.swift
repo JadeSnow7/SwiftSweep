@@ -8,8 +8,8 @@ let package = Package(
     ],
     products: [
         .executable(name: "swiftsweep", targets: ["SwiftSweepCLI"]),
+        .executable(name: "SwiftSweepApp", targets: ["SwiftSweepUI"]),
         .library(name: "SwiftSweepCore", targets: ["SwiftSweepCore"]),
-        .library(name: "SwiftSweepUI", targets: ["SwiftSweepUI"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
@@ -43,8 +43,8 @@ let package = Package(
             path: "Sources/SwiftSweepCLI"
         ),
         
-        // GUI Application Framework
-        .target(
+        // GUI Application
+        .executableTarget(
             name: "SwiftSweepUI",
             dependencies: ["SwiftSweepCore"],
             path: "Sources/SwiftSweepUI"
