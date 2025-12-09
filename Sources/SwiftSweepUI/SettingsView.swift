@@ -1,9 +1,11 @@
 import SwiftUI
+import SwiftSweepCore
 
 struct SettingsView: View {
     @AppStorage("autoCleanOnLaunch") private var autoCleanOnLaunch = false
     @AppStorage("showHiddenFiles") private var showHiddenFiles = false
     @AppStorage("defaultCleanCategory") private var defaultCleanCategory = "all"
+    @StateObject private var helperViewModel = HelperStatusViewModel()
     
     var body: some View {
         ScrollView {
@@ -70,23 +72,120 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                         }
                         Spacer()
-                        Text("Not Installed")
-                            .foregroundColor(.orange)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.orange.opacity(0.1))
-                            .cornerRadius(6)
+                        helperStatusBadge
                     }
                     
-                    Button("Install Helper...") {
-                        // TODO: Implement SMJobBless
+                    if helperViewModel.status == .requiresApproval {
+                        Text("Please enable SwiftSweep Helper in System Settings > Login Items")
+                            .font(.caption)
+                            .foregroundColor(.orange)
                     }
-                    .disabled(true)
+                    
+                    HStack {
+                        Button(action: { Task { await helperViewModel.registerHelper() }}) {
+                            Label("Install Helper", systemImage: "plus.circle")
+                        }
+                        .disabled(helperViewModel.status == .enabled)
+                        
+                        if helperViewModel.status == .enabled {
+                            Button(action: { Task { await helperViewModel.unregisterHelper() }}) {
+                                Label("Remove", systemImage: "minus.circle")
+                            }
+                            .foregroundColor(.red)
+                        }
+                    }
                 }
                 
                 Spacer()
             }
         }
+        .onAppear {
+            helperViewModel.checkStatus()
+        }
+    }
+    
+    @ViewBuilder
+    var helperStatusBadge: some View {
+        switch helperViewModel.status {
+        case .enabled:
+            Text("Enabled")
+                .foregroundColor(.green)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.green.opacity(0.1))
+                .cornerRadius(6)
+        case .requiresApproval:
+            Text("Needs Approval")
+                .foregroundColor(.orange)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.orange.opacity(0.1))
+                .cornerRadius(6)
+        case .notRegistered, .notFound:
+            Text("Not Installed")
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(6)
+        }
+    }
+}
+
+@MainActor
+class HelperStatusViewModel: ObservableObject {
+    @Published var status: HelperClientStatus = .notRegistered
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    
+    enum HelperClientStatus {
+        case notRegistered
+        case enabled
+        case requiresApproval
+        case notFound
+    }
+    
+    func checkStatus() {
+        if #available(macOS 13.0, *) {
+            let clientStatus = HelperClient.shared.checkStatus()
+            switch clientStatus {
+            case .notRegistered: status = .notRegistered
+            case .enabled: status = .enabled
+            case .requiresApproval: status = .requiresApproval
+            case .notFound: status = .notFound
+            }
+        } else {
+            status = .notFound
+        }
+    }
+    
+    func registerHelper() async {
+        guard #available(macOS 13.0, *) else { return }
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            try await HelperClient.shared.registerHelper()
+            checkStatus()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        
+        isLoading = false
+    }
+    
+    func unregisterHelper() async {
+        guard #available(macOS 13.0, *) else { return }
+        isLoading = true
+        
+        do {
+            try await HelperClient.shared.unregisterHelper()
+            checkStatus()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        
+        isLoading = false
     }
 }
 

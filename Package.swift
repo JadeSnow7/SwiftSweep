@@ -29,6 +29,7 @@ let package = Package(
                 "SystemMonitor",
                 "OptimizationEngine",
                 "UninstallEngine",
+                "PrivilegedHelper",
             ]
         ),
         
