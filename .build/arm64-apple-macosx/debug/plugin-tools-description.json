@@ -15,8 +15,8 @@
     }
   },
   "generatedSourceTargetSet" : [
-    "GenerateManual",
-    "GenerateDoccReference"
+    "GenerateDoccReference",
+    "GenerateManual"
   ],
   "pluginDescriptions" : [
     {
@@ -2102,7 +2102,19 @@
       "inputs" : [
         {
           "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/AnalyzeView.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/CleanView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/OptimizeView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SettingsView.swift"
         },
         {
           "kind" : "file",
@@ -2111,6 +2123,10 @@
         {
           "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SwiftSweepApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/UninstallView.swift"
         },
         {
           "kind" : "file",
@@ -2129,9 +2145,13 @@
       "moduleName" : "SwiftSweepUI",
       "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepUI.swiftmodule",
       "objects" : [
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/AnalyzeView.swift.o",
         "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/CleanView.swift.o",
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/OptimizeView.swift.o",
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/SettingsView.swift.o",
         "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/StatusView.swift.o",
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/SwiftSweepApp.swift.o"
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/SwiftSweepApp.swift.o",
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/UninstallView.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -2193,7 +2213,19 @@
       "outputs" : [
         {
           "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/AnalyzeView.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/CleanView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/OptimizeView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/SettingsView.swift.o"
         },
         {
           "kind" : "file",
@@ -2205,14 +2237,22 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/UninstallView.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepUI.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/AnalyzeView.swift",
         "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/CleanView.swift",
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/OptimizeView.swift",
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SettingsView.swift",
         "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/StatusView.swift",
-        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SwiftSweepApp.swift"
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SwiftSweepApp.swift",
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/UninstallView.swift"
       ],
       "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build",
       "wholeModuleOptimization" : false
@@ -3868,9 +3908,13 @@
       "-package-name",
       "molekit_dev",
       "-c",
+      "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/AnalyzeView.swift",
       "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/CleanView.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/OptimizeView.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SettingsView.swift",
       "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/StatusView.swift",
       "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SwiftSweepApp.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/UninstallView.swift",
       "-I",
       "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -4755,7 +4799,19 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/AnalyzeView.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/CleanView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/OptimizeView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SettingsView.swift"
         },
         {
           "kind" : "file",
@@ -4764,6 +4820,10 @@
         {
           "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/SwiftSweepApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepUI/UninstallView.swift"
         }
       ],
       "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepUI.build/sources"

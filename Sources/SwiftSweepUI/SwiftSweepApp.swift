@@ -84,13 +84,13 @@ struct ContentView: View {
                 case .clean:
                     CleanView()
                 case .uninstall:
-                    Text("Uninstall View - Coming Soon")
+                    UninstallView()
                 case .optimize:
-                    Text("Optimize View - Coming Soon")
+                    OptimizeView()
                 case .analyze:
-                    Text("Analyze View - Coming Soon")
+                    AnalyzeView()
                 case .settings:
-                    Text("Settings View - Coming Soon")
+                    SettingsView()
                 case .none:
                     Text("Select an option")
                 }
