@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftSweepCore
 
 struct OptimizeView: View {
     @StateObject private var viewModel = OptimizeViewModel()
@@ -27,17 +28,32 @@ struct OptimizeView: View {
                 
                 // Helper Status
                 if !viewModel.helperInstalled {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
-                        VStack(alignment: .leading) {
-                            Text("Privileged Helper Required")
-                                .fontWeight(.medium)
-                            Text("System optimization requires administrator privileges. SMJobBless helper not yet implemented.")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                            VStack(alignment: .leading) {
+                                Text("Privileged Helper Required")
+                                    .fontWeight(.medium)
+                                Text("System optimization requires administrator privileges.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
                         }
-                        Spacer()
+                        
+                        Button(action: { Task { await viewModel.installHelper() }}) {
+                            Label(viewModel.isInstallingHelper ? "Installing..." : "Install Helper", 
+                                  systemImage: "lock.shield")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(viewModel.isInstallingHelper)
+                        
+                        if let error = viewModel.installError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
                     }
                     .padding()
                     .background(Color.orange.opacity(0.1))
@@ -184,18 +200,40 @@ class OptimizeViewModel: ObservableObject {
     ]
     
     @Published var helperInstalled = false
+    @Published var isInstallingHelper = false
+    @Published var installError: String?
+    
+    init() {
+        checkHelperStatus()
+    }
+    
+    func checkHelperStatus() {
+        helperInstalled = SMJobBlessClient.shared.isHelperInstalled()
+    }
+    
+    func installHelper() async {
+        isInstallingHelper = true
+        installError = nil
+        
+        do {
+            try SMJobBlessClient.shared.installHelper()
+            checkHelperStatus()
+        } catch {
+            installError = error.localizedDescription
+        }
+        
+        isInstallingHelper = false
+    }
     
     func runTask(_ task: OptimizationTask) {
         guard let index = tasks.firstIndex(where: { $0.id == task.id }) else { return }
         
         if task.requiresPrivilege && !helperInstalled {
-            // Helper not installed, can't run privileged tasks
             return
         }
         
         tasks[index].isRunning = true
         
-        // For non-privileged tasks, run directly
         if !task.requiresPrivilege {
             DispatchQueue.global().async { [weak self] in
                 let process = Process()
@@ -218,9 +256,30 @@ class OptimizeViewModel: ObservableObject {
                 }
             }
         } else {
-            // Privileged tasks require helper
-            tasks[index].isRunning = false
-            tasks[index].lastResult = nil
+            // 使用 SMJobBlessClient 运行特权任务
+            Task {
+                do {
+                    switch task.title {
+                    case "Flush DNS Cache":
+                        _ = try await SMJobBlessClient.shared.flushDNS()
+                    case "Rebuild Spotlight":
+                        _ = try await SMJobBlessClient.shared.rebuildSpotlight()
+                    case "Clear Memory":
+                        _ = try await SMJobBlessClient.shared.clearMemory()
+                    default:
+                        break
+                    }
+                    await MainActor.run {
+                        self.tasks[index].isRunning = false
+                        self.tasks[index].lastResult = true
+                    }
+                } catch {
+                    await MainActor.run {
+                        self.tasks[index].isRunning = false
+                        self.tasks[index].lastResult = false
+                    }
+                }
+            }
         }
     }
     

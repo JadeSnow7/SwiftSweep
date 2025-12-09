@@ -15,8 +15,8 @@
     }
   },
   "generatedSourceTargetSet" : [
-    "GenerateDoccReference",
-    "GenerateManual"
+    "GenerateManual",
+    "GenerateDoccReference"
   ],
   "pluginDescriptions" : [
     {
@@ -1785,6 +1785,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/PrivilegedHelper/SMJobBlessClient.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/SystemMonitor/SystemMonitor.swift"
         },
         {
@@ -1810,6 +1814,7 @@
       "objects" : [
         "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/CleanupEngine.swift.o",
         "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/HelperClient.swift.o",
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SMJobBlessClient.swift.o",
         "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SystemMonitor.swift.o",
         "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/UninstallEngine.swift.o"
       ],
@@ -1881,6 +1886,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SMJobBlessClient.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SystemMonitor.swift.o"
         },
         {
@@ -1896,6 +1905,7 @@
       "sources" : [
         "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/CleanupEngine/CleanupEngine.swift",
         "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/PrivilegedHelper/HelperClient.swift",
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/PrivilegedHelper/SMJobBlessClient.swift",
         "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/SystemMonitor/SystemMonitor.swift",
         "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/UninstallEngine/UninstallEngine.swift"
       ],
@@ -3718,6 +3728,7 @@
       "-c",
       "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/CleanupEngine/CleanupEngine.swift",
       "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/PrivilegedHelper/HelperClient.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/PrivilegedHelper/SMJobBlessClient.swift",
       "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/SystemMonitor/SystemMonitor.swift",
       "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/UninstallEngine/UninstallEngine.swift",
       "-I",
@@ -4738,6 +4749,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SMJobBlessClient.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SystemMonitor.swift.o"
         },
         {
@@ -4806,6 +4821,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/PrivilegedHelper/SMJobBlessClient.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/SystemMonitor/SystemMonitor.swift"
         },
         {
@@ -4859,6 +4878,10 @@
         {
           "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/HelperClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SMJobBlessClient.swift.o"
         },
         {
           "kind" : "file",
@@ -6657,6 +6680,10 @@
         {
           "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/HelperClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SMJobBlessClient.swift.o"
         },
         {
           "kind" : "file",
