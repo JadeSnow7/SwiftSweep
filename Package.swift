@@ -28,6 +28,7 @@ let package = Package(
                 "AnalyzerEngine", 
                 "SystemMonitor",
                 "OptimizationEngine",
+                "UninstallEngine",
             ]
         ),
         

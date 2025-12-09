@@ -344,7 +344,168 @@ struct Uninstall: ParsableCommand {
         abstract: "Uninstall applications completely"
     )
     
+    @Argument(help: "Application name to uninstall (partial match supported)")
+    var appName: String?
+    
+    @Flag(name: .long, help: "List all installed applications")
+    var list = false
+    
+    @Flag(name: .long, help: "Show residual files without uninstalling")
+    var scan = false
+    
+    @Flag(name: .long, help: "Output as JSON")
+    var json = false
+    
     mutating func run() throws {
-        print("Application uninstall not yet implemented in Swift CLI")
+        let semaphore = DispatchSemaphore(value: 0)
+        var apps: [UninstallEngine.InstalledApp] = []
+        var scanError: Error?
+        
+        print("🔍 Scanning installed applications...")
+        
+        Task {
+            do {
+                apps = try await UninstallEngine.shared.scanInstalledApps()
+            } catch {
+                scanError = error
+            }
+            semaphore.signal()
+        }
+        
+        semaphore.wait()
+        
+        if let error = scanError {
+            print("❌ Error scanning: \(error)")
+            return
+        }
+        
+        if list {
+            printAppList(apps: apps)
+            return
+        }
+        
+        guard let name = appName else {
+            print("Usage: swiftsweep uninstall <AppName> [--scan]")
+            print("       swiftsweep uninstall --list")
+            return
+        }
+        
+        // Find matching apps
+        let matches = apps.filter { 
+            $0.name.lowercased().contains(name.lowercased()) ||
+            $0.bundleID.lowercased().contains(name.lowercased())
+        }
+        
+        if matches.isEmpty {
+            print("❌ No applications found matching '\(name)'")
+            return
+        }
+        
+        if matches.count > 1 {
+            print("Found multiple matches:")
+            for app in matches {
+                print("  • \(app.name) (\(app.bundleID))")
+            }
+            print("\nPlease be more specific.")
+            return
+        }
+        
+        let app = matches[0]
+        
+        // Find residual files
+        var residuals: [UninstallEngine.ResidualFile] = []
+        do {
+            residuals = try UninstallEngine.shared.findResidualFiles(for: app)
+        } catch {
+            print("⚠️  Could not scan residual files: \(error)")
+        }
+        
+        if json {
+            printAppJSON(app: app, residuals: residuals)
+        } else {
+            printAppDetails(app: app, residuals: residuals)
+        }
+        
+        if !scan {
+            print("\n⚠️  Actual uninstallation requires privileged access.")
+            print("   Use --scan to preview what would be removed.")
+            print("   Privileged helper (SMJobBless) not yet implemented.")
+        }
+    }
+    
+    func printAppList(apps: [UninstallEngine.InstalledApp]) {
+        print("\n📱 Installed Applications (\(apps.count) total):\n")
+        
+        for app in apps.prefix(30) {
+            let size = formatBytes(app.size)
+            print("  \(size.padding(toLength: 12, withPad: " ", startingAt: 0)) \(app.name)")
+        }
+        
+        if apps.count > 30 {
+            print("\n  ... and \(apps.count - 30) more applications")
+        }
+    }
+    
+    func printAppDetails(app: UninstallEngine.InstalledApp, residuals: [UninstallEngine.ResidualFile]) {
+        print("\n📦 \(app.name)")
+        print("   Bundle ID:  \(app.bundleID)")
+        print("   Path:       \(app.path)")
+        print("   App Size:   \(formatBytes(app.size))")
+        
+        if !residuals.isEmpty {
+            let residualSize = residuals.reduce(0) { $0 + $1.size }
+            print("\n🗂️  Residual Files (\(formatBytes(residualSize))):")
+            
+            let grouped = Dictionary(grouping: residuals) { $0.type }
+            for (type, files) in grouped {
+                print("   [\(type.rawValue)]")
+                for file in files {
+                    let name = (file.path as NSString).lastPathComponent
+                    print("     • \(name) (\(formatBytes(file.size)))")
+                }
+            }
+            
+            let total = app.size + residualSize
+            print("\n   Total:      \(formatBytes(total))")
+        } else {
+            print("\n✨ No residual files found")
+        }
+    }
+    
+    func printAppJSON(app: UninstallEngine.InstalledApp, residuals: [UninstallEngine.ResidualFile]) {
+        var residualItems: [[String: Any]] = []
+        for file in residuals {
+            residualItems.append([
+                "path": file.path,
+                "size": file.size,
+                "type": file.type.rawValue
+            ])
+        }
+        
+        let output: [String: Any] = [
+            "name": app.name,
+            "bundle_id": app.bundleID,
+            "path": app.path,
+            "size": app.size,
+            "residual_files": residualItems,
+            "total_size": app.size + residuals.reduce(0) { $0 + $1.size }
+        ]
+        
+        if let data = try? JSONSerialization.data(withJSONObject: output, options: .prettyPrinted),
+           let str = String(data: data, encoding: .utf8) {
+            print(str)
+        }
+    }
+    
+    func formatBytes(_ bytes: Int64) -> String {
+        let mb = Double(bytes) / 1024 / 1024
+        if mb > 1024 {
+            return String(format: "%.2f GB", mb / 1024)
+        } else if mb > 1 {
+            return String(format: "%.1f MB", mb)
+        } else {
+            return String(format: "%.1f KB", Double(bytes) / 1024)
+        }
     }
 }
+

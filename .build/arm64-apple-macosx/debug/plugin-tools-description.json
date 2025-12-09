@@ -1785,6 +1785,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/UninstallEngine/UninstallEngine.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
         },
         {
@@ -1801,7 +1805,8 @@
       "moduleOutputPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepCore.swiftmodule",
       "objects" : [
         "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/CleanupEngine.swift.o",
-        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SystemMonitor.swift.o"
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SystemMonitor.swift.o",
+        "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/UninstallEngine.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -1871,13 +1876,18 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/UninstallEngine.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules/SwiftSweepCore.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
         "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/CleanupEngine/CleanupEngine.swift",
-        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/SystemMonitor/SystemMonitor.swift"
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/SystemMonitor/SystemMonitor.swift",
+        "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/UninstallEngine/UninstallEngine.swift"
       ],
       "tempsPath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build",
       "wholeModuleOptimization" : false
@@ -3658,6 +3668,7 @@
       "-c",
       "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/CleanupEngine/CleanupEngine.swift",
       "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/SystemMonitor/SystemMonitor.swift",
+      "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/UninstallEngine/UninstallEngine.swift",
       "-I",
       "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -4653,6 +4664,10 @@
         {
           "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/SystemMonitor/SystemMonitor.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/Sources/SwiftSweepCore/UninstallEngine/UninstallEngine.swift"
         }
       ],
       "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/sources"
@@ -4701,6 +4716,10 @@
         {
           "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SystemMonitor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/UninstallEngine.swift.o"
         },
         {
           "kind" : "file",
@@ -6475,6 +6494,10 @@
         {
           "kind" : "file",
           "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/SystemMonitor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/SwiftSweepCore.build/UninstallEngine.swift.o"
         }
       ],
       "outputFilePath" : "/Users/huaodong/Mole/MoleKit_Dev/.build/arm64-apple-macosx/debug/swiftsweep.product/Objects.LinkFileList"
