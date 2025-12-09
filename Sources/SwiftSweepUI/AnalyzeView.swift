@@ -32,11 +32,17 @@ struct AnalyzeView: View {
                 }
                 .buttonStyle(.borderless)
                 
-                Button(action: { Task { await viewModel.analyze(path: targetPath) }}) {
-                    Label("Analyze", systemImage: "magnifyingglass")
+                if viewModel.isAnalyzing {
+                    Button(action: { viewModel.cancel() }) {
+                        Label("Cancel", systemImage: "xmark.circle")
+                    }
+                    .buttonStyle(.bordered)
+                } else {
+                    Button(action: { viewModel.analyze(path: targetPath) }) {
+                        Label("Analyze", systemImage: "magnifyingglass")
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(viewModel.isAnalyzing)
             }
             .padding(10)
             .background(Color(nsColor: .controlBackgroundColor))
@@ -52,7 +58,10 @@ struct AnalyzeView: View {
                     ProgressView()
                     Text("Analyzing \(viewModel.scannedFiles) files...")
                         .foregroundColor(.secondary)
-                        .padding(.top)
+                    Text("\(formatBytes(viewModel.totalSize)) scanned")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 4)
                     Spacer()
                 }
                 .frame(maxWidth: .infinity)
@@ -227,41 +236,114 @@ class AnalyzeViewModel: ObservableObject {
     @Published var dirCount: Int = 0
     @Published var scannedFiles: Int = 0
     @Published var isAnalyzing = false
+    @Published var currentPath: String = ""
     
-    func analyze(path: String) async {
+    private var analyzeTask: Task<Void, Never>?
+    
+    // 跳过的系统目录 (避免权限问题和无限循环)
+    private let skipDirs = [
+        ".Trash", ".Spotlight-V100", ".fseventsd", ".DocumentRevisions-V100",
+        "node_modules", ".git", "Library/Caches", ".npm", ".gradle"
+    ]
+    
+    func analyze(path: String) {
+        // 取消之前的任务
+        analyzeTask?.cancel()
+        
         isAnalyzing = true
         scannedFiles = 0
         topFiles = []
         totalSize = 0
         fileCount = 0
         dirCount = 0
+        currentPath = path
         
+        analyzeTask = Task.detached(priority: .userInitiated) { [weak self] in
+            await self?.performAnalysis(path: path)
+        }
+    }
+    
+    func cancel() {
+        analyzeTask?.cancel()
+        Task { @MainActor in
+            isAnalyzing = false
+        }
+    }
+    
+    private func performAnalysis(path: String) async {
         let fileManager = FileManager.default
         var allFiles: [(path: String, size: Int64)] = []
+        var localFileCount = 0
+        var localDirCount = 0
+        var localTotalSize: Int64 = 0
+        var lastUIUpdate = Date()
         
-        if let enumerator = fileManager.enumerator(atPath: path) {
-            for case let file as String in enumerator {
-                let fullPath = path + "/" + file
+        guard let enumerator = fileManager.enumerator(
+            at: URL(fileURLWithPath: path),
+            includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey, .isDirectoryKey],
+            options: [.skipsHiddenFiles],
+            errorHandler: { _, _ in true }  // 忽略错误继续
+        ) else {
+            await MainActor.run { self.isAnalyzing = false }
+            return
+        }
+        
+        for case let fileURL as URL in enumerator {
+            // 检查取消
+            if Task.isCancelled { break }
+            
+            // 跳过系统目录
+            let pathStr = fileURL.path
+            if skipDirs.contains(where: { pathStr.contains($0) }) {
+                enumerator.skipDescendants()
+                continue
+            }
+            
+            do {
+                let resourceValues = try fileURL.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey, .isDirectoryKey])
                 
-                var isDir: ObjCBool = false
-                if fileManager.fileExists(atPath: fullPath, isDirectory: &isDir) {
-                    if isDir.boolValue {
-                        dirCount += 1
-                    } else {
-                        fileCount += 1
-                        scannedFiles += 1
-                        
-                        if let attrs = try? fileManager.attributesOfItem(atPath: fullPath) {
-                            let size = attrs[.size] as? Int64 ?? 0
-                            totalSize += size
-                            allFiles.append((fullPath, size))
-                        }
+                if resourceValues.isDirectory == true {
+                    localDirCount += 1
+                } else if resourceValues.isRegularFile == true {
+                    localFileCount += 1
+                    let size = Int64(resourceValues.fileSize ?? 0)
+                    localTotalSize += size
+                    
+                    // 只保存大于1MB的文件用于排序
+                    if size > 1_000_000 {
+                        allFiles.append((pathStr, size))
                     }
+                }
+            } catch {
+                continue
+            }
+            
+            // 每0.3秒更新一次UI
+            if Date().timeIntervalSince(lastUIUpdate) > 0.3 {
+                lastUIUpdate = Date()
+                let countSnapshot = localFileCount
+                let dirSnapshot = localDirCount
+                let sizeSnapshot = localTotalSize
+                
+                await MainActor.run {
+                    self.scannedFiles = countSnapshot
+                    self.fileCount = countSnapshot
+                    self.dirCount = dirSnapshot
+                    self.totalSize = sizeSnapshot
                 }
             }
         }
         
-        topFiles = Array(allFiles.sorted { $0.size > $1.size }.prefix(20))
-        isAnalyzing = false
+        // 最终排序
+        let sorted = allFiles.sorted { $0.size > $1.size }.prefix(20)
+        
+        await MainActor.run {
+            self.topFiles = Array(sorted)
+            self.fileCount = localFileCount
+            self.dirCount = localDirCount
+            self.totalSize = localTotalSize
+            self.isAnalyzing = false
+        }
     }
 }
+
