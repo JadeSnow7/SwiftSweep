@@ -1,98 +1,141 @@
-# MoleKit - Professional macOS System Optimizer
+# SwiftSweep
 
-完全使用 Swift 编写的现代 macOS 系统优化工具。
+<p align="center">
+  <strong>🧹 原生 macOS 系统清理与优化工具</strong>
+</p>
 
-## 项目特性
+<p align="center">
+  使用 Swift 和 SwiftUI 构建的现代化系统维护工具
+</p>
 
-- 🎨 **原生 SwiftUI** - 美观的 macOS 用户界面
-- ⚡ **高性能** - 直接系统 API 调用
-- 📦 **模块化架构** - 易于扩展和维护
-- 🔄 **Swift 全栈** - 统一语言栈（GUI + CLI + 核心库）
-- 🏆 **生产级代码** - 完整的错误处理和日志
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-macOS%2013+-blue?style=flat-square" alt="Platform" />
+  <img src="https://img.shields.io/badge/Swift-5.9+-orange?style=flat-square" alt="Swift" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License" />
+</p>
 
-## 快速开始
+---
 
-### 构建
+## ✨ 特性
 
-```bash
-cd /Users/huaodong/MoleKit
-swift build
-```
+- 🎨 **原生 SwiftUI** — 现代化 macOS 界面，支持暗色模式
+- ⚡ **高性能** — 直接调用系统 API，后台线程处理
+- 📦 **模块化架构** — CLI + GUI 共享核心逻辑
+- 🔐 **智能权限管理** — AppleScript 提权，安全可靠
+- 🛡️ **安全至上** — 白名单保护，预览模式 (dry-run)
 
-### 运行 GUI 应用
+---
 
-```bash
-swift run MoleKitUI
-```
+## 🖥️ 界面预览
 
-### 运行 CLI 工具
+SwiftSweep 采用两栏式布局，包含以下功能模块：
 
-```bash
-swift run molekit status
-swift run molekit clean --dry-run
-swift run molekit analyze
-```
+| 模块 | 功能 |
+|------|------|
+| **Status** | 系统仪表盘，实时监控 CPU、内存、磁盘 |
+| **Clean** | 清理系统缓存、日志、浏览器数据 |
+| **Uninstall** | 完整卸载应用及其残留文件 |
+| **Optimize** | 系统优化（DNS 刷新、Spotlight 重建等）|
+| **Analyze** | 磁盘空间分析，定位大文件 |
 
-## 项目结构
+---
 
-```
-MoleKit/
-├── Sources/
-│   ├── MoleKitCore/          # 核心逻辑库
-│   │   ├── CleanupEngine/    # 清理引擎
-│   │   ├── AnalyzerEngine/   # 分析引擎
-│   │   ├── SystemMonitor/    # 系统监控
-│   │   └── OptimizationEngine/ # 优化引擎
-│   ├── MoleKitCLI/           # 命令行工具
-│   └── MoleKitUI/            # GUI 应用
-├── Tests/                     # 测试套件
-└── Package.swift             # Swift Package 配置
-```
+## 🚀 快速开始
 
-## 模块说明
+### 系统要求
 
-### MoleKitCore
-核心功能库，包含所有系统操作逻辑：
-- `CleanupEngine` - 文件扫描、清理、删除
-- `AnalyzerEngine` - 磁盘空间分析
-- `SystemMonitor` - 实时系统监控
-- `OptimizationEngine` - 系统优化
-
-### MoleKitCLI
-命令行工具，使用 Swift Argument Parser：
-```bash
-molekit clean [--dry-run] [--whitelist]
-molekit analyze [--show-large]
-molekit optimize [--list]
-molekit status [--json]
-```
-
-### MoleKitUI
-原生 SwiftUI 应用，支持：
-- 系统实时监控
-- 深度清理扫描
-- 磁盘空间分析
-- 应用卸载管理
-
-## 开发路线图
-
-- [ ] Phase 1: CleanupEngine 完整实现
-- [ ] Phase 2: SystemMonitor 完整实现
-- [ ] Phase 3: GUI 应用完善
-- [ ] Phase 4: CLI 工具集成
-- [ ] Phase 5: 测试覆盖
-- [ ] Phase 6: v1.0 发布
-
-## 系统要求
-
-- macOS 13.0+
+- macOS 13.0 (Ventura) 或更高版本
 - Swift 5.9+
 - Apple Silicon 或 Intel 处理器
 
-## 许可证
+### 构建与运行
 
-MIT License
+```bash
+# 克隆仓库
+git clone https://github.com/JadeSnow7/SwiftSweep.git
+cd SwiftSweep
 
-## 致谢
+# 构建项目
+swift build
 
-基于 Mole 原始项目的架构和设计理念。
+# 运行 GUI 应用
+swift run SwiftSweepApp
+
+# 运行 CLI 工具
+swift run swiftsweep --help
+```
+
+---
+
+## 📦 项目结构
+
+```
+SwiftSweep/
+├── Package.swift                 # Swift Package 配置
+├── Sources/
+│   ├── SwiftSweepCore/           # 核心逻辑库
+│   │   ├── CleanupEngine/        # 清理引擎
+│   │   ├── UninstallEngine/      # 卸载引擎
+│   │   ├── SystemMonitor/        # 系统监控
+│   │   ├── AnalyzerEngine/       # 磁盘分析
+│   │   ├── OptimizationEngine/   # 系统优化
+│   │   └── PrivilegedHelper/     # 权限管理
+│   ├── SwiftSweepCLI/            # 命令行工具
+│   └── SwiftSweepUI/             # SwiftUI 界面
+├── Helper/                       # Privileged Helper 源码
+└── Tests/                        # 单元测试
+```
+
+---
+
+## 🔧 CLI 使用
+
+```bash
+# 查看系统状态
+swift run swiftsweep status
+
+# 扫描可清理项（预览模式）
+swift run swiftsweep clean --dry-run
+
+# 执行清理
+swift run swiftsweep clean
+
+# 磁盘分析
+swift run swiftsweep analyze ~/Documents
+```
+
+---
+
+## 🛠️ 技术栈
+
+| 组件 | 技术 |
+|------|------|
+| UI 框架 | SwiftUI |
+| CLI 框架 | Swift Argument Parser |
+| 日志系统 | swift-log |
+| 权限管理 | NSAppleScript / SMJobBless |
+| 最低系统 | macOS 13.0+ |
+
+---
+
+## 📋 开发路线
+
+- [x] 核心引擎实现 (Cleanup, Uninstall, Analyze, Optimize)
+- [x] 系统监控模块 (CPU, 内存, 磁盘, 网络)
+- [x] SwiftUI 界面框架
+- [x] AppleScript 权限提升
+- [ ] SMJobBless 完整集成
+- [ ] 更多清理规则 (Xcode, Docker, Homebrew)
+- [ ] 代码签名与公证
+
+---
+
+## 📄 许可证
+
+MIT License © 2024
+
+---
+
+## 🙏 致谢
+
+本项目的设计理念源自 [Mole](https://github.com/tw93/Mole)，感谢原作者的开源贡献。
