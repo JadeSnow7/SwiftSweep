@@ -113,7 +113,7 @@ swift run swiftsweep analyze ~/Documents
 | UI 框架 | SwiftUI |
 | CLI 框架 | Swift Argument Parser |
 | 日志系统 | swift-log |
-| 权限管理 | NSAppleScript / SMJobBless |
+| 权限管理 | NSAppleScript / SMAppService |
 | 最低系统 | macOS 13.0+ |
 
 ---
@@ -124,7 +124,7 @@ swift run swiftsweep analyze ~/Documents
 - [x] 系统监控模块 (CPU, 内存, 磁盘, 网络)
 - [x] SwiftUI 界面框架
 - [x] AppleScript 权限提升
-- [ ] SMJobBless 完整集成
+- [ ] SMAppService 完整集成
 - [ ] 更多清理规则 (Xcode, Docker, Homebrew)
 - [ ] 代码签名与公证
 
