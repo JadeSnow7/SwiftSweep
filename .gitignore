@@ -1,6 +1,23 @@
+# Build artifacts
+.build/
+.swiftpm/
+DerivedData/
+
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcworkspace
+*.xcodeproj
+
+# macOS
 .DS_Store
-/.build
-/Packages
-/Package.resolved
-/*.xcodeproj
-/*.xcworkspace
+*.swp
+*~
+
+# SPM
+Packages/
+Package.resolved
+
+# Backup files
+*~.swift
+Package~.swift
