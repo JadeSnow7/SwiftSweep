@@ -272,13 +272,3 @@ class UninstallViewModel: ObservableObject {
         isLoadingResiduals = false
     }
 }
-
-extension UninstallEngine.InstalledApp: Hashable {
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-    
-    public static func == (lhs: UninstallEngine.InstalledApp, rhs: UninstallEngine.InstalledApp) -> Bool {
-        lhs.id == rhs.id
-    }
-}

@@ -18,8 +18,8 @@ RunLoop.main.run()
 
 class HelperDelegate: NSObject, NSXPCListenerDelegate {
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
-        // 配置连接
-        newConnection.exportedInterface = NSXPCInterface(with: HelperProtocol.self)
+        // 配置连接，接口需与客户端的 HelperXPCProtocol 完全一致
+        newConnection.exportedInterface = NSXPCInterface(with: HelperXPCProtocol.self)
         newConnection.exportedObject = HelperService()
         
         // 设置无效处理
@@ -34,7 +34,7 @@ class HelperDelegate: NSObject, NSXPCListenerDelegate {
 
 // MARK: - Helper Protocol
 
-@objc protocol HelperProtocol {
+@objc protocol HelperXPCProtocol {
     func flushDNS(withReply reply: @escaping (Bool, String) -> Void)
     func rebuildSpotlight(withReply reply: @escaping (Bool, String) -> Void)
     func clearMemory(withReply reply: @escaping (Bool, String) -> Void)
@@ -45,7 +45,7 @@ class HelperDelegate: NSObject, NSXPCListenerDelegate {
 
 // MARK: - Helper Service Implementation
 
-class HelperService: NSObject, HelperProtocol {
+class HelperService: NSObject, HelperXPCProtocol {
     
     func flushDNS(withReply reply: @escaping (Bool, String) -> Void) {
         let result = runShellCommand("/usr/bin/dscacheutil", arguments: ["-flushcache"])

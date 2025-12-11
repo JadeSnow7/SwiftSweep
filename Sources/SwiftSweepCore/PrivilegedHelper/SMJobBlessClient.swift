@@ -1,8 +1,7 @@
 import Foundation
 import ServiceManagement
-import Security
 
-/// SMJobBless 客户端 - 用于安装和通信 Privileged Helper
+/// 使用 SMAppService 的 Helper 客户端（替代 SMJobBless）
 public final class SMJobBlessClient {
     public static let shared = SMJobBlessClient()
     
@@ -15,52 +14,41 @@ public final class SMJobBlessClient {
     
     /// 检查 Helper 是否已安装
     public func isHelperInstalled() -> Bool {
+        if #available(macOS 13.0, *) {
+            let status = SMAppService.daemon(plistName: "\(helperIdentifier).plist").status
+            return status == .enabled
+        }
+        // 对于旧系统，保持兼容：检查文件是否存在
         let helperPath = "/Library/PrivilegedHelperTools/\(helperIdentifier)"
         return FileManager.default.fileExists(atPath: helperPath)
     }
     
-    /// 安装 Helper (需要管理员权限)
+    /// 安装 Helper（使用 SMAppService，macOS 13+）
     public func installHelper() throws {
-        var authRef: AuthorizationRef?
-        var authItem = AuthorizationItem(name: kSMRightBlessPrivilegedHelper, valueLength: 0, value: nil, flags: 0)
-        var authRights = AuthorizationRights(count: 1, items: &authItem)
-        let authFlags: AuthorizationFlags = [.interactionAllowed, .preAuthorize, .extendRights]
-        
-        let status = AuthorizationCreate(&authRights, nil, authFlags, &authRef)
-        
-        guard status == errAuthorizationSuccess, let auth = authRef else {
-            throw HelperError.authorizationFailed
-        }
-        
-        defer { AuthorizationFree(auth, []) }
-        
-        var error: Unmanaged<CFError>?
-        let success = SMJobBless(kSMDomainSystemLaunchd, helperIdentifier as CFString, auth, &error)
-        
-        if !success {
-            if let cfError = error?.takeRetainedValue() {
-                throw HelperError.installFailed(cfError.localizedDescription)
+        if #available(macOS 13.0, *) {
+            let service = SMAppService.daemon(plistName: "\(helperIdentifier).plist")
+            do {
+                try service.register()
+            } catch {
+                throw HelperError.installFailed(error.localizedDescription)
             }
-            throw HelperError.installFailed("Unknown error")
+        } else {
+            throw HelperError.installFailed("SMAppService requires macOS 13+")
         }
     }
     
-    /// 卸载 Helper
+    /// 卸载 Helper（SMAppService）
     public func uninstallHelper() throws {
-        // 需要 root 权限删除
-        let helperPath = "/Library/PrivilegedHelperTools/\(helperIdentifier)"
-        let plistPath = "/Library/LaunchDaemons/\(helperIdentifier).plist"
-        
-        // 先停止服务
-        let stopTask = Process()
-        stopTask.executableURL = URL(fileURLWithPath: "/bin/launchctl")
-        stopTask.arguments = ["unload", plistPath]
-        try? stopTask.run()
-        stopTask.waitUntilExit()
-        
-        // 删除文件 (需要 sudo)
-        try FileManager.default.removeItem(atPath: helperPath)
-        try FileManager.default.removeItem(atPath: plistPath)
+        if #available(macOS 13.0, *) {
+            let service = SMAppService.daemon(plistName: "\(helperIdentifier).plist")
+            do {
+                try service.unregister()
+            } catch {
+                throw HelperError.installFailed(error.localizedDescription)
+            }
+        } else {
+            throw HelperError.installFailed("SMAppService requires macOS 13+")
+        }
     }
     
     // MARK: - XPC Connection

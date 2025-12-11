@@ -228,7 +228,7 @@ class OptimizeViewModel: ObservableObject {
             
             var error: NSDictionary?
             if let appleScript = NSAppleScript(source: script) {
-                let result = appleScript.executeAndReturnError(&error)
+                _ = appleScript.executeAndReturnError(&error)
                 
                 DispatchQueue.main.async {
                     self?.tasks[index].isRunning = false
@@ -253,4 +253,3 @@ class OptimizeViewModel: ObservableObject {
         }
     }
 }
-

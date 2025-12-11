@@ -7,7 +7,7 @@ public final class UninstallEngine {
     
     private let logger = Logger(label: "com.swiftsweep.uninstall")
     
-    public struct InstalledApp: Identifiable {
+    public struct InstalledApp: Identifiable, Hashable {
         public let id: UUID
         public let name: String
         public let bundleID: String
@@ -31,7 +31,7 @@ public final class UninstallEngine {
         }
     }
     
-    public struct ResidualFile {
+    public struct ResidualFile: Hashable {
         public let path: String
         public let size: Int64
         public let type: ResidualType
