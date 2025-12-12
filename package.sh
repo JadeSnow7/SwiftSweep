@@ -13,7 +13,7 @@ ENTITLEMENTS="Entitlements.plist"
 
 # Signing Identity (Set this to your Developer ID Application certificate name)
 # Example: "Developer ID Application: John Doe (TEAMID)"
-SIGNING_IDENTITY="" 
+SIGNING_IDENTITY="Developer ID Application: Aodong Hu (6429YPLDYU)" 
 
 # ANSI Colors
 GREEN='\033[0;32m'
