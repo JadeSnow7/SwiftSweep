@@ -4,6 +4,13 @@ import SwiftSweepCore
 struct AnalyzeView: View {
     @StateObject private var viewModel = AnalyzeViewModel()
     @State private var targetPath: String = NSHomeDirectory()
+    @State private var viewMode: ViewMode = .treemap
+    
+    enum ViewMode: String, CaseIterable {
+        case treemap = "Treemap"
+        case tree = "Tree"
+        case files = "Largest Files"
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -13,7 +20,7 @@ struct AnalyzeView: View {
                     Text("Disk Analyzer")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                    Text("Find large files and folders")
+                    Text("Visualize disk usage like WizTree")
                         .foregroundColor(.secondary)
                 }
                 Spacer()
@@ -56,16 +63,50 @@ struct AnalyzeView: View {
                 VStack {
                     Spacer()
                     ProgressView()
-                    Text("Analyzing \(viewModel.scannedFiles) files...")
+                    Text("Scanning \(viewModel.scannedFiles) items...")
                         .foregroundColor(.secondary)
-                    Text("\(formatBytes(viewModel.totalSize)) scanned")
+                    Text("\(formatBytes(viewModel.totalSize)) found")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.top, 4)
                     Spacer()
                 }
                 .frame(maxWidth: .infinity)
-            } else if viewModel.topFiles.isEmpty {
+            } else if let rootNode = viewModel.rootNode {
+                // View mode picker
+                HStack {
+                    Picker("View", selection: $viewMode) {
+                        ForEach(ViewMode.allCases, id: \.self) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 300)
+                    
+                    Spacer()
+                    
+                    // Summary stats
+                    HStack(spacing: 16) {
+                        Label("\(formatBytes(viewModel.totalSize))", systemImage: "internaldrive.fill")
+                        Label("\(viewModel.fileCount) files", systemImage: "doc.fill")
+                        Label("\(viewModel.dirCount) folders", systemImage: "folder.fill")
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                
+                // Content based on view mode
+                switch viewMode {
+                case .treemap:
+                    TreemapView(rootNode: rootNode)
+                case .tree:
+                    FileTreeView(rootNode: rootNode)
+                case .files:
+                    LargestFilesView(files: viewModel.topFiles, basePath: targetPath)
+                }
+            } else {
                 VStack {
                     Spacer()
                     Image(systemName: "chart.pie")
@@ -76,30 +117,6 @@ struct AnalyzeView: View {
                     Spacer()
                 }
                 .frame(maxWidth: .infinity)
-            } else {
-                // Results
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        // Summary
-                        HStack(spacing: 20) {
-                            SummaryCard(title: "Total Size", value: formatBytes(viewModel.totalSize), icon: "internaldrive.fill", color: .blue)
-                            SummaryCard(title: "Files", value: "\(viewModel.fileCount)", icon: "doc.fill", color: .green)
-                            SummaryCard(title: "Folders", value: "\(viewModel.dirCount)", icon: "folder.fill", color: .orange)
-                        }
-                        .padding()
-                        
-                        // Top files
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Largest Files")
-                                .font(.headline)
-                                .padding(.horizontal)
-                            
-                            ForEach(Array(viewModel.topFiles.enumerated()), id: \.offset) { index, file in
-                                LargeFileRow(index: index + 1, path: file.path, size: file.size, basePath: targetPath)
-                            }
-                        }
-                    }
-                }
             }
         }
     }
@@ -118,38 +135,27 @@ struct AnalyzeView: View {
     }
     
     func formatBytes(_ bytes: Int64) -> String {
-        let mb = Double(bytes) / 1024 / 1024
-        if mb > 1024 {
-            return String(format: "%.2f GB", mb / 1024)
-        }
-        return String(format: "%.1f MB", mb)
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: bytes)
     }
 }
 
-struct SummaryCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
+// MARK: - Largest Files View (Original functionality)
+
+struct LargestFilesView: View {
+    let files: [(path: String, size: Int64)]
+    let basePath: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                Text(title)
-                    .foregroundColor(.secondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(Array(files.enumerated()), id: \.offset) { index, file in
+                    LargeFileRow(index: index + 1, path: file.path, size: file.size, basePath: basePath)
+                }
             }
-            .font(.caption)
-            
-            Text(value)
-                .font(.title2)
-                .fontWeight(.semibold)
+            .padding()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(10)
     }
 }
 
@@ -217,16 +223,13 @@ struct LargeFileRow: View {
     }
     
     func formatBytes(_ bytes: Int64) -> String {
-        let mb = Double(bytes) / 1024 / 1024
-        if mb > 1024 {
-            return String(format: "%.2f GB", mb / 1024)
-        } else if mb > 1 {
-            return String(format: "%.1f MB", mb)
-        } else {
-            return String(format: "%.1f KB", Double(bytes) / 1024)
-        }
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: bytes)
     }
 }
+
+// MARK: - ViewModel
 
 @MainActor
 class AnalyzeViewModel: ObservableObject {
@@ -236,12 +239,12 @@ class AnalyzeViewModel: ObservableObject {
     @Published var dirCount: Int = 0
     @Published var scannedFiles: Int = 0
     @Published var isAnalyzing = false
+    @Published var rootNode: FileNode?
     
     private var analyzeTask: Task<Void, Never>?
     private let engine = AnalyzerEngine.shared
     
     func analyze(path: String) {
-        // 取消之前的任务
         analyzeTask?.cancel()
         
         isAnalyzing = true
@@ -250,6 +253,7 @@ class AnalyzeViewModel: ObservableObject {
         totalSize = 0
         fileCount = 0
         dirCount = 0
+        rootNode = nil
         
         analyzeTask = Task.detached(priority: .userInitiated) { [weak self] in
             guard let self = self else { return }
@@ -267,6 +271,7 @@ class AnalyzeViewModel: ObservableObject {
                     self.totalSize = result.totalSize
                     self.fileCount = result.fileCount
                     self.dirCount = result.dirCount
+                    self.rootNode = result.rootNode
                     self.isAnalyzing = false
                 }
             } else {
@@ -282,5 +287,3 @@ class AnalyzeViewModel: ObservableObject {
         isAnalyzing = false
     }
 }
-
-

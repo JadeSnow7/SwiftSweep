@@ -163,14 +163,17 @@ struct Clean: ParsableCommand {
 
 struct Analyze: ParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "Analyze disk usage and show large files"
+        abstract: "Analyze disk usage and show large files/folders"
     )
     
     @Argument(help: "Path to analyze (default: home directory)")
     var path: String?
     
-    @Option(name: .long, help: "Number of largest files to show")
+    @Option(name: .long, help: "Number of largest items to show")
     var top: Int = 10
+    
+    @Flag(name: .long, help: "Show folder sizes (tree analysis)")
+    var tree = false
     
     @Flag(name: .long, help: "Output as JSON")
     var json = false
@@ -180,89 +183,147 @@ struct Analyze: ParsableCommand {
         let fileManager = FileManager.default
         
         guard fileManager.fileExists(atPath: targetPath) else {
-            print("❌ Path does not exist: \(targetPath)")
+            printError("Path does not exist: \(targetPath)")
             return
         }
         
-        print("🔍 Analyzing: \(targetPath)")
-        print("   This may take a while for large directories...\n")
+        if !json {
+            print("🔍 Analyzing: \(targetPath)")
+            print("   This may take a while for large directories...\n")
+        }
         
-        var allFiles: [(path: String, size: Int64)] = []
-        var totalSize: Int64 = 0
-        var fileCount = 0
-        var dirCount = 0
+        let semaphore = DispatchSemaphore(value: 0)
+        var result: AnalyzerEngine.AnalysisResult?
+        var scanError: Error?
+        let showProgress = !json
         
-        if let enumerator = fileManager.enumerator(atPath: targetPath) {
-            for case let file as String in enumerator {
-                let fullPath = targetPath + "/" + file
-                
-                var isDir: ObjCBool = false
-                if fileManager.fileExists(atPath: fullPath, isDirectory: &isDir) {
-                    if isDir.boolValue {
-                        dirCount += 1
-                    } else {
-                        fileCount += 1
-                        if let attrs = try? fileManager.attributesOfItem(atPath: fullPath) {
-                            let size = attrs[.size] as? Int64 ?? 0
-                            totalSize += size
-                            allFiles.append((fullPath, size))
-                        }
+        Task {
+            do {
+                result = try await AnalyzerEngine.shared.analyze(path: targetPath) { count, size in
+                    if showProgress {
+                        print("\r   Scanned \(count) items...", terminator: "")
+                        fflush(stdout)
                     }
                 }
+            } catch {
+                scanError = error
+            }
+            semaphore.signal()
+        }
+        
+        semaphore.wait()
+        
+        if !json { print("") } // New line after progress
+        
+        if let error = scanError {
+            printError("Error scanning: \(error)")
+            return
+        }
+        
+        guard let r = result else {
+            printError("Analysis failed")
+            return
+        }
+        
+        if json {
+            printJSON(result: r, path: targetPath)
+        } else if tree, let root = r.rootNode {
+            printTree(root: root)
+        } else {
+            printSummary(result: r, path: targetPath)
+        }
+    }
+    
+    func printSummary(result: AnalyzerEngine.AnalysisResult, path: String) {
+        print("📊 Summary:")
+        print("   Total Size:   \(formatBytes(result.totalSize))")
+        print("   Files:        \(result.fileCount)")
+        print("   Directories:  \(result.dirCount)")
+        print("")
+        print("📁 Top \(min(top, result.topFiles.count)) Largest Files:")
+        print("")
+        
+        for (index, file) in result.topFiles.prefix(top).enumerated() {
+            let relativePath = file.path.replacingOccurrences(of: path + "/", with: "")
+            print("  \(index + 1). \(formatBytes(file.size).padding(toLength: 12, withPad: " ", startingAt: 0)) \(relativePath)")
+        }
+    }
+    
+    func printTree(root: FileNode) {
+        print("📁 Folder Sizes (Top \(top)):")
+        print("")
+        
+        // Get all directories sorted by size
+        var folders: [FileNode] = []
+        collectFolders(node: root, into: &folders)
+        let topFolders = folders.sorted { $0.size > $1.size }.prefix(top)
+        
+        for (index, folder) in topFolders.enumerated() {
+            let percent = root.size > 0 ? Double(folder.size) / Double(root.size) * 100 : 0
+            print("  \(index + 1). \(formatBytes(folder.size).padding(toLength: 12, withPad: " ", startingAt: 0)) (\(String(format: "%5.1f%%", percent))) \(folder.path)")
+        }
+    }
+    
+    func collectFolders(node: FileNode, into array: inout [FileNode]) {
+        if node.isDirectory && node.size > 0 {
+            array.append(node)
+            node.children?.forEach { collectFolders(node: $0, into: &array) }
+        }
+    }
+    
+    func printJSON(result: AnalyzerEngine.AnalysisResult, path: String) {
+        var topFilesJSON: [[String: Any]] = []
+        for file in result.topFiles.prefix(top) {
+            topFilesJSON.append([
+                "path": file.path,
+                "size": file.size,
+                "size_human": formatBytes(file.size)
+            ])
+        }
+        
+        var topFoldersJSON: [[String: Any]] = []
+        if let root = result.rootNode {
+            var folders: [FileNode] = []
+            collectFolders(node: root, into: &folders)
+            for folder in folders.sorted(by: { $0.size > $1.size }).prefix(top) {
+                topFoldersJSON.append([
+                    "path": folder.path,
+                    "size": folder.size,
+                    "size_human": formatBytes(folder.size),
+                    "file_count": folder.fileCount,
+                    "percentage": root.size > 0 ? Double(folder.size) / Double(root.size) * 100 : 0
+                ])
             }
         }
         
-        // Sort by size descending
-        let topFiles = allFiles.sorted { $0.size > $1.size }.prefix(top)
+        let output: [String: Any] = [
+            "path": path,
+            "total_size": result.totalSize,
+            "total_size_human": formatBytes(result.totalSize),
+            "file_count": result.fileCount,
+            "dir_count": result.dirCount,
+            "top_files": topFilesJSON,
+            "top_folders": topFoldersJSON
+        ]
         
+        if let data = try? JSONSerialization.data(withJSONObject: output, options: [.prettyPrinted, .sortedKeys]),
+           let str = String(data: data, encoding: .utf8) {
+            print(str)
+        }
+    }
+    
+    func printError(_ message: String) {
         if json {
-            var items: [[String: Any]] = []
-            for file in topFiles {
-                items.append([
-                    "path": file.path,
-                    "size": file.size,
-                    "size_human": formatBytes(file.size)
-                ])
-            }
-            
-            let output: [String: Any] = [
-                "path": targetPath,
-                "total_size": totalSize,
-                "total_size_human": formatBytes(totalSize),
-                "file_count": fileCount,
-                "dir_count": dirCount,
-                "top_files": items
-            ]
-            
-            if let data = try? JSONSerialization.data(withJSONObject: output, options: .prettyPrinted),
-               let str = String(data: data, encoding: .utf8) {
-                print(str)
-            }
+            print("{\"error\": \"\(message)\"}")
         } else {
-            print("📊 Summary:")
-            print("   Total Size:   \(formatBytes(totalSize))")
-            print("   Files:        \(fileCount)")
-            print("   Directories:  \(dirCount)")
-            print("")
-            print("📁 Top \(top) Largest Files:")
-            print("")
-            
-            for (index, file) in topFiles.enumerated() {
-                let relativePath = file.path.replacingOccurrences(of: targetPath + "/", with: "")
-                print("  \(index + 1). \(formatBytes(file.size).padding(toLength: 12, withPad: " ", startingAt: 0)) \(relativePath)")
-            }
+            print("❌ \(message)")
         }
     }
     
     func formatBytes(_ bytes: Int64) -> String {
-        let mb = Double(bytes) / 1024 / 1024
-        if mb > 1024 {
-            return String(format: "%.2f GB", mb / 1024)
-        } else if mb > 1 {
-            return String(format: "%.1f MB", mb)
-        } else {
-            return String(format: "%.1f KB", Double(bytes) / 1024)
-        }
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: bytes)
     }
 }
 

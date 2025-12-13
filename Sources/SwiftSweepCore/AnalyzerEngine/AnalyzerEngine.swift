@@ -1,11 +1,86 @@
 import Foundation
 
-/// SwiftSweep 磁盘分析引擎 - 扫描大文件和目录统计
-public final class AnalyzerEngine {
+// MARK: - FileNode (Recursive Tree Structure)
+
+/// Represents a node in the file system tree (file or directory)
+public final class FileNode: Identifiable, Hashable, @unchecked Sendable {
+    public let id = UUID()
+    public let name: String
+    public let path: String
+    public let isDirectory: Bool
+    public private(set) var size: Int64
+    public private(set) var children: [FileNode]?
+    public weak var parent: FileNode?
+    
+    /// Number of files in this subtree (including self if file)
+    public private(set) var fileCount: Int
+    /// Number of directories in this subtree (including self if directory)
+    public private(set) var dirCount: Int
+    
+    public init(name: String, path: String, isDirectory: Bool, size: Int64 = 0) {
+        self.name = name
+        self.path = path
+        self.isDirectory = isDirectory
+        self.size = size
+        self.children = isDirectory ? [] : nil
+        self.fileCount = isDirectory ? 0 : 1
+        self.dirCount = isDirectory ? 1 : 0
+    }
+    
+    public static func == (lhs: FileNode, rhs: FileNode) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    /// Add a child node and update size/counts
+    public func addChild(_ child: FileNode) {
+        child.parent = self
+        children?.append(child)
+        size += child.size
+        fileCount += child.fileCount
+        dirCount += child.dirCount
+    }
+    
+    /// Sort children by size descending (largest first)
+    public func sortChildrenBySize() {
+        children?.sort { $0.size > $1.size }
+        children?.forEach { $0.sortChildrenBySize() }
+    }
+    
+    /// Get flat list of largest files in subtree
+    public func getLargestFiles(limit: Int = 20) -> [FileNode] {
+        var files: [FileNode] = []
+        collectFiles(into: &files)
+        return Array(files.sorted { $0.size > $1.size }.prefix(limit))
+    }
+    
+    private func collectFiles(into array: inout [FileNode]) {
+        if !isDirectory {
+            array.append(self)
+        } else {
+            children?.forEach { $0.collectFiles(into: &array) }
+        }
+    }
+}
+
+// MARK: - AnalyzerEngine
+
+/// SwiftSweep Disk Analyzer - Builds hierarchical file tree with size aggregation
+public final class AnalyzerEngine: @unchecked Sendable {
     public static let shared = AnalyzerEngine()
     
     private init() {}
     
+    // Directories to skip for performance
+    private let skipDirs: Set<String> = [
+        ".Trash", ".Spotlight-V100", ".fseventsd", ".DocumentRevisions-V100",
+        "node_modules", ".git", ".npm", ".gradle", ".cache"
+    ]
+    
+    /// Backward-compatible FileItem for existing UI
     public struct FileItem: Identifiable, Hashable {
         public let id = UUID()
         public let path: String
@@ -19,94 +94,109 @@ public final class AnalyzerEngine {
         }
     }
     
+    /// Backward-compatible AnalysisResult
     public struct AnalysisResult {
         public let topFiles: [FileItem]
         public let totalSize: Int64
         public let fileCount: Int
         public let dirCount: Int
         
-        public init(topFiles: [FileItem], totalSize: Int64, fileCount: Int, dirCount: Int) {
+        /// New: Full tree structure
+        public let rootNode: FileNode?
+        
+        public init(topFiles: [FileItem], totalSize: Int64, fileCount: Int, dirCount: Int, rootNode: FileNode? = nil) {
             self.topFiles = topFiles
             self.totalSize = totalSize
             self.fileCount = fileCount
             self.dirCount = dirCount
+            self.rootNode = rootNode
         }
     }
     
-    // 跳过的系统目录
-    private let skipDirs = [
-        ".Trash", ".Spotlight-V100", ".fseventsd", ".DocumentRevisions-V100",
-        "node_modules", ".git", "Library/Caches", ".npm", ".gradle"
-    ]
+    // MARK: - Tree-based Analysis (New)
     
-    /// 执行磁盘分析
+    /// Build complete file tree with size aggregation
     /// - Parameters:
-    ///   - path: 目标路径
-    ///   - onProgress: 进度回调 (已扫描文件数, 当前总大小)
-    /// - Returns: 分析结果
-    public func analyze(path: String, onProgress: ((Int, Int64) -> Void)? = nil) async throws -> AnalysisResult {
+    ///   - path: Root path to analyze
+    ///   - onProgress: Progress callback (scanned items, current total size)
+    /// - Returns: Root FileNode of the tree
+    public func buildTree(path: String, onProgress: ((Int, Int64) -> Void)? = nil) async throws -> FileNode {
         let fileManager = FileManager.default
-        var allFiles: [FileItem] = []
-        var fileCount = 0
-        var dirCount = 0
-        var totalSize: Int64 = 0
+        let rootURL = URL(fileURLWithPath: path)
+        
+        var scannedCount = 0
         var lastUIUpdate = Date()
         
-        guard let enumerator = fileManager.enumerator(
-            at: URL(fileURLWithPath: path),
-            includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey, .isDirectoryKey],
-            options: [.skipsHiddenFiles],
-            errorHandler: { _, _ in true }
-        ) else {
-            return AnalysisResult(topFiles: [], totalSize: 0, fileCount: 0, dirCount: 0)
-        }
-        
-        // 使用 while 循环而非 for-in
-        while let fileURL = enumerator.nextObject() as? URL {
-            // 检查取消状态 (通过 Task.isCancelled)
-            if Task.isCancelled { break }
+        // Recursive function to build tree
+        func scanDirectory(_ url: URL) -> FileNode {
+            let name = url.lastPathComponent
+            let nodePath = url.path
             
-            // 跳过特定目录
-            let pathStr = fileURL.path
-            if skipDirs.contains(where: { pathStr.contains($0) }) {
-                enumerator.skipDescendants()
-                continue
+            // Check if should skip
+            if skipDirs.contains(name) {
+                return FileNode(name: name, path: nodePath, isDirectory: true, size: 0)
             }
             
-            do {
-                let resourceValues = try fileURL.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey, .isDirectoryKey])
+            var isDir: ObjCBool = false
+            guard fileManager.fileExists(atPath: nodePath, isDirectory: &isDir) else {
+                return FileNode(name: name, path: nodePath, isDirectory: false, size: 0)
+            }
+            
+            if !isDir.boolValue {
+                // It's a file
+                let size = (try? fileManager.attributesOfItem(atPath: nodePath)[.size] as? Int64) ?? 0
+                scannedCount += 1
                 
-                if resourceValues.isDirectory == true {
-                    dirCount += 1
-                } else if resourceValues.isRegularFile == true {
-                    fileCount += 1
-                    let size = Int64(resourceValues.fileSize ?? 0)
-                    totalSize += size
-                    
-                    // 只保存大于1MB的文件用于排序，减少内存占用
-                    if size > 1_000_000 {
-                        allFiles.append(FileItem(path: pathStr, size: size))
-                    }
+                // Throttle progress updates
+                if Date().timeIntervalSince(lastUIUpdate) > 0.2 {
+                    lastUIUpdate = Date()
+                    onProgress?(scannedCount, 0) // Size will be computed after tree is built
                 }
-            } catch {
-                continue
+                
+                return FileNode(name: name, path: nodePath, isDirectory: false, size: size)
             }
             
-            // 节流回调
-            if Date().timeIntervalSince(lastUIUpdate) > 0.3 {
-                lastUIUpdate = Date()
-                onProgress?(fileCount, totalSize)
+            // It's a directory
+            let dirNode = FileNode(name: name, path: nodePath, isDirectory: true)
+            
+            guard let contents = try? fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey], options: [.skipsHiddenFiles]) else {
+                return dirNode
             }
+            
+            // Process children
+            for childURL in contents {
+                if Task.isCancelled { break }
+                let childNode = scanDirectory(childURL)
+                dirNode.addChild(childNode)
+            }
+            
+            return dirNode
         }
         
-        // 最终排序
-        let sorted = allFiles.sorted { $0.size > $1.size }.prefix(20)
+        let root = scanDirectory(rootURL)
+        root.sortChildrenBySize()
+        
+        // Final progress update
+        onProgress?(root.fileCount, root.size)
+        
+        return root
+    }
+    
+    // MARK: - Backward Compatible Analysis
+    
+    /// Perform disk analysis (backward compatible, now uses tree internally)
+    public func analyze(path: String, onProgress: ((Int, Int64) -> Void)? = nil) async throws -> AnalysisResult {
+        let root = try await buildTree(path: path, onProgress: onProgress)
+        
+        let largestFiles = root.getLargestFiles(limit: 20)
+        let topFiles = largestFiles.map { FileItem(path: $0.path, size: $0.size, isDirectory: false) }
         
         return AnalysisResult(
-            topFiles: Array(sorted),
-            totalSize: totalSize,
-            fileCount: fileCount,
-            dirCount: dirCount
+            topFiles: topFiles,
+            totalSize: root.size,
+            fileCount: root.fileCount,
+            dirCount: root.dirCount,
+            rootNode: root
         )
     }
 }

@@ -36,7 +36,24 @@ SwiftSweep 采用两栏式布局，包含以下功能模块：
 | **Clean** | 清理系统缓存、日志、浏览器数据 |
 | **Uninstall** | 完整卸载应用及其残留文件 |
 | **Optimize** | 系统优化（DNS 刷新、Spotlight 重建等）|
-| **Analyze** | 磁盘空间分析，定位大文件 |
+| **Analyze** | 磁盘空间分析，定位大文件 (WizTree 风格) |
+
+### 截图预览
+
+<p align="center">
+  <img src="docs/screenshots/status.png" width="600" alt="System Status" />
+</p>
+<p align="center"><em>系统状态监控 - 实时显示 CPU、内存、磁盘使用情况</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/cleanup.png" width="600" alt="System Cleanup" />
+</p>
+<p align="center"><em>系统清理 - 扫描并清理缓存、日志等垃圾文件</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/analyzer.png" width="600" alt="Disk Analyzer" />
+</p>
+<p align="center"><em>磁盘分析 - WizTree 风格的文件树视图</em></p>
 
 ---
 

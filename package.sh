@@ -42,6 +42,14 @@ echo "Copying executable..."
 cp "${BUILD_DIR}/${EXECUTABLE_NAME}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 chmod +x "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 
+# 3.5 Copy Icon
+echo "Copying App Icon..."
+if [ -f "Resources/AppIcon.icns" ]; then
+    cp "Resources/AppIcon.icns" "${APP_BUNDLE}/Contents/Resources/AppIcon.icns"
+else
+    echo -e "${YELLOW}Warning: AppIcon.icns not found${NC}"
+fi
+
 # 4. Create Info.plist
 echo "Configuring Info.plist..."
 if [ -f "${INFO_PLIST}" ]; then
