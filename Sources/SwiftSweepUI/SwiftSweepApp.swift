@@ -39,6 +39,7 @@ struct ContentView: View {
         case uninstall
         case optimize
         case analyze
+        case applications
         case settings
     }
     
@@ -67,6 +68,9 @@ struct ContentView: View {
                     NavigationLink(value: NavigationItem.analyze) {
                         Label("Analyze", systemImage: "magnifyingglass")
                     }
+                    NavigationLink(value: NavigationItem.applications) {
+                        Label("Applications", systemImage: "square.grid.2x2")
+                    }
                 }
                 
                 Section("Settings") {
@@ -90,6 +94,8 @@ struct ContentView: View {
                     OptimizeView()
                 case .analyze:
                     AnalyzeView()
+                case .applications:
+                    MainApplicationsView()
                 case .settings:
                     SettingsView()
                 case .none:

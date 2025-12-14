@@ -14,6 +14,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
         .package(url: "https://github.com/apple/swift-log", from: "1.4.0"),
+        .package(path: "Packages/SwiftSweepAppInventory"),
     ],
     targets: [
         // Core Framework
@@ -46,8 +47,19 @@ let package = Package(
         // GUI Application
         .executableTarget(
             name: "SwiftSweepUI",
-            dependencies: ["SwiftSweepCore"],
+            dependencies: [
+                "SwiftSweepCore",
+                .product(name: "SwiftSweepAppInventory", package: "SwiftSweepAppInventory"),
+            ],
             path: "Sources/SwiftSweepUI"
+        ),
+
+        // Helper Tool
+        .executableTarget(
+            name: "SwiftSweepHelper",
+            dependencies: [],
+            path: "Helper",
+            sources: ["main.swift"]
         ),
         
         // Tests
