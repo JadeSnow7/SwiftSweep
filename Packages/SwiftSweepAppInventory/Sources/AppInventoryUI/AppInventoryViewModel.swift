@@ -219,6 +219,15 @@ public final class AppInventoryViewModel: ObservableObject {
         organizationStore.saveAssignments(assignments)
     }
     
+    public func moveCategories(from source: IndexSet, to destination: Int) {
+        categories.move(fromOffsets: source, toOffset: destination)
+        // Update order values
+        for (index, _) in categories.enumerated() {
+            categories[index].order = index
+        }
+        organizationStore.saveCategories(categories)
+    }
+    
     public func assignApp(_ appID: String, to categoryID: UUID?) {
         if let categoryID = categoryID {
             assignments[appID] = categoryID

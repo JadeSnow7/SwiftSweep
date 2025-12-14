@@ -6,7 +6,7 @@ public protocol CacheStoring {
     func saveCache(_ cache: [String: CachedAppMetadata])
     func getMetadata(for appID: String) -> CachedAppMetadata?
     func setMetadata(_ metadata: CachedAppMetadata, for appID: String)
-    func isValid(cached: CachedAppMetadata, currentVersion: String?, currentMTime: Date) -> Bool
+    func isValid(cached: CachedAppMetadata, currentVersion: String?, currentMTime: Date?) -> Bool
 }
 
 /// Default implementation using UserDefaults.
@@ -49,9 +49,12 @@ public final class CacheStore: CacheStoring {
     }
     
     /// Checks if cached metadata is still valid based on version and modification time.
-    public func isValid(cached: CachedAppMetadata, currentVersion: String?, currentMTime: Date) -> Bool {
+    public func isValid(cached: CachedAppMetadata, currentVersion: String?, currentMTime: Date?) -> Bool {
+        // If mtime is nil, always invalidate
+        guard let mtime = currentMTime else { return false }
+        
         // Invalidate if mtime changed
-        if abs(cached.bundleMTime.timeIntervalSince(currentMTime)) > 1.0 {
+        if abs(cached.bundleMTime.timeIntervalSince(mtime)) > 1.0 {
             return false
         }
         // Invalidate if version changed (and version is available)
@@ -61,5 +64,11 @@ public final class CacheStore: CacheStoring {
             }
         }
         return true
+    }
+    
+    /// Clears all cached metadata.
+    public func clearAll() {
+        memoryCache = [:]
+        defaults.removeObject(forKey: cacheKey)
     }
 }

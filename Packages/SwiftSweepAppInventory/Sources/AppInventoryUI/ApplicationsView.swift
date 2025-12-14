@@ -331,6 +331,8 @@ struct AppCell: View {
 struct CategoryManagementSheet: View {
     @ObservedObject var viewModel: AppInventoryViewModel
     @State private var newCategoryName = ""
+    @State private var editingCategoryID: UUID?
+    @State private var editingName = ""
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -341,16 +343,57 @@ struct CategoryManagementSheet: View {
             List {
                 ForEach(viewModel.categories) { category in
                     HStack {
-                        Text(category.name)
-                        Spacer()
-                        Button {
-                            viewModel.deleteCategory(category.id)
-                        } label: {
-                            Image(systemName: "trash")
-                                .foregroundColor(.red)
+                        if editingCategoryID == category.id {
+                            TextField("Name", text: $editingName, onCommit: {
+                                if !editingName.isEmpty {
+                                    viewModel.renameCategory(category.id, to: editingName)
+                                }
+                                editingCategoryID = nil
+                            })
+                            .textFieldStyle(.roundedBorder)
+                            
+                            Button {
+                                if !editingName.isEmpty {
+                                    viewModel.renameCategory(category.id, to: editingName)
+                                }
+                                editingCategoryID = nil
+                            } label: {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.green)
+                            }
+                            .buttonStyle(.borderless)
+                            
+                            Button {
+                                editingCategoryID = nil
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(.borderless)
+                        } else {
+                            Text(category.name)
+                            Spacer()
+                            Button {
+                                editingCategoryID = category.id
+                                editingName = category.name
+                            } label: {
+                                Image(systemName: "pencil")
+                                    .foregroundColor(.blue)
+                            }
+                            .buttonStyle(.borderless)
+                            
+                            Button {
+                                viewModel.deleteCategory(category.id)
+                            } label: {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
+                            }
+                            .buttonStyle(.borderless)
                         }
-                        .buttonStyle(.borderless)
                     }
+                }
+                .onMove { indices, destination in
+                    viewModel.moveCategories(from: indices, to: destination)
                 }
             }
             .frame(minHeight: 150)
@@ -376,6 +419,6 @@ struct CategoryManagementSheet: View {
             }
         }
         .padding()
-        .frame(width: 350)
+        .frame(width: 400)
     }
 }
