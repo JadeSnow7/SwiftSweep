@@ -36,7 +36,13 @@ public struct ApplicationsView: View {
             ToolbarItem(placement: .primaryAction) {
                 Picker("Filter", selection: $viewModel.selectedFilter) {
                     ForEach(AppInventoryViewModel.FilterType.allCases) { filter in
-                        Text(filter.rawValue).tag(filter)
+                        if filter == .unused && !viewModel.hasLastUsedData {
+                            Text("\(filter.rawValue) (N/A)")
+                                .tag(filter)
+                                .foregroundColor(.secondary)
+                        } else {
+                            Text(filter.rawValue).tag(filter)
+                        }
                     }
                 }
                 .pickerStyle(.menu)

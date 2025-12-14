@@ -36,6 +36,7 @@ public final class InventoryProvider: InventoryProviding {
                 NSMetadataItemPathKey as String,
                 NSMetadataItemDisplayNameKey as String,
                 NSMetadataItemFSContentChangeDateKey as String,
+                NSMetadataItemFSSizeKey as String,
                 "kMDItemCFBundleIdentifier",
                 "kMDItemVersion",
                 "kMDItemLastUsedDate"
@@ -70,6 +71,7 @@ public final class InventoryProvider: InventoryProviding {
                     let version = item.value(forAttribute: "kMDItemVersion") as? String
                     let lastUsed = item.value(forAttribute: "kMDItemLastUsedDate") as? Date
                     let contentModified = item.value(forAttribute: NSMetadataItemFSContentChangeDateKey) as? Date
+                    let estimatedSize = (item.value(forAttribute: NSMetadataItemFSSizeKey) as? NSNumber)?.int64Value
                     
                     let id = bundleID ?? url.path
                     
@@ -78,7 +80,7 @@ public final class InventoryProvider: InventoryProviding {
                         url: url,
                         displayName: displayName,
                         version: version,
-                        estimatedSizeBytes: nil, // Spotlight doesn't provide reliable size
+                        estimatedSizeBytes: estimatedSize,
                         lastUsedDate: lastUsed,
                         contentModifiedDate: contentModified,
                         source: .spotlight

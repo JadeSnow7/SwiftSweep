@@ -126,12 +126,49 @@ public final class AppInventoryViewModel: ObservableObject {
     public func startDeepScan() async {
         guard let directoryURL = resolveBookmark() else { return }
         
-        deepScanner = DeepScanner(cacheStore: cacheStore)
-        state = .deepScanning(current: 0, total: apps.count)
-        
         do {
             _ = directoryURL.startAccessingSecurityScopedResource()
             defer { directoryURL.stopAccessingSecurityScopedResource() }
+            
+            // If apps is empty (Spotlight failed), list apps from directory first
+            if apps.isEmpty {
+                let fm = FileManager.default
+                guard let contents = try? fm.contentsOfDirectory(
+                    at: directoryURL,
+                    includingPropertiesForKeys: [.contentModificationDateKey, .localizedNameKey],
+                    options: [.skipsHiddenFiles]
+                ) else {
+                    state = .error("Failed to list /Applications directory")
+                    return
+                }
+                
+                apps = contents.compactMap { url -> AppItem? in
+                    guard url.pathExtension == "app" else { return nil }
+                    
+                    let displayName = (try? url.resourceValues(forKeys: [.localizedNameKey]).localizedName)
+                        ?? url.deletingPathExtension().lastPathComponent
+                    let contentModified = try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+                    let bundle = Bundle(url: url)
+                    let bundleID = bundle?.bundleIdentifier
+                    let version = bundle?.infoDictionary?["CFBundleShortVersionString"] as? String
+                    
+                    let id = bundleID ?? url.path
+                    
+                    return AppItem(
+                        id: id,
+                        url: url,
+                        displayName: displayName,
+                        version: version,
+                        estimatedSizeBytes: nil,
+                        lastUsedDate: nil,
+                        contentModifiedDate: contentModified,
+                        source: .filesystem
+                    )
+                }.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
+            }
+            
+            deepScanner = DeepScanner(cacheStore: cacheStore)
+            state = .deepScanning(current: 0, total: apps.count)
             
             let sizes = try await deepScanner?.scanAllApps(in: directoryURL) { [weak self] current, total in
                 Task { @MainActor in
@@ -189,6 +226,13 @@ public final class AppInventoryViewModel: ObservableObject {
             assignments.removeValue(forKey: appID)
         }
         organizationStore.saveAssignments(assignments)
+    }
+    
+    // MARK: - Data Availability
+    
+    /// Returns true if any apps have lastUsedDate, meaning Unused filter can work.
+    public var hasLastUsedData: Bool {
+        apps.contains { $0.lastUsedDate != nil }
     }
     
     // MARK: - Filtering
