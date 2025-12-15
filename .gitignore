@@ -4,6 +4,7 @@
 DerivedData/
 .derivedData*/
 .xcode_home/
+Output/
 
 # Xcode
 *.xcodeproj/xcuserdata/
