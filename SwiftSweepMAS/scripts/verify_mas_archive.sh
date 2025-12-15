@@ -75,13 +75,12 @@ check_entitlements() {
         echo -e "${GREEN}  ✓ get-task-allow is false or absent${NC}"
     fi
     
-    # Check bookmarks (for host app)
-    if [ "$name" == "Host App" ]; then
-        if echo "$entitlements" | grep -q "com.apple.security.files.bookmarks.app-scope"; then
-            echo -e "${GREEN}  ✓ Bookmarks app-scope enabled${NC}"
-        else
-            echo -e "${YELLOW}  ⚠ Bookmarks app-scope not found (may be needed)${NC}"
-        fi
+    # Check bookmarks.app-scope (required for both Host and Extension)
+    if echo "$entitlements" | grep -q "com.apple.security.files.bookmarks.app-scope"; then
+        echo -e "${GREEN}  ✓ Bookmarks app-scope enabled${NC}"
+    else
+        echo -e "${RED}  ✗ Bookmarks app-scope NOT enabled (required for bookmark access)${NC}"
+        return 1
     fi
     
     # Check user-selected files
