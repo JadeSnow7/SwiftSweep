@@ -42,12 +42,31 @@ public final class InventoryProvider: InventoryProviding {
                 "kMDItemLastUsedDate"
             ]
             
+            var hasResumed = false
             var observer: NSObjectProtocol?
+            var timeoutTask: DispatchWorkItem?
+            
+            // Timeout after 3 seconds
+            let timeout = DispatchWorkItem { [weak query] in
+                guard !hasResumed else { return }
+                hasResumed = true
+                query?.stop()
+                if let observer = observer {
+                    NotificationCenter.default.removeObserver(observer)
+                }
+                continuation.resume(returning: [])
+            }
+            timeoutTask = timeout
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: timeout)
+            
             observer = NotificationCenter.default.addObserver(
                 forName: .NSMetadataQueryDidFinishGathering,
                 object: query,
                 queue: .main
             ) { [weak query] _ in
+                guard !hasResumed else { return }
+                hasResumed = true
+                timeoutTask?.cancel()
                 query?.stop()
                 if let observer = observer {
                     NotificationCenter.default.removeObserver(observer)

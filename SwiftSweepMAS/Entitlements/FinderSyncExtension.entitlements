@@ -8,6 +8,8 @@
 	<array>
 		<string>group.com.swiftsweep.mas</string>
 	</array>
+	<key>com.apple.security.files.bookmarks.app-scope</key>
+	<true/>
 	<key>com.apple.security.files.user-selected.read-only</key>
 	<true/>
 </dict>

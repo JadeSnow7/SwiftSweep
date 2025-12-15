@@ -8,6 +8,7 @@ public final class HelperClient {
     public static let shared = HelperClient()
     
     private let helperBundleIdentifier = "com.swiftsweep.helper"
+    private var connection: NSXPCConnection?
     
     public enum HelperError: Error, LocalizedError {
         case notInstalled
@@ -83,6 +84,29 @@ public final class HelperClient {
         }
     }
     
+    // MARK: - XPC Connection
+    
+    private func getConnection() throws -> NSXPCConnection {
+        if let conn = connection {
+            return conn
+        }
+        
+        let conn = NSXPCConnection(machServiceName: helperBundleIdentifier, options: .privileged)
+        conn.remoteObjectInterface = NSXPCInterface(with: HelperXPCProtocol.self)
+        
+        conn.invalidationHandler = { [weak self] in
+            self?.connection = nil
+        }
+        
+        conn.interruptionHandler = { [weak self] in
+            self?.connection = nil
+        }
+        
+        conn.resume()
+        connection = conn
+        return conn
+    }
+    
     // MARK: - Privileged Operations
     
     /// 刷新 DNS 缓存
@@ -91,7 +115,27 @@ public final class HelperClient {
             throw HelperError.notInstalled
         }
         
-        return try await runPrivilegedCommand("/usr/bin/dscacheutil", arguments: ["-flushcache"])
+        return try await withCheckedThrowingContinuation { continuation in
+            do {
+                let conn = try getConnection()
+                guard let proxy = conn.remoteObjectProxyWithErrorHandler({ error in
+                    continuation.resume(throwing: HelperError.communicationFailed(error.localizedDescription))
+                }) as? HelperXPCProtocol else {
+                    continuation.resume(throwing: HelperError.communicationFailed("Failed to get proxy"))
+                    return
+                }
+                
+                proxy.flushDNS { success, output in
+                    if success {
+                        continuation.resume(returning: output)
+                    } else {
+                        continuation.resume(throwing: HelperError.executionFailed(output))
+                    }
+                }
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
     }
     
     /// 重建 Spotlight 索引
@@ -100,7 +144,27 @@ public final class HelperClient {
             throw HelperError.notInstalled
         }
         
-        return try await runPrivilegedCommand("/usr/bin/mdutil", arguments: ["-E", "/"])
+        return try await withCheckedThrowingContinuation { continuation in
+            do {
+                let conn = try getConnection()
+                guard let proxy = conn.remoteObjectProxyWithErrorHandler({ error in
+                    continuation.resume(throwing: HelperError.communicationFailed(error.localizedDescription))
+                }) as? HelperXPCProtocol else {
+                    continuation.resume(throwing: HelperError.communicationFailed("Failed to get proxy"))
+                    return
+                }
+                
+                proxy.rebuildSpotlight { success, output in
+                    if success {
+                        continuation.resume(returning: output)
+                    } else {
+                        continuation.resume(throwing: HelperError.executionFailed(output))
+                    }
+                }
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
     }
     
     /// 清理内存
@@ -109,7 +173,56 @@ public final class HelperClient {
             throw HelperError.notInstalled
         }
         
-        return try await runPrivilegedCommand("/usr/sbin/purge", arguments: [])
+        return try await withCheckedThrowingContinuation { continuation in
+            do {
+                let conn = try getConnection()
+                guard let proxy = conn.remoteObjectProxyWithErrorHandler({ error in
+                    continuation.resume(throwing: HelperError.communicationFailed(error.localizedDescription))
+                }) as? HelperXPCProtocol else {
+                    continuation.resume(throwing: HelperError.communicationFailed("Failed to get proxy"))
+                    return
+                }
+                
+                proxy.clearMemory { success, output in
+                    if success {
+                        continuation.resume(returning: output)
+                    } else {
+                        continuation.resume(throwing: HelperError.executionFailed(output))
+                    }
+                }
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    /// 清理字体缓存
+    public func clearFontCache() async throws -> String {
+        guard checkStatus() == .enabled else {
+            throw HelperError.notInstalled
+        }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            do {
+                let conn = try getConnection()
+                guard let proxy = conn.remoteObjectProxyWithErrorHandler({ error in
+                    continuation.resume(throwing: HelperError.communicationFailed(error.localizedDescription))
+                }) as? HelperXPCProtocol else {
+                    continuation.resume(throwing: HelperError.communicationFailed("Failed to get proxy"))
+                    return
+                }
+                
+                proxy.runCommand("/usr/bin/atsutil", arguments: ["databases", "-remove"]) { success, output in
+                    if success {
+                        continuation.resume(returning: output)
+                    } else {
+                        continuation.resume(throwing: HelperError.executionFailed(output))
+                    }
+                }
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
     }
     
     /// 删除需要权限的文件
@@ -118,38 +231,27 @@ public final class HelperClient {
             throw HelperError.notInstalled
         }
         
-        _ = try await runPrivilegedCommand("/bin/rm", arguments: ["-rf", path])
-    }
-    
-    // MARK: - Private
-    
-    private func runPrivilegedCommand(_ command: String, arguments: [String]) async throws -> String {
-        // 注意: 实际的 XPC 通信需要 Helper 进程
-        // 这里是占位实现，完整实现需要:
-        // 1. Helper 进程运行并监听 XPC
-        // 2. 主程序通过 XPC 发送命令
-        // 3. Helper 执行并返回结果
-        
-        // 临时实现: 对于不需要 root 的命令，直接运行
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: command)
-        process.arguments = arguments
-        
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-        
-        try process.run()
-        process.waitUntilExit()
-        
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(data: data, encoding: .utf8) ?? ""
-        
-        if process.terminationStatus != 0 {
-            throw HelperError.executionFailed(output)
+        return try await withCheckedThrowingContinuation { continuation in
+            do {
+                let conn = try getConnection()
+                guard let proxy = conn.remoteObjectProxyWithErrorHandler({ error in
+                    continuation.resume(throwing: HelperError.communicationFailed(error.localizedDescription))
+                }) as? HelperXPCProtocol else {
+                    continuation.resume(throwing: HelperError.communicationFailed("Failed to get proxy"))
+                    return
+                }
+                
+                proxy.deleteFile(atPath: path) { success, output in
+                    if success {
+                        continuation.resume(returning: ())
+                    } else {
+                        continuation.resume(throwing: HelperError.executionFailed(output))
+                    }
+                }
+            } catch {
+                continuation.resume(throwing: error)
+            }
         }
-        
-        return output
     }
 }
 

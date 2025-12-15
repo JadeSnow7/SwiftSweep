@@ -46,6 +46,12 @@ public struct ApplicationsView: View {
                     }
                 }
                 .pickerStyle(.menu)
+                .onChange(of: viewModel.selectedFilter) { newValue in
+                    // Auto-reset to .all if Unused is selected but no data
+                    if newValue == .unused && !viewModel.hasLastUsedData {
+                        viewModel.selectedFilter = .all
+                    }
+                }
             }
             
             ToolbarItem(placement: .primaryAction) {
@@ -119,7 +125,7 @@ public struct ApplicationsView: View {
                     .foregroundColor(.secondary)
             }
         case .baselineReady:
-            Text("\(viewModel.apps.count) apps (estimated sizes)")
+            Text("\(viewModel.apps.count) apps • Authorize for accurate sizes")
                 .font(.caption)
                 .foregroundColor(.secondary)
         case .authorizedReady:
@@ -306,8 +312,7 @@ struct AppCell: View {
     
     private func loadIcon() {
         DispatchQueue.global(qos: .userInitiated).async {
-            let loadedIcon = NSWorkspace.shared.icon(forFile: app.url.path)
-            loadedIcon.size = NSSize(width: 48, height: 48)
+            let loadedIcon = IconCache.shared.icon(for: app.url)
             DispatchQueue.main.async {
                 self.icon = loadedIcon
             }

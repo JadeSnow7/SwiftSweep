@@ -5,6 +5,13 @@ struct UninstallView: View {
     @StateObject private var viewModel = UninstallViewModel()
     @State private var searchText = ""
     
+    /// Optional pre-selected app URL passed from Applications view
+    var preselectedAppURL: URL?
+    
+    init(preselectedAppURL: URL? = nil) {
+        self.preselectedAppURL = preselectedAppURL
+    }
+    
     var filteredApps: [UninstallEngine.InstalledApp] {
         if searchText.isEmpty {
             return viewModel.apps
@@ -87,8 +94,14 @@ struct UninstallView: View {
             }
         }
         .onAppear {
-            if viewModel.apps.isEmpty {
-                Task { await viewModel.scanApps() }
+            Task {
+                if viewModel.apps.isEmpty {
+                    await viewModel.scanApps()
+                }
+                // If pre-selected app, find and select it
+                if let url = preselectedAppURL {
+                    viewModel.selectApp(byURL: url)
+                }
             }
         }
     }
@@ -270,5 +283,29 @@ class UninstallViewModel: ObservableObject {
             residualFiles = []
         }
         isLoadingResiduals = false
+    }
+    
+    /// Select an app by its path URL (for navigation from Applications view)
+    func selectApp(byURL url: URL) {
+        if let app = apps.first(where: { $0.path == url.path }) {
+            selectedApp = app
+            loadResiduals(for: app)
+        } else {
+            // App not in scanned list, create a temporary entry
+            let fm = FileManager.default
+            let size = (try? fm.attributesOfItem(atPath: url.path)[.size] as? Int64) ?? 0
+            let bundle = Bundle(url: url)
+            let bundleID = bundle?.bundleIdentifier ?? url.lastPathComponent
+            let tempApp = UninstallEngine.InstalledApp(
+                name: url.deletingPathExtension().lastPathComponent,
+                bundleID: bundleID,
+                path: url.path,
+                size: size,
+                lastUsed: nil
+            )
+            apps.insert(tempApp, at: 0)
+            selectedApp = tempApp
+            loadResiduals(for: tempApp)
+        }
     }
 }

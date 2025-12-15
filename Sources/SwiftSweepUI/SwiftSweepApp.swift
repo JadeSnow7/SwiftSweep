@@ -32,6 +32,8 @@ struct SwiftSweepApp: App {
 
 struct ContentView: View {
     @State private var selection: NavigationItem? = .status
+    @StateObject private var navigationState = NavigationState.shared
+    @State private var uninstallTargetURL: URL?
     
     enum NavigationItem: String, Hashable {
         case status
@@ -89,7 +91,10 @@ struct ContentView: View {
                 case .clean:
                     CleanView()
                 case .uninstall:
-                    UninstallView()
+                    UninstallView(preselectedAppURL: uninstallTargetURL)
+                        .onDisappear {
+                            uninstallTargetURL = nil
+                        }
                 case .optimize:
                     OptimizeView()
                 case .analyze:
@@ -103,6 +108,13 @@ struct ContentView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .onChange(of: navigationState.uninstallAppURL) { _, newURL in
+            if let url = newURL {
+                uninstallTargetURL = url
+                selection = .uninstall
+                navigationState.clearUninstallRequest()
+            }
         }
     }
 }

@@ -108,6 +108,57 @@ public actor DeepScanner: DeepScanning {
         return results
     }
     
+    /// Scan provided apps and calculate their sizes (ensures ID consistency).
+    /// - Parameters:
+    ///   - apps: The AppItem array to scan.
+    ///   - progress: Callback with (current, total) counts.
+    /// - Returns: Dictionary of AppItem.id to sizes.
+    public func scanApps(_ apps: [AppItem], progress: @escaping (Int, Int) -> Void) async throws -> [String: Int64] {
+        isCancelled = false
+        
+        let total = apps.count
+        var results: [String: Int64] = [:]
+        var lastProgressUpdate = Date()
+        
+        for (index, app) in apps.enumerated() {
+            if isCancelled { break }
+            
+            // Check cache first
+            if let cached = cacheStore.getMetadata(for: app.id),
+               cacheStore.isValid(cached: cached, currentVersion: app.version, currentMTime: app.contentModifiedDate) {
+                results[app.id] = cached.sizeBytes
+            } else {
+                do {
+                    let size = try await calculateAllocatedSize(at: app.url)
+                    results[app.id] = size
+                    
+                    // Cache result
+                    if let modTime = app.contentModifiedDate {
+                        let metadata = CachedAppMetadata(
+                            sizeBytes: size,
+                            scannedAt: Date(),
+                            bundleVersion: app.version,
+                            bundleMTime: modTime
+                        )
+                        cacheStore.setMetadata(metadata, for: app.id)
+                    }
+                } catch {
+                    // Skip apps that fail to scan
+                    continue
+                }
+            }
+            
+            // Throttle progress updates to ~200ms
+            let now = Date()
+            if now.timeIntervalSince(lastProgressUpdate) > 0.2 || index == total - 1 {
+                progress(index + 1, total)
+                lastProgressUpdate = now
+            }
+        }
+        
+        return results
+    }
+    
     // MARK: - Private Helpers
     
     private func calculateAllocatedSize(at url: URL) async throws -> Int64 {

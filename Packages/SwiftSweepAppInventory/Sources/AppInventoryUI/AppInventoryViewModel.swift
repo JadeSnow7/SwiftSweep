@@ -170,7 +170,8 @@ public final class AppInventoryViewModel: ObservableObject {
             deepScanner = DeepScanner(cacheStore: cacheStore)
             state = .deepScanning(current: 0, total: apps.count)
             
-            let sizes = try await deepScanner?.scanAllApps(in: directoryURL) { [weak self] current, total in
+            // Use scanApps with the existing apps array for ID consistency
+            let sizes = try await deepScanner?.scanApps(apps) { [weak self] current, total in
                 Task { @MainActor in
                     self?.state = .deepScanning(current: current, total: total)
                 }
@@ -215,6 +216,10 @@ public final class AppInventoryViewModel: ObservableObject {
     public func deleteCategory(_ id: UUID) {
         categories.removeAll { $0.id == id }
         assignments = assignments.filter { $0.value != id }
+        // Normalize order values
+        for (index, _) in categories.enumerated() {
+            categories[index].order = index
+        }
         organizationStore.saveCategories(categories)
         organizationStore.saveAssignments(assignments)
     }

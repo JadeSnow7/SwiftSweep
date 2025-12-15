@@ -2,49 +2,39 @@ import SwiftUI
 import SwiftSweepCore
 import AppInventoryUI
 
+/// Shared navigation state for passing data between views
+@MainActor
+final class NavigationState: ObservableObject {
+    @Published var uninstallAppURL: URL?
+    
+    static let shared = NavigationState()
+    
+    private init() {}
+    
+    func requestUninstall(appURL: URL) {
+        uninstallAppURL = appURL
+    }
+    
+    func clearUninstallRequest() {
+        uninstallAppURL = nil
+    }
+}
+
 /// Applications View wrapper for SwiftSweep Main app.
 /// This bridges the shared ApplicationsView to the Main app's UninstallEngine.
 struct MainApplicationsView: View {
+    @StateObject private var navigationState = NavigationState.shared
+    
     var body: some View {
         ApplicationsView(
             defaults: UserDefaults.standard,
             onUninstallRequested: { app in
-                // Bridge to UninstallEngine
-                Task { @MainActor in
-                    await triggerUninstall(appURL: app.url)
-                }
+                // Request navigation to UninstallView with this app
+                NavigationState.shared.requestUninstall(appURL: app.url)
             }
         )
-    }
-    
-    @MainActor
-    private func triggerUninstall(appURL: URL) async {
-        // Create an InstalledApp from the URL and scan for residuals
-        // This is the bridge between AppInventory and UninstallEngine
-        let fm = FileManager.default
-        guard let attributes = try? fm.attributesOfItem(atPath: appURL.path),
-              let size = attributes[.size] as? Int64 else {
-            return
-        }
-        
-        let bundle = Bundle(url: appURL)
-        let bundleID = bundle?.bundleIdentifier ?? appURL.lastPathComponent
-        
-        let installedApp = UninstallEngine.InstalledApp(
-            name: appURL.deletingPathExtension().lastPathComponent,
-            bundleID: bundleID,
-            path: appURL.path,
-            size: size,
-            lastUsed: nil
-        )
-        
-        // Find residuals and show in UI (This would typically navigate to UninstallView)
-        do {
-            let residuals = try UninstallEngine.shared.findResidualFiles(for: installedApp)
-            // For now, just print - in a full implementation, this would navigate to the UninstallView
-            print("Found \(residuals.count) residual files for \(installedApp.name)")
-        } catch {
-            print("Error finding residuals: \(error)")
+        .onChange(of: navigationState.uninstallAppURL) { newURL in
+            // Parent ContentView will observe this and navigate
         }
     }
 }
