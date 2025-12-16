@@ -109,7 +109,7 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .onChange(of: navigationState.uninstallAppURL) { _, newURL in
+        .onChange(of: navigationState.uninstallAppURL) { newURL in
             if let url = newURL {
                 uninstallTargetURL = url
                 selection = .uninstall
