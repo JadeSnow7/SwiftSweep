@@ -18,7 +18,7 @@ public final class OptimizationEngine {
         public var isRunning: Bool = false
         public var lastResult: Bool? = nil
         
-        public enum TaskType {
+        public enum TaskType: Sendable {
             case flushDNS
             case rebuildSpotlight
             case clearMemory
@@ -98,12 +98,13 @@ public final class OptimizationEngine {
     }
     
     private func runStandard(task: OptimizationTask) async -> Bool {
+        let taskType = task.taskType
         return await withCheckedContinuation { continuation in
             DispatchQueue.global().async {
                 let process = Process()
                 process.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
                 
-                switch task.taskType {
+                switch taskType {
                 case .resetDock:
                     process.arguments = ["Dock"]
                 case .resetFinder:
@@ -161,10 +162,11 @@ public final class OptimizationEngine {
     }
     
     private func runPrivilegedLegacy(task: OptimizationTask) async -> Bool {
+        let taskType = task.taskType
         return await withCheckedContinuation { continuation in
             DispatchQueue.global().async {
                 let command: String
-                switch task.taskType {
+                switch taskType {
                 case .flushDNS:
                     command = "dscacheutil -flushcache && killall -HUP mDNSResponder"
                 case .rebuildSpotlight:

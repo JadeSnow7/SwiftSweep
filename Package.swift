@@ -59,6 +59,10 @@ let package = Package(
             name: "SwiftSweepHelper",
             dependencies: [],
             path: "Helper",
+            exclude: [
+                "Info.plist",
+                "com.swiftsweep.helper.plist",
+            ],
             sources: ["main.swift"]
         ),
         
