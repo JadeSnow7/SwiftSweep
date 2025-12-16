@@ -4,8 +4,6 @@ import Foundation
 public final class BookmarkManager: ObservableObject {
     public static let shared = BookmarkManager()
     
-    private let defaults: UserDefaults
-    
     @Published public private(set) var authorizedDirectories: [ResolvedDirectory] = []
     
     public struct ResolvedDirectory: Identifiable {
@@ -20,7 +18,6 @@ public final class BookmarkManager: ObservableObject {
     }
     
     private init() {
-        defaults = DirectorySyncConstants.userDefaults
         migrateLegacyBookmarks()
         reloadDirectories()
     }
@@ -29,7 +26,8 @@ public final class BookmarkManager: ObservableObject {
     
     /// Add a directory to authorized list
     public func addAuthorizedDirectory(_ url: URL) throws {
-        guard authorizedDirectories.count < DirectorySyncConstants.maxDirectories else {
+        let currentCount = DirectorySyncStore.load().bookmarks.count
+        guard currentCount < DirectorySyncConstants.maxDirectories else {
             throw BookmarkError.limitReached
         }
         
@@ -62,9 +60,7 @@ public final class BookmarkManager: ObservableObject {
         }
         
         bookmarks[normalizedPath] = bookmark
-        defaults.set(bookmarks, forKey: DirectorySyncConstants.bookmarksKey)
-        
-        incrementVersionAndNotify()
+        persistBookmarksAndNotify(bookmarks)
         reloadDirectories()
     }
     
@@ -76,9 +72,7 @@ public final class BookmarkManager: ObservableObject {
     public func removeAuthorizedDirectory(path: String) {
         var bookmarks = getBookmarksDict()
         bookmarks.removeValue(forKey: path)
-        defaults.set(bookmarks, forKey: DirectorySyncConstants.bookmarksKey)
-        
-        incrementVersionAndNotify()
+        persistBookmarksAndNotify(bookmarks)
         reloadDirectories()
     }
     
@@ -126,7 +120,7 @@ public final class BookmarkManager: ObservableObject {
     // MARK: - Private
     
     private func getBookmarksDict() -> [String: Data] {
-        defaults.dictionary(forKey: DirectorySyncConstants.bookmarksKey) as? [String: Data] ?? [:]
+        DirectorySyncStore.load().bookmarks
     }
     
     private func normalizedPath(for url: URL) -> String {
@@ -177,8 +171,7 @@ public final class BookmarkManager: ObservableObject {
         
         var merged = bookmarks
         upgraded.forEach { merged[$0.key] = $0.value }
-        defaults.set(merged, forKey: DirectorySyncConstants.bookmarksKey)
-        incrementVersionAndNotify()
+        persistBookmarksAndNotify(merged)
     }
     
     /// Resolve bookmark data with a fallback for legacy non-security-scoped entries
@@ -210,12 +203,13 @@ public final class BookmarkManager: ObservableObject {
         return ResolvedDirectory(url: legacyURL, path: path, isStale: true)
     }
     
-    private func incrementVersionAndNotify() {
-        // Increment version
-        let version = defaults.integer(forKey: DirectorySyncConstants.versionKey)
-        defaults.set(version + 1, forKey: DirectorySyncConstants.versionKey)
+    private func persistBookmarksAndNotify(_ bookmarks: [String: Data]) {
+        _ = DirectorySyncStore.update { snapshot in
+            snapshot.bookmarks = bookmarks
+            snapshot.version += 1
+        }
         
-        // Post distributed notification for immediate sync
+        // Post distributed notification for immediate sync (cross-process)
         DistributedNotificationCenter.default().postNotificationName(
             NSNotification.Name(DirectorySyncConstants.syncNotificationName),
             object: nil,

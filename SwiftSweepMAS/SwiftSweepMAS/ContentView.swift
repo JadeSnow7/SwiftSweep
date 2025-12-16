@@ -7,7 +7,7 @@ struct ContentView: View {
     @StateObject private var navigationManager = NavigationManager.shared
     @StateObject private var bookmarkManager = BookmarkManager.shared
     
-    @AppStorage("hasCompletedOnboarding", store: DirectorySyncConstants.userDefaults)
+    @AppStorage("hasCompletedOnboarding")
     private var hasCompletedOnboarding = false
     
     var body: some View {
@@ -28,7 +28,7 @@ struct ContentView: View {
                 
                 NavigationLink {
                     AppInventoryUI.ApplicationsView(
-                        defaults: DirectorySyncConstants.userDefaults
+                        defaults: .standard
                     )
                 } label: {
                     Label("Applications", systemImage: "square.grid.2x2")
@@ -226,4 +226,3 @@ struct SettingsView: View {
         .navigationTitle("Settings")
     }
 }
-

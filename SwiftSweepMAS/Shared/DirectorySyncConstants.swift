@@ -4,6 +4,9 @@ import Foundation
 public enum DirectorySyncConstants {
     /// App Group suite name for shared UserDefaults
     public static let suiteName = "group.com.swiftsweep.mas"
+
+    /// File name used for bookmark sync storage inside the App Group container
+    public static let storeFileName = "authorized-directories-store.plist"
     
     /// Key for storing authorized directory bookmarks
     public static let bookmarksKey = "authorizedDirectoryBookmarks"
@@ -19,15 +22,4 @@ public enum DirectorySyncConstants {
     
     /// Recommended number of directories
     public static let recommendedDirectories = 8
-    
-    /// Shared UserDefaults for the App Group (falls back to `.standard` if the container is unavailable).
-    public static let userDefaults: UserDefaults = {
-        // Touch container first; if the App Group entitlement is missing, avoid using the suite to
-        // prevent noisy CFPrefs warnings and fall back to `.standard`.
-        guard FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: suiteName) != nil,
-              let defaults = UserDefaults(suiteName: suiteName) else {
-            return .standard
-        }
-        return defaults
-    }()
 }

@@ -103,7 +103,7 @@ class FinderSync: FIFinderSync {
         // Debounce: skip if called too recently
         guard Date().timeIntervalSince(lastReloadTime) >= minReloadInterval else { return }
         
-        let currentVersion = DirectorySyncConstants.userDefaults.integer(forKey: DirectorySyncConstants.versionKey)
+        let currentVersion = DirectorySyncStore.load().version
         
         // Only reload if version actually changed
         guard currentVersion != lastKnownVersion else { return }

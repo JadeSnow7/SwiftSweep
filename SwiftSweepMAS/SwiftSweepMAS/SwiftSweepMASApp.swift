@@ -5,6 +5,10 @@ import UserNotifications
 struct SwiftSweepMASApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
+    init() {
+        LegacyPreferencesMigration.performIfNeeded()
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
