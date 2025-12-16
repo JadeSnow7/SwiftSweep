@@ -1,4 +1,4 @@
-import Foundation
+@preconcurrency import Foundation
 import CoreServices
 
 /// Protocol for providing a list of installed applications.
@@ -14,22 +14,51 @@ public final class InventoryProvider: InventoryProviding {
     public init() {}
     
     public func fetchApps() async -> [AppItem] {
+        print("[InventoryProvider] fetchApps() START")
         // Try Spotlight first
         let spotlightApps = await querySpotlight()
+        print("[InventoryProvider] Spotlight returned \(spotlightApps.count) apps")
         if !spotlightApps.isEmpty {
             return deduplicateApps(spotlightApps)
         }
         
         // Fallback to FileManager
+        print("[InventoryProvider] Falling back to FileManager")
         let fileSystemApps = scanFileSystem()
+        print("[InventoryProvider] FileManager returned \(fileSystemApps.count) apps")
         return deduplicateApps(fileSystemApps)
     }
     
     // MARK: - Spotlight Query
     
     private func querySpotlight() async -> [AppItem] {
-        await withCheckedContinuation { continuation in
-            let query = NSMetadataQuery()
+        return await withCheckedContinuation { continuation in
+            let path = applicationsPath
+            Task { @MainActor in
+                let wrapper = SpotlightQueryWrapper(applicationsPath: path, continuation: continuation)
+                wrapper.start()
+            }
+        }
+    }
+    
+    // MARK: - Spotlight Helper
+    
+    @MainActor
+    private class SpotlightQueryWrapper {
+        private let query = NSMetadataQuery()
+        private let applicationsPath: String
+        private let continuation: CheckedContinuation<[AppItem], Never>
+        private var observer: NSObjectProtocol?
+        private var timeoutWorkItem: DispatchWorkItem?
+        private var hasFinished = false
+        
+        init(applicationsPath: String, continuation: CheckedContinuation<[AppItem], Never>) {
+            self.applicationsPath = applicationsPath
+            self.continuation = continuation
+        }
+        
+        func start() {
+            // Setup query
             query.predicate = NSPredicate(format: "kMDItemContentType == 'com.apple.application-bundle'")
             query.searchScopes = [URL(fileURLWithPath: applicationsPath)]
             query.valueListAttributes = [
@@ -42,73 +71,93 @@ public final class InventoryProvider: InventoryProviding {
                 "kMDItemLastUsedDate"
             ]
             
-            var hasResumed = false
-            var observer: NSObjectProtocol?
-            var timeoutTask: DispatchWorkItem?
-            
-            // Timeout after 3 seconds
-            let timeout = DispatchWorkItem { [weak query] in
-                guard !hasResumed else { return }
-                hasResumed = true
-                query?.stop()
-                if let observer = observer {
-                    NotificationCenter.default.removeObserver(observer)
+            // Setup timeout
+            let workItem = DispatchWorkItem { [self] in
+                Task { @MainActor in
+                    self.finish(with: [])
                 }
-                continuation.resume(returning: [])
             }
-            timeoutTask = timeout
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: timeout)
+            self.timeoutWorkItem = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: workItem)
             
+            // Setup observer
             observer = NotificationCenter.default.addObserver(
                 forName: .NSMetadataQueryDidFinishGathering,
                 object: query,
                 queue: .main
-            ) { [weak query] _ in
-                guard !hasResumed else { return }
-                hasResumed = true
-                timeoutTask?.cancel()
-                query?.stop()
-                if let observer = observer {
-                    NotificationCenter.default.removeObserver(observer)
+            ) { [self] _ in
+                Task { @MainActor in
+                    self.processResults()
                 }
-                
-                guard let results = query?.results as? [NSMetadataItem] else {
-                    continuation.resume(returning: [])
-                    return
-                }
-                
-                let apps = results.compactMap { item -> AppItem? in
-                    guard let path = item.value(forAttribute: NSMetadataItemPathKey) as? String,
-                          path.hasSuffix(".app") else {
-                        return nil
-                    }
-                    
-                    let url = URL(fileURLWithPath: path)
-                    let displayName = (item.value(forAttribute: NSMetadataItemDisplayNameKey) as? String)
-                        ?? url.deletingPathExtension().lastPathComponent
-                    let bundleID = item.value(forAttribute: "kMDItemCFBundleIdentifier") as? String
-                    let version = item.value(forAttribute: "kMDItemVersion") as? String
-                    let lastUsed = item.value(forAttribute: "kMDItemLastUsedDate") as? Date
-                    let contentModified = item.value(forAttribute: NSMetadataItemFSContentChangeDateKey) as? Date
-                    let estimatedSize = (item.value(forAttribute: NSMetadataItemFSSizeKey) as? NSNumber)?.int64Value
-                    
-                    let id = bundleID ?? url.path
-                    
-                    return AppItem(
-                        id: id,
-                        url: url,
-                        displayName: displayName,
-                        version: version,
-                        estimatedSizeBytes: estimatedSize,
-                        lastUsedDate: lastUsed,
-                        contentModifiedDate: contentModified,
-                        source: .spotlight
-                    )
-                }
-                continuation.resume(returning: apps)
             }
             
-            query.start()
+            if !query.start() {
+                finish(with: [])
+            }
+        }
+        
+        private func processResults() {
+            guard let results = query.results as? [NSMetadataItem] else {
+                finish(with: [])
+                return
+            }
+            
+            let apps = results.compactMap { item -> AppItem? in
+                guard let path = item.value(forAttribute: NSMetadataItemPathKey) as? String,
+                      path.hasSuffix(".app") else {
+                    return nil
+                }
+                
+                let url = URL(fileURLWithPath: path)
+                let displayName = (item.value(forAttribute: NSMetadataItemDisplayNameKey) as? String)
+                    ?? url.deletingPathExtension().lastPathComponent
+                let bundleID = item.value(forAttribute: "kMDItemCFBundleIdentifier") as? String
+                let version = item.value(forAttribute: "kMDItemVersion") as? String
+                let lastUsed = item.value(forAttribute: "kMDItemLastUsedDate") as? Date
+                let contentModified = item.value(forAttribute: NSMetadataItemFSContentChangeDateKey) as? Date
+                let estimatedSize = (item.value(forAttribute: NSMetadataItemFSSizeKey) as? NSNumber)?.int64Value
+                
+                let id = bundleID ?? url.path
+                
+                return AppItem(
+                    id: id,
+                    url: url,
+                    displayName: displayName,
+                    version: version,
+                    estimatedSizeBytes: estimatedSize,
+                    lastUsedDate: lastUsed,
+                    contentModifiedDate: contentModified,
+                    source: .spotlight
+                )
+            }
+            
+            finish(with: apps)
+        }
+        
+        private func finish(with apps: [AppItem]) {
+            guard !hasFinished else { return }
+            hasFinished = true
+            
+            timeoutWorkItem?.cancel()
+            timeoutWorkItem = nil
+            query.stop()
+            if let observer {
+                NotificationCenter.default.removeObserver(observer)
+                self.observer = nil
+            }
+            
+            continuation.resume(returning: apps)
+        }
+        
+        deinit {
+            timeoutWorkItem?.cancel()
+            if let observer {
+                NotificationCenter.default.removeObserver(observer)
+            }
+            query.stop()
+            if !hasFinished {
+                continuation.resume(returning: [])
+            }
         }
     }
     
