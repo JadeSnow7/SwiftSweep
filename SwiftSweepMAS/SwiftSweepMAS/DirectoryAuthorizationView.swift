@@ -36,7 +36,7 @@ struct DirectoryAuthorizationView: View {
                             NavigationManager.shared.navigateToAnalysis(path: dir.url.path)
                         },
                         onRemove: {
-                        bookmarkManager.removeAuthorizedDirectory(dir.url)
+                        bookmarkManager.removeAuthorizedDirectory(path: dir.path)
                         }
                     )
                 }

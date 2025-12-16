@@ -34,22 +34,30 @@ public struct ApplicationsView: View {
         .searchable(text: $viewModel.searchText, placement: .toolbar)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Picker("Filter", selection: $viewModel.selectedFilter) {
+                Picker("Filter", selection: $viewModel.selectedFilterSelection) {
                     ForEach(AppInventoryViewModel.FilterType.allCases) { filter in
                         if filter == .unused && !viewModel.hasLastUsedData {
                             Text("\(filter.rawValue) (N/A)")
-                                .tag(filter)
+                                .tag(AppInventoryViewModel.FilterSelection.builtIn(filter))
                                 .foregroundColor(.secondary)
                         } else {
-                            Text(filter.rawValue).tag(filter)
+                            Text(filter.rawValue).tag(AppInventoryViewModel.FilterSelection.builtIn(filter))
+                        }
+                    }
+                    
+                    if !viewModel.categories.isEmpty {
+                        Divider()
+                        ForEach(viewModel.categories) { category in
+                            Text(category.name)
+                                .tag(AppInventoryViewModel.FilterSelection.category(category.id))
                         }
                     }
                 }
                 .pickerStyle(.menu)
-                .onChange(of: viewModel.selectedFilter) { newValue in
+                .onChange(of: viewModel.selectedFilterSelection) { newValue in
                     // Auto-reset to .all if Unused is selected but no data
-                    if newValue == .unused && !viewModel.hasLastUsedData {
-                        viewModel.selectedFilter = .all
+                    if case .builtIn(.unused) = newValue, !viewModel.hasLastUsedData {
+                        viewModel.selectedFilterSelection = .builtIn(.all)
                     }
                 }
             }

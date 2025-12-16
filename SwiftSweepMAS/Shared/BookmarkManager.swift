@@ -20,7 +20,8 @@ public final class BookmarkManager: ObservableObject {
     }
     
     private init() {
-        defaults = UserDefaults(suiteName: DirectorySyncConstants.suiteName) ?? .standard
+        defaults = DirectorySyncConstants.userDefaults
+        migrateLegacyBookmarks()
         reloadDirectories()
     }
     
@@ -32,14 +33,35 @@ public final class BookmarkManager: ObservableObject {
             throw BookmarkError.limitReached
         }
         
-        let bookmark = try url.bookmarkData(
-            options: .withSecurityScope,
-            includingResourceValuesForKeys: nil,
-            relativeTo: nil
-        )
+        guard url.isFileURL else {
+            throw BookmarkError.accessDenied
+        }
         
+        let normalizedPath = normalizedPath(for: url)
         var bookmarks = getBookmarksDict()
-        bookmarks[url.path] = bookmark
+        if bookmarks[normalizedPath] != nil {
+            return
+        }
+        
+        let didStartAccessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        
+        let bookmark: Data
+        do {
+            bookmark = try url.bookmarkData(
+                options: .withSecurityScope,
+                includingResourceValuesForKeys: nil,
+                relativeTo: nil
+            )
+        } catch {
+            throw BookmarkError.accessDenied
+        }
+        
+        bookmarks[normalizedPath] = bookmark
         defaults.set(bookmarks, forKey: DirectorySyncConstants.bookmarksKey)
         
         incrementVersionAndNotify()
@@ -48,8 +70,12 @@ public final class BookmarkManager: ObservableObject {
     
     /// Remove a directory from authorized list
     public func removeAuthorizedDirectory(_ url: URL) {
+        removeAuthorizedDirectory(path: normalizedPath(for: url))
+    }
+    
+    public func removeAuthorizedDirectory(path: String) {
         var bookmarks = getBookmarksDict()
-        bookmarks.removeValue(forKey: url.path)
+        bookmarks.removeValue(forKey: path)
         defaults.set(bookmarks, forKey: DirectorySyncConstants.bookmarksKey)
         
         incrementVersionAndNotify()
@@ -59,20 +85,23 @@ public final class BookmarkManager: ObservableObject {
     /// Get bookmark data for a path (for Extension use)
     public func getBookmark(for url: URL) -> Data? {
         let bookmarks = getBookmarksDict()
+        let targetPath = normalizedPath(for: url)
         
         // Try exact match first
-        if let data = bookmarks[url.path] {
+        if let data = bookmarks[targetPath] {
             return data
         }
         
-        // Try to find a parent directory bookmark
+        // Try to find the closest parent directory bookmark (longest match)
+        var bestMatch: (path: String, data: Data)?
         for (path, data) in bookmarks {
-            if url.path.hasPrefix(path) {
-                return data
+            if targetPath == path || targetPath.hasPrefix(path + "/") {
+                if bestMatch == nil || path.count > bestMatch!.path.count {
+                    bestMatch = (path, data)
+                }
             }
         }
-        
-        return nil
+        return bestMatch?.data
     }
     
     /// Resolve authorized directories (for Finder Sync registration)
@@ -80,14 +109,8 @@ public final class BookmarkManager: ObservableObject {
     public func resolveAuthorizedDirectories() -> [URL] {
         let bookmarks = getBookmarksDict()
         
-        return bookmarks.compactMap { _, data in
-            var isStale = false
-            return try? URL(
-                resolvingBookmarkData: data,
-                options: .withSecurityScope,
-                relativeTo: nil,
-                bookmarkDataIsStale: &isStale
-            )
+        return bookmarks.compactMap { path, data in
+            resolveBookmark(path: path, data: data)?.url
         }
     }
     
@@ -96,17 +119,7 @@ public final class BookmarkManager: ObservableObject {
         let bookmarks = getBookmarksDict()
         
         authorizedDirectories = bookmarks.compactMap { path, data in
-            var isStale = false
-            guard let url = try? URL(
-                resolvingBookmarkData: data,
-                options: .withSecurityScope,
-                relativeTo: nil,
-                bookmarkDataIsStale: &isStale
-            ) else {
-                return nil
-            }
-            
-            return ResolvedDirectory(url: url, path: path, isStale: isStale)
+            resolveBookmark(path: path, data: data)
         }
     }
     
@@ -114,6 +127,87 @@ public final class BookmarkManager: ObservableObject {
     
     private func getBookmarksDict() -> [String: Data] {
         defaults.dictionary(forKey: DirectorySyncConstants.bookmarksKey) as? [String: Data] ?? [:]
+    }
+    
+    private func normalizedPath(for url: URL) -> String {
+        var path = url.standardizedFileURL.path
+        if path.count > 1, path.hasSuffix("/") {
+            path.removeLast()
+        }
+        return path
+    }
+    
+    /// Upgrade any legacy (non-security-scoped) bookmarks created before entitlements were enabled
+    private func migrateLegacyBookmarks() {
+        let bookmarks = getBookmarksDict()
+        var upgraded: [String: Data] = [:]
+        var didUpgrade = false
+        
+        for (path, data) in bookmarks {
+            // If it already resolves with security scope, keep it as-is
+            var securityStale = false
+            if (try? URL(
+                resolvingBookmarkData: data,
+                options: .withSecurityScope,
+                relativeTo: nil,
+                bookmarkDataIsStale: &securityStale
+            )) != nil {
+                continue
+            }
+            
+            // Try to resolve legacy bookmark and regenerate with security scope
+            var legacyStale = false
+            if let legacyURL = try? URL(
+                resolvingBookmarkData: data,
+                options: [],
+                relativeTo: nil,
+                bookmarkDataIsStale: &legacyStale
+            ),
+               let scoped = try? legacyURL.bookmarkData(
+                options: .withSecurityScope,
+                includingResourceValuesForKeys: nil,
+                relativeTo: nil
+               ) {
+                upgraded[path] = scoped
+                didUpgrade = true
+            }
+        }
+        
+        guard didUpgrade else { return }
+        
+        var merged = bookmarks
+        upgraded.forEach { merged[$0.key] = $0.value }
+        defaults.set(merged, forKey: DirectorySyncConstants.bookmarksKey)
+        incrementVersionAndNotify()
+    }
+    
+    /// Resolve bookmark data with a fallback for legacy non-security-scoped entries
+    private func resolveBookmark(path: String, data: Data) -> ResolvedDirectory? {
+        var isStale = false
+        
+        // Preferred: security-scoped bookmark
+        if let url = try? URL(
+            resolvingBookmarkData: data,
+            options: .withSecurityScope,
+            relativeTo: nil,
+            bookmarkDataIsStale: &isStale
+        ) {
+            return ResolvedDirectory(url: url, path: path, isStale: isStale)
+        }
+        
+        // Fallback: legacy bookmark without security scope
+        var legacyStale = false
+        guard let legacyURL = try? URL(
+            resolvingBookmarkData: data,
+            options: [],
+            relativeTo: nil,
+            bookmarkDataIsStale: &legacyStale
+        ) else {
+            return nil
+        }
+        
+        // Mark as stale so UI can prompt re-authorization
+        return ResolvedDirectory(url: legacyURL, path: path, isStale: true)
     }
     
     private func incrementVersionAndNotify() {

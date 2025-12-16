@@ -19,4 +19,15 @@ public enum DirectorySyncConstants {
     
     /// Recommended number of directories
     public static let recommendedDirectories = 8
+    
+    /// Shared UserDefaults for the App Group (falls back to `.standard` if the container is unavailable).
+    public static let userDefaults: UserDefaults = {
+        // Touch container first; if the App Group entitlement is missing, avoid using the suite to
+        // prevent noisy CFPrefs warnings and fall back to `.standard`.
+        guard FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: suiteName) != nil,
+              let defaults = UserDefaults(suiteName: suiteName) else {
+            return .standard
+        }
+        return defaults
+    }()
 }

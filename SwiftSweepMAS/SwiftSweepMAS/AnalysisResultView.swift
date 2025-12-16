@@ -85,6 +85,16 @@ struct ResultContentView: View {
     let result: AnalyzerEngine.AnalysisResult
     let path: String
     
+    @State private var viewMode: ViewMode = .treemap
+    
+    private enum ViewMode: String, CaseIterable, Identifiable {
+        case treemap = "Treemap"
+        case tree = "Tree"
+        case files = "Largest Files"
+        
+        var id: String { rawValue }
+    }
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -109,35 +119,69 @@ struct ResultContentView: View {
                     .cornerRadius(8)
                 }
                 
-                if let rootNode = result.rootNode,
-                   let children = rootNode.children,
-                   !children.isEmpty {
-                    GroupBox("Folder Tree") {
-                        FileTreeView(nodes: children, totalSize: rootNode.size)
-                    }
-                }
-                
-                // Largest files
-                GroupBox("Largest Files") {
-                    LazyVStack(alignment: .leading, spacing: 8) {
-                        ForEach(result.topFiles.prefix(10)) { file in
-                            HStack {
-                                Image(systemName: iconForFile(file.path))
-                                    .foregroundColor(.secondary)
-                                
-                                Text(URL(fileURLWithPath: file.path).lastPathComponent)
-                                    .lineLimit(1)
-                                
-                                Spacer()
-                                
-                                Text(SizeFormatter.shared.format(file.size))
-                                    .foregroundColor(.secondary)
+                if let rootNode = result.rootNode {
+                    HStack {
+                        Picker("View", selection: $viewMode) {
+                            ForEach(ViewMode.allCases) { mode in
+                                Text(mode.rawValue).tag(mode)
                             }
                         }
+                        .pickerStyle(.segmented)
+                        .frame(maxWidth: 420)
+                        
+                        Spacer()
                     }
+                    
+                    switch viewMode {
+                    case .treemap:
+                        TreemapView(rootNode: rootNode)
+                            .frame(minHeight: 420)
+                    case .tree:
+                        GroupBox("Folder Tree") {
+                            let children = rootNode.children ?? []
+                            if children.isEmpty {
+                                Text("No folders to display.")
+                                    .foregroundColor(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding(.vertical, 24)
+                            } else {
+                                FileTreeView(nodes: children, totalSize: rootNode.size)
+                            }
+                        }
+                    case .files:
+                        LargestFilesGroup(result: result)
+                    }
+                } else {
+                    LargestFilesGroup(result: result)
                 }
             }
             .padding()
+        }
+    }
+}
+
+private struct LargestFilesGroup: View {
+    let result: AnalyzerEngine.AnalysisResult
+    
+    var body: some View {
+        GroupBox("Largest Files") {
+            LazyVStack(alignment: .leading, spacing: 8) {
+                ForEach(result.topFiles.prefix(20)) { file in
+                    HStack {
+                        Image(systemName: iconForFile(file.path))
+                            .foregroundColor(.secondary)
+                        
+                        Text(URL(fileURLWithPath: file.path).lastPathComponent)
+                            .lineLimit(1)
+                        
+                        Spacer()
+                        
+                        Text(SizeFormatter.shared.format(file.size))
+                            .foregroundColor(.secondary)
+                            .monospacedDigit()
+                    }
+                }
+            }
         }
     }
     

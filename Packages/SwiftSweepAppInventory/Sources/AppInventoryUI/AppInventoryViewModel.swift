@@ -42,7 +42,7 @@ public final class AppInventoryViewModel: ObservableObject {
     @Published public var categories: [AppCategory] = []
     @Published public var assignments: [String: UUID] = [:]
     @Published public var searchText: String = ""
-    @Published public var selectedFilter: FilterType = .all
+    @Published public var selectedFilterSelection: FilterSelection = .builtIn(.all)
     @Published public var isAuthorized: Bool = false
     
     // MARK: - Filter Types
@@ -55,6 +55,20 @@ public final class AppInventoryViewModel: ObservableObject {
         case uncategorized = "Uncategorized"
         
         public var id: String { rawValue }
+    }
+    
+    public enum FilterSelection: Hashable, Identifiable {
+        case builtIn(FilterType)
+        case category(UUID)
+        
+        public var id: String {
+            switch self {
+            case .builtIn(let filter):
+                return "builtin:\(filter.rawValue)"
+            case .category(let id):
+                return "category:\(id.uuidString)"
+            }
+        }
     }
     
     // MARK: - Dependencies
@@ -84,15 +98,19 @@ public final class AppInventoryViewModel: ObservableObject {
     
     /// Load the app list (Baseline: Spotlight + FS Fallback).
     public func loadApps() async {
+        print("[AppInventory] loadApps() START")
         state = .loadingBaseline
         
         let fetchedApps = await inventoryProvider.fetchApps()
+        print("[AppInventory] loadApps() fetchedApps.count = \(fetchedApps.count)")
         
         if fetchedApps.isEmpty {
+            print("[AppInventory] loadApps() -> baselineUnavailableOrEmpty")
             state = .baselineUnavailableOrEmpty
         } else {
             apps = fetchedApps
             state = isAuthorized ? .authorizedReady : .baselineReady
+            print("[AppInventory] loadApps() -> \(isAuthorized ? "authorizedReady" : "baselineReady")")
         }
     }
     
@@ -106,6 +124,13 @@ public final class AppInventoryViewModel: ObservableObject {
         
         // Create and store bookmark
         do {
+            let didStartAccessing = url.startAccessingSecurityScopedResource()
+            defer {
+                if didStartAccessing {
+                    url.stopAccessingSecurityScopedResource()
+                }
+            }
+            
             let bookmarkData = try url.bookmarkData(
                 options: .withSecurityScope,
                 includingResourceValuesForKeys: nil,
@@ -216,6 +241,9 @@ public final class AppInventoryViewModel: ObservableObject {
     public func deleteCategory(_ id: UUID) {
         categories.removeAll { $0.id == id }
         assignments = assignments.filter { $0.value != id }
+        if case .category(id) = selectedFilterSelection {
+            selectedFilterSelection = .builtIn(.all)
+        }
         // Normalize order values
         for (index, _) in categories.enumerated() {
             categories[index].order = index
@@ -263,17 +291,22 @@ public final class AppInventoryViewModel: ObservableObject {
         }
         
         // Apply smart filter
-        switch selectedFilter {
-        case .all:
-            break
-        case .large:
-            result = SmartFilters.largeApps(result)
-        case .unused:
-            result = SmartFilters.unusedApps(result)
-        case .recentlyUpdated:
-            result = SmartFilters.recentlyUpdated(result)
-        case .uncategorized:
-            result = SmartFilters.uncategorized(result, assignments: assignments)
+        switch selectedFilterSelection {
+        case .builtIn(let filter):
+            switch filter {
+            case .all:
+                break
+            case .large:
+                result = SmartFilters.largeApps(result)
+            case .unused:
+                result = SmartFilters.unusedApps(result)
+            case .recentlyUpdated:
+                result = SmartFilters.recentlyUpdated(result)
+            case .uncategorized:
+                result = SmartFilters.uncategorized(result, assignments: assignments)
+            }
+        case .category(let categoryID):
+            result = result.filter { assignments[$0.id] == categoryID }
         }
         
         return result

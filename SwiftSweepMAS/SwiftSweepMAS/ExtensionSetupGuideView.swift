@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ExtensionSetupGuideView: View {
-    @AppStorage("hasConfirmedExtensionEnabled", store: UserDefaults(suiteName: DirectorySyncConstants.suiteName))
+    @AppStorage("hasConfirmedExtensionEnabled", store: DirectorySyncConstants.userDefaults)
     private var hasConfirmedEnabled = false
     
     var body: some View {
