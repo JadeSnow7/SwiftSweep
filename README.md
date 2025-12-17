@@ -43,17 +43,17 @@ SwiftSweep 采用两栏式布局，包含以下功能模块：
 <p align="center">
   <img src="docs/screenshots/status.png" width="600" alt="System Status" />
 </p>
-<p align="center"><em>系统状态监控 - 实时显示 CPU、内存、磁盘使用情况</em></p>
+<p align="center"><em>系统状态监控 - 实时显示 CPU、内存、磁盘、网络和电池使用情况</em></p>
 
 <p align="center">
-  <img src="docs/screenshots/cleanup.png" width="600" alt="System Cleanup" />
+  <img src="docs/screenshots/uninstall.png" width="600" alt="App Uninstaller" />
 </p>
-<p align="center"><em>系统清理 - 扫描并清理缓存、日志等垃圾文件</em></p>
+<p align="center"><em>应用卸载器 - 扫描已安装应用及其残留文件</em></p>
 
 <p align="center">
-  <img src="docs/screenshots/analyzer.png" width="600" alt="Disk Analyzer" />
+  <img src="docs/screenshots/settings.png" width="600" alt="Settings" />
 </p>
-<p align="center"><em>磁盘分析 - WizTree 风格的文件树视图</em></p>
+<p align="center"><em>设置界面 - 配置偏好和管理 Helper 权限</em></p>
 
 ---
 

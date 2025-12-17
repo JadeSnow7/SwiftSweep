@@ -31,6 +31,7 @@ let package = Package(
                 "OptimizationEngine",
                 "UninstallEngine",
                 "PrivilegedHelper",
+                "Shared",
             ]
         ),
         
@@ -60,10 +61,16 @@ let package = Package(
             dependencies: [],
             path: "Helper",
             exclude: [
-                "Info.plist",
                 "com.swiftsweep.helper.plist",
             ],
-            sources: ["main.swift"]
+            linkerSettings: [
+                .unsafeFlags([
+                    "-Xlinker", "-sectcreate",
+                    "-Xlinker", "__TEXT",
+                    "-Xlinker", "__info_plist",
+                    "-Xlinker", "Helper/Info.plist"
+                ])
+            ]
         ),
         
         // Tests

@@ -4,6 +4,12 @@
 <dict>
     <key>Label</key>
     <string>com.swiftsweep.helper</string>
+    <key>BundleProgram</key>
+    <string>Contents/Library/LaunchDaemons/com.swiftsweep.helper</string>
+    <key>AssociatedBundleIdentifiers</key>
+    <array>
+        <string>com.swiftsweep.app</string>
+    </array>
     <key>MachServices</key>
     <dict>
         <key>com.swiftsweep.helper</key>

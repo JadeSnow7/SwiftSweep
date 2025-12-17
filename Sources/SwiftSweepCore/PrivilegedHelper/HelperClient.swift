@@ -4,7 +4,7 @@ import ServiceManagement
 /// SwiftSweep 权限助手客户端
 /// 使用 SMAppService (macOS 13+) 管理特权助手
 @available(macOS 13.0, *)
-public final class HelperClient {
+public final class HelperClient: @unchecked Sendable, PrivilegedDeleting {
     public static let shared = HelperClient()
     
     private let helperBundleIdentifier = "com.swiftsweep.helper"
@@ -251,6 +251,22 @@ public final class HelperClient {
             } catch {
                 continuation.resume(throwing: error)
             }
+        }
+    }
+    
+    // MARK: - PrivilegedDeleting Conformance
+    
+    public func deleteItem(at url: URL) async throws {
+        try await deleteFile(at: url.path)
+    }
+    
+    public func status() async -> PrivilegedHelperStatus {
+        let s = checkStatus()
+        switch s {
+        case .enabled: return .available
+        case .notRegistered: return .notInstalled
+        case .notFound: return .notInstalled
+        default: return .unknown
         }
     }
 }

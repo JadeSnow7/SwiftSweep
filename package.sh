@@ -42,6 +42,51 @@ echo "Copying executable..."
 cp "${BUILD_DIR}/${EXECUTABLE_NAME}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 chmod +x "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 
+# 3.1 Build and Bundle Helper (for SMAppService)
+HELPER_NAME="SwiftSweepHelper"
+HELPER_BUNDLE_ID="com.swiftsweep.helper"
+HELPER_DIR="${APP_BUNDLE}/Contents/Library/LaunchDaemons"
+
+echo "Building Helper..."
+swift build -c release --product ${HELPER_NAME}
+if [ $? -ne 0 ]; then
+    echo -e "${YELLOW}Warning: Helper build failed. SMAppService registration may not work.${NC}"
+else
+    echo "Creating Helper directory structure..."
+    mkdir -p "${HELPER_DIR}"
+    
+    # Copy Helper binary (SMAppService expects it here)
+    cp "${BUILD_DIR}/${HELPER_NAME}" "${HELPER_DIR}/${HELPER_BUNDLE_ID}"
+    chmod +x "${HELPER_DIR}/${HELPER_BUNDLE_ID}"
+    
+    # Sign Helper with Developer ID (must match main app signing)
+    if [ -n "${SIGNING_IDENTITY}" ]; then
+        echo "Embedding Info.plist into Helper binary..."
+        # Create a temporary Info.plist section object file
+        HELPER_INFO_PLIST="Helper/Info.plist"
+        if [ -f "${HELPER_INFO_PLIST}" ]; then
+            # Use ld to embed Info.plist (requires rebuilding with linker flag)
+            # For now, sign with entitlements that include the Info.plist reference
+            echo "Signing Helper with Developer ID and Info.plist..."
+            codesign --force --options runtime --sign "${SIGNING_IDENTITY}" \
+                --identifier "${HELPER_BUNDLE_ID}" \
+                --info-plist "${HELPER_INFO_PLIST}" \
+                "${HELPER_DIR}/${HELPER_BUNDLE_ID}"
+        else
+            echo "Signing Helper with Developer ID (no Info.plist)..."
+            codesign --force --options runtime --sign "${SIGNING_IDENTITY}" \
+                --identifier "${HELPER_BUNDLE_ID}" \
+                "${HELPER_DIR}/${HELPER_BUNDLE_ID}"
+        fi
+        codesign -dv "${HELPER_DIR}/${HELPER_BUNDLE_ID}" 2>&1 | grep -E "(Authority|Info.plist)"
+    fi
+    
+    # Copy Helper plist
+    cp "Helper/com.swiftsweep.helper.plist" "${HELPER_DIR}/"
+    
+    echo -e "${GREEN}Helper bundled successfully.${NC}"
+fi
+
 # 3.5 Copy Icon
 echo "Copying App Icon..."
 if [ -f "Resources/AppIcon.icns" ]; then

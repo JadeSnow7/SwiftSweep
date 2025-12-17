@@ -37,7 +37,32 @@ public final class CleanupEngine {
         case other = "Other"
     }
     
-    private init() {}
+    // MARK: - Properties
+    
+    private var privilegedDeleter: PrivilegedDeleting?
+    
+    /// Result structure for granular reporting
+    public struct CleanupResultItem: Sendable {
+        public let originalPath: String
+        public let canonicalPath: String
+        public let size: Int64
+        public let outcome: Outcome
+        
+        public enum Outcome: Sendable {
+            case deleted
+            case deletedPrivileged
+            case skippedDryRun
+            case failed(reason: String)
+        }
+    }
+    
+    public init(privilegedDeleter: PrivilegedDeleting? = nil) {
+        if #available(macOS 13.0, *) {
+            self.privilegedDeleter = privilegedDeleter ?? HelperClient.shared
+        } else {
+            self.privilegedDeleter = privilegedDeleter
+        }
+    }
     
     /// 扫描可清理的项目
     public func scanForCleanableItems() async throws -> [CleanupItem] {
@@ -61,30 +86,122 @@ public final class CleanupEngine {
         return items
     }
     
-    /// 执行清理操作
+    /// 执行清理操作 (Legacy wrapper returning total bytes)
+    @discardableResult
     public func performCleanup(items: [CleanupItem], dryRun: Bool = false) async throws -> Int64 {
-        logger.info("Starting cleanup. Dry run: \(dryRun)")
+        let results = await performRobustCleanup(items: items, dryRun: dryRun)
         
-        var freedBytes: Int64 = 0
-        let fileManager = FileManager.default
+        let freedBytes = results.reduce(0 as Int64) { total, result in
+            switch result.outcome {
+            case .deleted, .deletedPrivileged:
+                return total + result.size
+            case .skippedDryRun:
+                return total + (dryRun ? result.size : 0) // Count potential size
+            case .failed:
+                return total
+            }
+        }
+        return freedBytes
+    }
+    
+    /// 执行健壮清理操作
+    public func performRobustCleanup(items: [CleanupItem], dryRun: Bool = false) async -> [CleanupResultItem] {
+        logger.info("Starting robust cleanup. Dry run: \(dryRun)")
+        
+        var results: [CleanupResultItem] = []
         
         for item in items where item.isSelected {
-            do {
-                if dryRun {
-                    logger.debug("Would delete: \(item.path)")
-                    freedBytes += item.size
-                } else {
-                    try fileManager.removeItem(atPath: item.path)
-                    freedBytes += item.size
-                    logger.debug("Deleted: \(item.path)")
-                }
-            } catch {
-                logger.error("Failed to delete \(item.path): \(error)")
+            let result = await deleteItemChecked(item, dryRun: dryRun)
+            results.append(result)
+        }
+        
+        return results
+    }
+    
+    private func deleteItemChecked(_ item: CleanupItem, dryRun: Bool) async -> CleanupResultItem {
+        let path = item.path
+        let url = URL(fileURLWithPath: path)
+        let standardizedURL = url.standardized
+        let canonicalPath = standardizedURL.path
+        
+        // 1. Safety Checks
+        guard !canonicalPath.isEmpty, canonicalPath != "/" else {
+            return CleanupResultItem(originalPath: path, canonicalPath: canonicalPath, size: item.size, outcome: .failed(reason: "Invalid path"))
+        }
+
+        // 2. Dry Run
+        if dryRun {
+            logger.debug("Would delete: \(canonicalPath)")
+            return CleanupResultItem(originalPath: path, canonicalPath: canonicalPath, size: item.size, outcome: .skippedDryRun)
+        }
+        
+        // 3. Attempt Standard Delete
+        do {
+            try FileManager.default.removeItem(at: standardizedURL)
+            logger.debug("Deleted (Standard): \(canonicalPath)")
+            return CleanupResultItem(originalPath: path, canonicalPath: canonicalPath, size: item.size, outcome: .deleted)
+        } catch {
+            // 4. Check for Escalation
+            if shouldEscalate(error: error) {
+                return await attemptPrivilegedDelete(item: item, url: standardizedURL, canonicalPath: canonicalPath)
+            } else {
+                logger.error("Failed to delete \(canonicalPath): \(error)")
+                return CleanupResultItem(originalPath: path, canonicalPath: canonicalPath, size: item.size, outcome: .failed(reason: error.localizedDescription))
+            }
+        }
+    }
+    
+    private func attemptPrivilegedDelete(item: CleanupItem, url: URL, canonicalPath: String) async -> CleanupResultItem {
+        // Pre-check: Verify path is in allowlist (same rules as Helper)
+        guard CleanupAllowlist.isTargetAllowed(canonicalPath) else {
+            logger.warning("Path not in allowlist, skipping Helper: \(canonicalPath)")
+            return CleanupResultItem(originalPath: item.path, canonicalPath: canonicalPath, size: item.size, outcome: .failed(reason: "Path not in allowed list"))
+        }
+        
+        guard let deleter = privilegedDeleter else {
+            return CleanupResultItem(originalPath: item.path, canonicalPath: canonicalPath, size: item.size, outcome: .failed(reason: "Permission denied (Helper unavailable)"))
+        }
+        
+        do {
+            try await deleter.deleteItem(at: url)
+            
+            // Verify Deletion
+            if FileManager.default.fileExists(atPath: canonicalPath) {
+                 return CleanupResultItem(originalPath: item.path, canonicalPath: canonicalPath, size: item.size, outcome: .failed(reason: "Helper reported success but file exists"))
+            }
+            
+            logger.info("Deleted (Privileged): \(canonicalPath)")
+            return CleanupResultItem(originalPath: item.path, canonicalPath: canonicalPath, size: item.size, outcome: .deletedPrivileged)
+        } catch {
+            logger.error("Privileged delete failed \(canonicalPath): \(error)")
+             return CleanupResultItem(originalPath: item.path, canonicalPath: canonicalPath, size: item.size, outcome: .failed(reason: "Privileged delete failed: \(error.localizedDescription)"))
+        }
+    }
+    
+    private func shouldEscalate(error: Error) -> Bool {
+        let nsError = error as NSError
+        
+        // Cocoa Errors
+        if nsError.domain == NSCocoaErrorDomain {
+            if nsError.code == NSFileWriteNoPermissionError || nsError.code == NSFileReadNoPermissionError {
+                return true
             }
         }
         
-        logger.info("Cleanup complete. Freed \(freedBytes) bytes")
-        return freedBytes
+        // POSIX Errors
+        if nsError.domain == NSPOSIXErrorDomain {
+            // EACCES (13): Permission denied
+            // EPERM (1): Operation not permitted
+            if nsError.code == 13 || nsError.code == 1 {
+                return true
+            }
+            // EROFS (30): Read-only file system - DO NOT ESCALATE
+            if nsError.code == 30 {
+                return false
+            }
+        }
+        
+        return false
     }
     
     // MARK: - Private Scanning Methods

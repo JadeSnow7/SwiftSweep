@@ -85,7 +85,12 @@ struct SettingsView: View {
                         Button(action: { Task { await helperViewModel.registerHelper() }}) {
                             Label("Install Helper", systemImage: "plus.circle")
                         }
-                        .disabled(helperViewModel.status == .enabled)
+                        .disabled(helperViewModel.status == .enabled || helperViewModel.isLoading)
+                        
+                        if helperViewModel.isLoading {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                        }
                         
                         if helperViewModel.status == .enabled {
                             Button(action: { Task { await helperViewModel.unregisterHelper() }}) {
@@ -93,6 +98,12 @@ struct SettingsView: View {
                             }
                             .foregroundColor(.red)
                         }
+                    }
+                    
+                    if let error = helperViewModel.errorMessage {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.red)
                     }
                 }
                 
