@@ -61,24 +61,14 @@ else
     
     # Sign Helper with Developer ID (must match main app signing)
     if [ -n "${SIGNING_IDENTITY}" ]; then
-        echo "Embedding Info.plist into Helper binary..."
-        # Create a temporary Info.plist section object file
-        HELPER_INFO_PLIST="Helper/Info.plist"
-        if [ -f "${HELPER_INFO_PLIST}" ]; then
-            # Use ld to embed Info.plist (requires rebuilding with linker flag)
-            # For now, sign with entitlements that include the Info.plist reference
-            echo "Signing Helper with Developer ID and Info.plist..."
-            codesign --force --options runtime --sign "${SIGNING_IDENTITY}" \
-                --identifier "${HELPER_BUNDLE_ID}" \
-                --info-plist "${HELPER_INFO_PLIST}" \
-                "${HELPER_DIR}/${HELPER_BUNDLE_ID}"
-        else
-            echo "Signing Helper with Developer ID (no Info.plist)..."
-            codesign --force --options runtime --sign "${SIGNING_IDENTITY}" \
-                --identifier "${HELPER_BUNDLE_ID}" \
-                "${HELPER_DIR}/${HELPER_BUNDLE_ID}"
-        fi
-        codesign -dv "${HELPER_DIR}/${HELPER_BUNDLE_ID}" 2>&1 | grep -E "(Authority|Info.plist)"
+        echo "Signing Helper with Developer ID..."
+        # Sign with hardened runtime and timestamp (required for notarization)
+        codesign --force --options runtime --timestamp --sign "${SIGNING_IDENTITY}" \
+            --identifier "${HELPER_BUNDLE_ID}" \
+            "${HELPER_DIR}/${HELPER_BUNDLE_ID}"
+        
+        echo "Verifying Helper signature..."
+        codesign -dv "${HELPER_DIR}/${HELPER_BUNDLE_ID}" 2>&1 | grep -E "(Authority|Timestamp)"
     fi
     
     # Copy Helper plist
@@ -130,7 +120,7 @@ fi
 # 5. Code Signing
 if [ -n "${SIGNING_IDENTITY}" ]; then
     echo "Signing with identity: ${SIGNING_IDENTITY}"
-    codesign --force --options runtime --deep --sign "${SIGNING_IDENTITY}" --entitlements "${ENTITLEMENTS}" "${APP_BUNDLE}"
+    codesign --force --options runtime --timestamp --deep --sign "${SIGNING_IDENTITY}" --entitlements "${ENTITLEMENTS}" "${APP_BUNDLE}"
     
     echo "Verifying signature..."
     codesign --verify --verbose "${APP_BUNDLE}"
