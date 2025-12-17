@@ -7,10 +7,15 @@ DerivedData/
 Output/
 
 # Xcode
-*.xcodeproj/xcuserdata/
-*.xcworkspace/xcuserdata/
+**/*.xcodeproj/xcuserdata/
+**/*.xcworkspace/xcuserdata/
 *.xcworkspace
 *.xcodeproj
+
+# Keep SwiftSweepMAS Xcode project tracked (used by Xcode Cloud / MAS builds)
+!SwiftSweepMAS/SwiftSweepMAS.xcodeproj/
+!SwiftSweepMAS/SwiftSweepMAS.xcodeproj/project.pbxproj
+!SwiftSweepMAS/SwiftSweepMAS.xcodeproj/xcshareddata/**
 
 # macOS
 .DS_Store

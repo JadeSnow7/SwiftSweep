@@ -1,0 +1,626 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		06227F9F628537175A0D56E9 /* ExtensionSetupGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EF18930B6899791C5E2A8F3 /* ExtensionSetupGuideView.swift */; };
+		06EA39BE1A5260826D7621A4 /* DirectorySyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5247D2D48B5B869EA1F0AEAF /* DirectorySyncStore.swift */; };
+		0A24334FD8B3FFDC42957E3D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B2263AEE0AC4FBF9652A0273 /* PrivacyInfo.xcprivacy */; };
+		11A0A0C11069EAD0A6B26AF5 /* AnalyzeMenuHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014A6CEA492666B5BF2AD92C /* AnalyzeMenuHandler.swift */; };
+		17CB01F58FEF2800E2DBEA61 /* DirectoryAuthorizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A322C81395231DD47815823C /* DirectoryAuthorizationView.swift */; };
+		28132674F54FAA4636EE90EC /* ResultPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DB42FDC33927DC19B15B8B0 /* ResultPresenter.swift */; };
+		29DDAE494AC4E7959BB67E97 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 572D9AA4E98BAF1189861EE0 /* README.md */; };
+		2D17A457E34E97D8B1453391 /* SwiftSweepMASApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF096095956628606AF9BCB2 /* SwiftSweepMASApp.swift */; };
+		2E3702B8DCDFAE8CB3EA255D /* FileNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1D0F776E002B0358CAD4DF /* FileNode.swift */; };
+		4B2A35A9AD014806B82485C7 /* BookmarkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 359E9C6B91CEFEB1A507CC23 /* BookmarkManager.swift */; };
+		50072211659A215B944D510A /* SwiftSweepAppInventory in Frameworks */ = {isa = PBXBuildFile; productRef = 871DA7C7353A78F84C9D5509 /* SwiftSweepAppInventory */; };
+		52EA3208E7B3609AE064F9EE /* BookmarkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 359E9C6B91CEFEB1A507CC23 /* BookmarkManager.swift */; };
+		634D412ADBE3485CB997E3CC /* SizeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD3B5CF44E1098AACBCFE50 /* SizeFormatter.swift */; };
+		680B7A7E0528B9330B72387E /* DirectorySyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5247D2D48B5B869EA1F0AEAF /* DirectorySyncStore.swift */; };
+		696191CBA8CDE17C9FA40144 /* LegacyPreferencesMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57EADC2BF92F25F04E15D4E4 /* LegacyPreferencesMigration.swift */; };
+		6ED9AE75A5F5CCF5A855D9D5 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 572D9AA4E98BAF1189861EE0 /* README.md */; };
+		7583CAEF054CE325CE87A50E /* AnalyzerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E72755D12A517E5FAB6B957 /* AnalyzerEngine.swift */; };
+		7661F861DCA74D3790022F98 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C60CFFEAEA1891FAC4404D8 /* ContentView.swift */; };
+		7CF50F0C795E59B54D9AD603 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3527E578CD69D7B4391A3F76 /* Assets.xcassets */; };
+		7E0E821E3B74917E00FAC5E6 /* AnalyzerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E72755D12A517E5FAB6B957 /* AnalyzerEngine.swift */; };
+		84BF7E8FA22F7087EB6DBF54 /* DirectorySyncConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A31D482DDEFEC346595DC82 /* DirectorySyncConstants.swift */; };
+		91A83CBD7679566CDD334E26 /* DirectorySyncConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A31D482DDEFEC346595DC82 /* DirectorySyncConstants.swift */; };
+		96103BEDA9152C0B91D27274 /* NotificationPermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76E7B30AE9273246E8F00318 /* NotificationPermissionManager.swift */; };
+		A9E7F90A9445F30087F9748F /* AnalysisResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40B41025A54C8D5C622E2DB1 /* AnalysisResultView.swift */; };
+		C0D8084B5A80280EE0347E8B /* LegacyPreferencesMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57EADC2BF92F25F04E15D4E4 /* LegacyPreferencesMigration.swift */; };
+		D31B98BBBB5CA6AE3685F3B8 /* FileNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1D0F776E002B0358CAD4DF /* FileNode.swift */; };
+		E463D5065FEC9D4EC55DF5FF /* SizeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD3B5CF44E1098AACBCFE50 /* SizeFormatter.swift */; };
+		E4D1A9D20351E25BAE060608 /* FinderSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001B4E6E03F526E8D4BAB96D /* FinderSync.swift */; };
+		F1800F84AB5357A89078CC85 /* TreemapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C12AF81166F4A84871D475A /* TreemapView.swift */; };
+		FF1ED50AE4C3BFA67076434A /* FinderSyncExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E74A6ABF22FA718F55FCD0E2 /* FinderSyncExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4190B7D6CB52A41CC2F8D2FF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0F757570C6AC89EBC0F4729A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 90BECC60CEB6943CF89EEA32;
+			remoteInfo = FinderSyncExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		84690BD3C14014C775A87416 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				FF1ED50AE4C3BFA67076434A /* FinderSyncExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		001B4E6E03F526E8D4BAB96D /* FinderSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderSync.swift; sourceTree = "<group>"; };
+		014A6CEA492666B5BF2AD92C /* AnalyzeMenuHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzeMenuHandler.swift; sourceTree = "<group>"; };
+		0C60CFFEAEA1891FAC4404D8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		0DB42FDC33927DC19B15B8B0 /* ResultPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultPresenter.swift; sourceTree = "<group>"; };
+		138BE70163635FD424F4C687 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		229A6208A4247FA00635A8B0 /* SwiftSweepMASDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SwiftSweepMASDebug.entitlements; sourceTree = "<group>"; };
+		2A31D482DDEFEC346595DC82 /* DirectorySyncConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectorySyncConstants.swift; sourceTree = "<group>"; };
+		2F3DAF809C451C64C6CFFF62 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		3527E578CD69D7B4391A3F76 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		359E9C6B91CEFEB1A507CC23 /* BookmarkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkManager.swift; sourceTree = "<group>"; };
+		3AD3B5CF44E1098AACBCFE50 /* SizeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SizeFormatter.swift; sourceTree = "<group>"; };
+		40B41025A54C8D5C622E2DB1 /* AnalysisResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisResultView.swift; sourceTree = "<group>"; };
+		5247D2D48B5B869EA1F0AEAF /* DirectorySyncStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectorySyncStore.swift; sourceTree = "<group>"; };
+		572D9AA4E98BAF1189861EE0 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		57EADC2BF92F25F04E15D4E4 /* LegacyPreferencesMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyPreferencesMigration.swift; sourceTree = "<group>"; };
+		6EF18930B6899791C5E2A8F3 /* ExtensionSetupGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionSetupGuideView.swift; sourceTree = "<group>"; };
+		76E7B30AE9273246E8F00318 /* NotificationPermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPermissionManager.swift; sourceTree = "<group>"; };
+		7C12AF81166F4A84871D475A /* TreemapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TreemapView.swift; sourceTree = "<group>"; };
+		8E72755D12A517E5FAB6B957 /* AnalyzerEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzerEngine.swift; sourceTree = "<group>"; };
+		A322C81395231DD47815823C /* DirectoryAuthorizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectoryAuthorizationView.swift; sourceTree = "<group>"; };
+		AE1D0F776E002B0358CAD4DF /* FileNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileNode.swift; sourceTree = "<group>"; };
+		AF096095956628606AF9BCB2 /* SwiftSweepMASApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftSweepMASApp.swift; sourceTree = "<group>"; };
+		B2263AEE0AC4FBF9652A0273 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		BD9A166248C35F23F63E77EC /* SwiftSweepMAS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftSweepMAS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D91CD2C818B3961626BA1079 /* SwiftSweepAppInventory */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SwiftSweepAppInventory; path = ../Packages/SwiftSweepAppInventory; sourceTree = SOURCE_ROOT; };
+		E6AF1A29744485BF2FCAE241 /* FinderSyncExtensionDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FinderSyncExtensionDebug.entitlements; sourceTree = "<group>"; };
+		E74A6ABF22FA718F55FCD0E2 /* FinderSyncExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FinderSyncExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0D4CE7D8EF2DFB7A88089F62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				50072211659A215B944D510A /* SwiftSweepAppInventory in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		117C6CAE62E42B7EE8041D22 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				3527E578CD69D7B4391A3F76 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		1BB8ECD562B5193B4268D253 /* AnalyzerEngineSubset */ = {
+			isa = PBXGroup;
+			children = (
+				8E72755D12A517E5FAB6B957 /* AnalyzerEngine.swift */,
+				AE1D0F776E002B0358CAD4DF /* FileNode.swift */,
+				572D9AA4E98BAF1189861EE0 /* README.md */,
+				3AD3B5CF44E1098AACBCFE50 /* SizeFormatter.swift */,
+			);
+			path = AnalyzerEngineSubset;
+			sourceTree = "<group>";
+		};
+		4C3C7A4D130897AE85B45B41 = {
+			isa = PBXGroup;
+			children = (
+				EB0A7535EA0CF7F45A2C3993 /* FinderSyncExtension */,
+				5C83B3505E9E84FE45A59220 /* Packages */,
+				67110645691F0AE9541AE886 /* Shared */,
+				87F804A8317D88EB8AA94BAA /* SwiftSweep */,
+				E28A7A5C071C624590025116 /* SwiftSweepMAS */,
+				FF92827A438A1B8FA1BF27DE /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5C83B3505E9E84FE45A59220 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				D91CD2C818B3961626BA1079 /* SwiftSweepAppInventory */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		67110645691F0AE9541AE886 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				359E9C6B91CEFEB1A507CC23 /* BookmarkManager.swift */,
+				2A31D482DDEFEC346595DC82 /* DirectorySyncConstants.swift */,
+				5247D2D48B5B869EA1F0AEAF /* DirectorySyncStore.swift */,
+				57EADC2BF92F25F04E15D4E4 /* LegacyPreferencesMigration.swift */,
+				1BB8ECD562B5193B4268D253 /* AnalyzerEngineSubset */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		87F804A8317D88EB8AA94BAA /* SwiftSweep */ = {
+			isa = PBXGroup;
+			children = (
+				117C6CAE62E42B7EE8041D22 /* Resources */,
+			);
+			name = SwiftSweep;
+			path = ..;
+			sourceTree = "<group>";
+		};
+		E28A7A5C071C624590025116 /* SwiftSweepMAS */ = {
+			isa = PBXGroup;
+			children = (
+				40B41025A54C8D5C622E2DB1 /* AnalysisResultView.swift */,
+				0C60CFFEAEA1891FAC4404D8 /* ContentView.swift */,
+				A322C81395231DD47815823C /* DirectoryAuthorizationView.swift */,
+				6EF18930B6899791C5E2A8F3 /* ExtensionSetupGuideView.swift */,
+				138BE70163635FD424F4C687 /* Info.plist */,
+				76E7B30AE9273246E8F00318 /* NotificationPermissionManager.swift */,
+				B2263AEE0AC4FBF9652A0273 /* PrivacyInfo.xcprivacy */,
+				AF096095956628606AF9BCB2 /* SwiftSweepMASApp.swift */,
+				229A6208A4247FA00635A8B0 /* SwiftSweepMASDebug.entitlements */,
+				7C12AF81166F4A84871D475A /* TreemapView.swift */,
+			);
+			path = SwiftSweepMAS;
+			sourceTree = "<group>";
+		};
+		EB0A7535EA0CF7F45A2C3993 /* FinderSyncExtension */ = {
+			isa = PBXGroup;
+			children = (
+				014A6CEA492666B5BF2AD92C /* AnalyzeMenuHandler.swift */,
+				001B4E6E03F526E8D4BAB96D /* FinderSync.swift */,
+				E6AF1A29744485BF2FCAE241 /* FinderSyncExtensionDebug.entitlements */,
+				2F3DAF809C451C64C6CFFF62 /* Info.plist */,
+				0DB42FDC33927DC19B15B8B0 /* ResultPresenter.swift */,
+			);
+			path = FinderSyncExtension;
+			sourceTree = "<group>";
+		};
+		FF92827A438A1B8FA1BF27DE /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E74A6ABF22FA718F55FCD0E2 /* FinderSyncExtension.appex */,
+				BD9A166248C35F23F63E77EC /* SwiftSweepMAS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6F0921258EEBE9BF4F95BC82 /* SwiftSweepMAS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C1DA65734F452052BB753E49 /* Build configuration list for PBXNativeTarget "SwiftSweepMAS" */;
+			buildPhases = (
+				687DBB3516C366F6DE670C3C /* Sources */,
+				D57A415C77981089182CCE81 /* Resources */,
+				0D4CE7D8EF2DFB7A88089F62 /* Frameworks */,
+				84690BD3C14014C775A87416 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6FDB2D25A0C55AC038C0B5A8 /* PBXTargetDependency */,
+			);
+			name = SwiftSweepMAS;
+			packageProductDependencies = (
+				871DA7C7353A78F84C9D5509 /* SwiftSweepAppInventory */,
+			);
+			productName = SwiftSweepMAS;
+			productReference = BD9A166248C35F23F63E77EC /* SwiftSweepMAS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		90BECC60CEB6943CF89EEA32 /* FinderSyncExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9CCE97D4D70012EBE25A1E1A /* Build configuration list for PBXNativeTarget "FinderSyncExtension" */;
+			buildPhases = (
+				F7208183C9016DD2016A13BE /* Sources */,
+				32D84B7B4610AF0A519838E9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FinderSyncExtension;
+			packageProductDependencies = (
+			);
+			productName = FinderSyncExtension;
+			productReference = E74A6ABF22FA718F55FCD0E2 /* FinderSyncExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0F757570C6AC89EBC0F4729A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					6F0921258EEBE9BF4F95BC82 = {
+						DevelopmentTeam = 6429YPLDYU;
+						ProvisioningStyle = Automatic;
+					};
+					90BECC60CEB6943CF89EEA32 = {
+						DevelopmentTeam = 6429YPLDYU;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = C3424D58C673A0483A29D86B /* Build configuration list for PBXProject "SwiftSweepMAS" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 4C3C7A4D130897AE85B45B41;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EF6E8E557060097A9C54D151 /* XCLocalSwiftPackageReference "../Packages/SwiftSweepAppInventory" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				90BECC60CEB6943CF89EEA32 /* FinderSyncExtension */,
+				6F0921258EEBE9BF4F95BC82 /* SwiftSweepMAS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		32D84B7B4610AF0A519838E9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6ED9AE75A5F5CCF5A855D9D5 /* README.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D57A415C77981089182CCE81 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7CF50F0C795E59B54D9AD603 /* Assets.xcassets in Resources */,
+				0A24334FD8B3FFDC42957E3D /* PrivacyInfo.xcprivacy in Resources */,
+				29DDAE494AC4E7959BB67E97 /* README.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		687DBB3516C366F6DE670C3C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A9E7F90A9445F30087F9748F /* AnalysisResultView.swift in Sources */,
+				7E0E821E3B74917E00FAC5E6 /* AnalyzerEngine.swift in Sources */,
+				4B2A35A9AD014806B82485C7 /* BookmarkManager.swift in Sources */,
+				7661F861DCA74D3790022F98 /* ContentView.swift in Sources */,
+				17CB01F58FEF2800E2DBEA61 /* DirectoryAuthorizationView.swift in Sources */,
+				84BF7E8FA22F7087EB6DBF54 /* DirectorySyncConstants.swift in Sources */,
+				06EA39BE1A5260826D7621A4 /* DirectorySyncStore.swift in Sources */,
+				06227F9F628537175A0D56E9 /* ExtensionSetupGuideView.swift in Sources */,
+				D31B98BBBB5CA6AE3685F3B8 /* FileNode.swift in Sources */,
+				C0D8084B5A80280EE0347E8B /* LegacyPreferencesMigration.swift in Sources */,
+				96103BEDA9152C0B91D27274 /* NotificationPermissionManager.swift in Sources */,
+				634D412ADBE3485CB997E3CC /* SizeFormatter.swift in Sources */,
+				2D17A457E34E97D8B1453391 /* SwiftSweepMASApp.swift in Sources */,
+				F1800F84AB5357A89078CC85 /* TreemapView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F7208183C9016DD2016A13BE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				11A0A0C11069EAD0A6B26AF5 /* AnalyzeMenuHandler.swift in Sources */,
+				7583CAEF054CE325CE87A50E /* AnalyzerEngine.swift in Sources */,
+				52EA3208E7B3609AE064F9EE /* BookmarkManager.swift in Sources */,
+				91A83CBD7679566CDD334E26 /* DirectorySyncConstants.swift in Sources */,
+				680B7A7E0528B9330B72387E /* DirectorySyncStore.swift in Sources */,
+				2E3702B8DCDFAE8CB3EA255D /* FileNode.swift in Sources */,
+				E4D1A9D20351E25BAE060608 /* FinderSync.swift in Sources */,
+				696191CBA8CDE17C9FA40144 /* LegacyPreferencesMigration.swift in Sources */,
+				28132674F54FAA4636EE90EC /* ResultPresenter.swift in Sources */,
+				E463D5065FEC9D4EC55DF5FF /* SizeFormatter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6FDB2D25A0C55AC038C0B5A8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 90BECC60CEB6943CF89EEA32 /* FinderSyncExtension */;
+			targetProxy = 4190B7D6CB52A41CC2F8D2FF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1CEA2C440C7BBBA4E43DDDBB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Entitlements/FinderSyncExtension.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FinderSyncExtension/Info.plist;
+				INFOPLIST_GENERATION_MODE = GeneratedFile;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.swiftsweep.mas.findersync;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		41852C34A952E8E2B1D24D5E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 6429YPLDYU;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		446666A210430113D43E9898 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Entitlements/FinderSyncExtension.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FinderSyncExtension/Info.plist;
+				INFOPLIST_GENERATION_MODE = GeneratedFile;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.swiftsweep.mas.findersync;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		B6D342A4821355E826F230C0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Entitlements/SwiftSweepMAS.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SwiftSweepMAS/Info.plist;
+				INFOPLIST_GENERATION_MODE = GeneratedFile;
+				INFOPLIST_KEY_CFBundleDisplayName = SwiftSweep;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 SwiftSweep. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.swiftsweep.mas;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		DC4A504339E9E5C0C4DE16E0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 6429YPLDYU;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		F813C157E7AE3DCE8570AE48 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Entitlements/SwiftSweepMAS.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SwiftSweepMAS/Info.plist;
+				INFOPLIST_GENERATION_MODE = GeneratedFile;
+				INFOPLIST_KEY_CFBundleDisplayName = SwiftSweep;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 SwiftSweep. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.swiftsweep.mas;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9CCE97D4D70012EBE25A1E1A /* Build configuration list for PBXNativeTarget "FinderSyncExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1CEA2C440C7BBBA4E43DDDBB /* Debug */,
+				446666A210430113D43E9898 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C1DA65734F452052BB753E49 /* Build configuration list for PBXNativeTarget "SwiftSweepMAS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F813C157E7AE3DCE8570AE48 /* Debug */,
+				B6D342A4821355E826F230C0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C3424D58C673A0483A29D86B /* Build configuration list for PBXProject "SwiftSweepMAS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DC4A504339E9E5C0C4DE16E0 /* Debug */,
+				41852C34A952E8E2B1D24D5E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		EF6E8E557060097A9C54D151 /* XCLocalSwiftPackageReference "../Packages/SwiftSweepAppInventory" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/SwiftSweepAppInventory;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		871DA7C7353A78F84C9D5509 /* SwiftSweepAppInventory */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftSweepAppInventory;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 0F757570C6AC89EBC0F4729A /* Project object */;
+}
