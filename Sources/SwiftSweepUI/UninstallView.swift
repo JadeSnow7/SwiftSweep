@@ -93,6 +93,19 @@ struct UninstallView: View {
                 AppDetailPanel(app: selected, residuals: viewModel.residualFiles, viewModel: viewModel)
             }
         }
+        .sheet(isPresented: $viewModel.showingConfirmation) {
+            if let plan = viewModel.deletionPlan {
+                UninstallConfirmationSheet(
+                    plan: plan,
+                    viewModel: viewModel
+                )
+            }
+        }
+        .alert("卸载失败", isPresented: $viewModel.showingError) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "未知错误")
+        }
         .onAppear {
             Task {
                 if viewModel.apps.isEmpty {
@@ -175,12 +188,25 @@ struct AppDetailPanel: View {
                         .scaleEffect(0.7)
                 }
                 
+                #if SWIFTSWEEP_MAS
+                // MAS 版本：显示沙盒限制提示
                 Button(action: {}) {
                     Label("Uninstall", systemImage: "trash")
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(.gray)
+                .disabled(true)
+                #else
+                // Developer ID 版本：可用
+                Button(action: {
+                    viewModel.prepareUninstall(app: app, residuals: residuals)
+                }) {
+                    Label("Uninstall", systemImage: "trash")
+                }
+                .buttonStyle(.borderedProminent)
                 .tint(.red)
-                .disabled(true) // Requires privileged helper
+                .disabled(viewModel.isDeleting || !viewModel.isHelperAvailable)
+                #endif
             }
             
             if !residuals.isEmpty {
@@ -196,9 +222,29 @@ struct AppDetailPanel: View {
                 }
             }
             
-            Text("⚠️ Uninstallation requires privileged helper (not yet implemented)")
+            #if SWIFTSWEEP_MAS
+            Text("⚠️ App Store 版不支持卸载功能（沙盒限制）")
                 .font(.caption)
                 .foregroundColor(.orange)
+            #else
+            if !viewModel.isHelperAvailable {
+                HStack {
+                    Text("⚠️ 需要安装 Helper 才能卸载应用")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                    
+                    if #available(macOS 13.0, *) {
+                        Button("安装 Helper") {
+                            Task {
+                                await viewModel.installHelper()
+                            }
+                        }
+                        .font(.caption)
+                        .buttonStyle(.link)
+                    }
+                }
+            }
+            #endif
         }
         .padding()
         .background(Color(nsColor: .controlBackgroundColor))
@@ -256,6 +302,218 @@ struct ResidualBadge: View {
     }
 }
 
+// MARK: - Confirmation Sheet
+
+struct UninstallConfirmationSheet: View {
+    let plan: DeletionPlan
+    @ObservedObject var viewModel: UninstallViewModel
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Image(systemName: "trash.fill")
+                    .font(.title)
+                    .foregroundColor(.red)
+                VStack(alignment: .leading) {
+                    Text("确认卸载")
+                        .font(.headline)
+                    Text(plan.app.name.replacingOccurrences(of: ".app", with: ""))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+            }
+            .padding()
+            
+            Divider()
+            
+            // File List
+            VStack(alignment: .leading, spacing: 8) {
+                Text("将删除以下文件 (\(plan.items.count) 个项目，共 \(formatBytes(plan.totalSize)))")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                List {
+                    ForEach(plan.items) { item in
+                        DeletionItemRow(item: item, result: viewModel.itemResult(for: item))
+                    }
+                }
+                .listStyle(.bordered)
+                .frame(height: 250)
+            }
+            .padding()
+            
+            // Progress or Result
+            if viewModel.isDeleting {
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("正在删除...")
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+            } else if let result = viewModel.deletionResult {
+                resultView(result)
+                    .padding()
+            }
+            
+            Divider()
+            
+            // Actions
+            HStack {
+                Button("取消") {
+                    dismiss()
+                    viewModel.cancelUninstall()
+                }
+                .keyboardShortcut(.escape)
+                
+                Spacer()
+                
+                if let result = viewModel.deletionResult, !result.isComplete {
+                    Button("重试失败项") {
+                        Task {
+                            await viewModel.retryFailedItems()
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                }
+                
+                if viewModel.deletionResult == nil {
+                    Button("确认卸载") {
+                        Task {
+                            await viewModel.executeUninstall()
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
+                    .disabled(viewModel.isDeleting)
+                } else if viewModel.deletionResult?.isComplete == true {
+                    Button("完成") {
+                        dismiss()
+                        viewModel.finishUninstall()
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            }
+            .padding()
+        }
+        .frame(width: 500, height: 500)
+    }
+    
+    @ViewBuilder
+    func resultView(_ result: DeletionResult) -> some View {
+        if result.isComplete {
+            HStack {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                Text("卸载完成！已删除 \(result.successCount) 个项目")
+            }
+        } else {
+            HStack {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                VStack(alignment: .leading) {
+                    Text("部分删除失败")
+                    Text("成功: \(result.successCount) / 失败: \(result.failureCount)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+    }
+    
+    func formatBytes(_ bytes: Int64) -> String {
+        let mb = Double(bytes) / 1024 / 1024
+        if mb > 1024 {
+            return String(format: "%.2f GB", mb / 1024)
+        }
+        return String(format: "%.1f MB", mb)
+    }
+}
+
+struct DeletionItemRow: View {
+    let item: DeletionItem
+    let result: DeletionItemResult?
+    
+    var body: some View {
+        HStack {
+            Image(systemName: iconForKind(item.kind))
+                .foregroundColor(colorForKind(item.kind))
+                .frame(width: 20)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text((item.path as NSString).lastPathComponent)
+                    .font(.caption)
+                    .lineLimit(1)
+                Text(item.path)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                
+                if let error = result?.error {
+                    Text(error)
+                        .font(.caption2)
+                        .foregroundColor(.red)
+                }
+            }
+            
+            Spacer()
+            
+            if let result = result {
+                if result.success {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                } else {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.red)
+                }
+            } else {
+                Text(formatBytes(item.size))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+    
+    func iconForKind(_ kind: DeletionItemKind) -> String {
+        switch kind {
+        case .app: return "app.fill"
+        case .cache: return "folder.fill"
+        case .preferences: return "gearshape.fill"
+        case .appSupport: return "folder.fill"
+        case .launchAgent: return "gearshape.2.fill"
+        case .container: return "shippingbox.fill"
+        case .other: return "doc.fill"
+        }
+    }
+    
+    func colorForKind(_ kind: DeletionItemKind) -> Color {
+        switch kind {
+        case .app: return .blue
+        case .cache: return .orange
+        case .preferences: return .purple
+        case .appSupport: return .green
+        case .launchAgent: return .red
+        case .container: return .cyan
+        case .other: return .gray
+        }
+    }
+    
+    func formatBytes(_ bytes: Int64) -> String {
+        let mb = Double(bytes) / 1024 / 1024
+        if mb > 1024 {
+            return String(format: "%.1f GB", mb / 1024)
+        } else if mb > 1 {
+            return String(format: "%.0f MB", mb)
+        } else {
+            return String(format: "%.0f KB", Double(bytes) / 1024)
+        }
+    }
+}
+
+// MARK: - ViewModel
+
 @MainActor
 class UninstallViewModel: ObservableObject {
     @Published var apps: [UninstallEngine.InstalledApp] = []
@@ -263,6 +521,25 @@ class UninstallViewModel: ObservableObject {
     @Published var residualFiles: [UninstallEngine.ResidualFile] = []
     @Published var isScanning = false
     @Published var isLoadingResiduals = false
+    
+    // Uninstall state
+    @Published var showingConfirmation = false
+    @Published var deletionPlan: DeletionPlan?
+    @Published var deletionResult: DeletionResult?
+    @Published var isDeleting = false
+    @Published var showingError = false
+    @Published var errorMessage: String?
+    
+    #if !SWIFTSWEEP_MAS
+    var isHelperAvailable: Bool {
+        if #available(macOS 13.0, *) {
+            return HelperClient.shared.checkStatus() == .enabled
+        }
+        return false
+    }
+    #else
+    var isHelperAvailable: Bool { false }
+    #endif
     
     func scanApps() async {
         isScanning = true
@@ -307,5 +584,87 @@ class UninstallViewModel: ObservableObject {
             selectedApp = tempApp
             loadResiduals(for: tempApp)
         }
+    }
+    
+    // MARK: - Uninstall Actions
+    
+    func prepareUninstall(app: UninstallEngine.InstalledApp, residuals: [UninstallEngine.ResidualFile]) {
+        // Create a copy of app with residuals
+        var appWithResiduals = app
+        appWithResiduals.residualFiles = residuals
+        
+        do {
+            deletionPlan = try UninstallEngine.shared.createDeletionPlan(for: appWithResiduals)
+            deletionResult = nil
+            showingConfirmation = true
+        } catch {
+            errorMessage = error.localizedDescription
+            showingError = true
+        }
+    }
+    
+    #if !SWIFTSWEEP_MAS
+    @available(macOS 13.0, *)
+    func executeUninstall() async {
+        guard let plan = deletionPlan else { return }
+        
+        isDeleting = true
+        do {
+            deletionResult = try await UninstallEngine.shared.executeDeletionPlan(plan)
+        } catch {
+            errorMessage = error.localizedDescription
+            showingError = true
+        }
+        isDeleting = false
+    }
+    
+    @available(macOS 13.0, *)
+    func retryFailedItems() async {
+        guard let result = deletionResult else { return }
+        
+        isDeleting = true
+        do {
+            let retryResult = try await UninstallEngine.shared.retryFailedDeletions(result.failedItems)
+            // Merge results
+            var newResults = result.itemResults.filter { $0.success }
+            newResults.append(contentsOf: retryResult.itemResults)
+            deletionResult = DeletionResult(itemResults: newResults)
+        } catch {
+            errorMessage = error.localizedDescription
+            showingError = true
+        }
+        isDeleting = false
+    }
+    
+    @available(macOS 13.0, *)
+    func installHelper() async {
+        do {
+            try await HelperClient.shared.registerHelper()
+            objectWillChange.send()
+        } catch {
+            errorMessage = error.localizedDescription
+            showingError = true
+        }
+    }
+    #endif
+    
+    func cancelUninstall() {
+        deletionPlan = nil
+        deletionResult = nil
+    }
+    
+    func finishUninstall() {
+        // Remove uninstalled app from list
+        if let plan = deletionPlan {
+            apps.removeAll { $0.id == plan.app.id }
+            selectedApp = nil
+            residualFiles = []
+        }
+        deletionPlan = nil
+        deletionResult = nil
+    }
+    
+    func itemResult(for item: DeletionItem) -> DeletionItemResult? {
+        deletionResult?.itemResults.first { $0.item.id == item.id }
     }
 }

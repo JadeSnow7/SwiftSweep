@@ -37,6 +37,8 @@ targets:
       GENERATE_INFOPLIST_FILE: YES
       CODE_SIGN_ENTITLEMENTS: Entitlements/SwiftSweepMAS.entitlements
       SWIFT_VERSION: "5.9"
+      # MAS 编译隔离标志 - 禁用 Helper 相关功能
+      OTHER_SWIFT_FLAGS: "-DSWIFTSWEEP_MAS"
     entitlements:
       path: Entitlements/SwiftSweepMAS.entitlements
       properties:

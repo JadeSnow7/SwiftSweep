@@ -352,7 +352,6 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Entitlements/FinderSyncExtension.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FinderSyncExtension/Info.plist;
@@ -433,7 +432,6 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Entitlements/FinderSyncExtension.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FinderSyncExtension/Info.plist;
@@ -457,7 +455,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Entitlements/SwiftSweepMAS.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SwiftSweepMAS/Info.plist;
@@ -471,6 +468,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
+				OTHER_SWIFT_FLAGS = "-DSWIFTSWEEP_MAS";
 				PRODUCT_BUNDLE_IDENTIFIER = com.swiftsweep.mas;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
@@ -548,7 +546,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Entitlements/SwiftSweepMAS.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SwiftSweepMAS/Info.plist;
@@ -562,6 +559,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
+				OTHER_SWIFT_FLAGS = "-DSWIFTSWEEP_MAS";
 				PRODUCT_BUNDLE_IDENTIFIER = com.swiftsweep.mas;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;

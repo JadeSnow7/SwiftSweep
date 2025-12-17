@@ -5,7 +5,7 @@ import Logging
 public final class UninstallEngine {
     public static let shared = UninstallEngine()
     
-    private let logger = Logger(label: "com.swiftsweep.uninstall")
+    internal let logger = Logger(label: "com.swiftsweep.uninstall")
     
     public struct InstalledApp: Identifiable, Hashable {
         public let id: UUID
