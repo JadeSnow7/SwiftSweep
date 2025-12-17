@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		06227F9F628537175A0D56E9 /* ExtensionSetupGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EF18930B6899791C5E2A8F3 /* ExtensionSetupGuideView.swift */; };
-		06EA39BE1A5260826D7621A4 /* DirectorySyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5247D2D48B5B869EA1F0AEAF /* DirectorySyncStore.swift */; };
 		0A24334FD8B3FFDC42957E3D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B2263AEE0AC4FBF9652A0273 /* PrivacyInfo.xcprivacy */; };
 		11A0A0C11069EAD0A6B26AF5 /* AnalyzeMenuHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014A6CEA492666B5BF2AD92C /* AnalyzeMenuHandler.swift */; };
 		17CB01F58FEF2800E2DBEA61 /* DirectoryAuthorizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A322C81395231DD47815823C /* DirectoryAuthorizationView.swift */; };
@@ -20,8 +19,6 @@
 		50072211659A215B944D510A /* SwiftSweepAppInventory in Frameworks */ = {isa = PBXBuildFile; productRef = 871DA7C7353A78F84C9D5509 /* SwiftSweepAppInventory */; };
 		52EA3208E7B3609AE064F9EE /* BookmarkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 359E9C6B91CEFEB1A507CC23 /* BookmarkManager.swift */; };
 		634D412ADBE3485CB997E3CC /* SizeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD3B5CF44E1098AACBCFE50 /* SizeFormatter.swift */; };
-		680B7A7E0528B9330B72387E /* DirectorySyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5247D2D48B5B869EA1F0AEAF /* DirectorySyncStore.swift */; };
-		696191CBA8CDE17C9FA40144 /* LegacyPreferencesMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57EADC2BF92F25F04E15D4E4 /* LegacyPreferencesMigration.swift */; };
 		6ED9AE75A5F5CCF5A855D9D5 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 572D9AA4E98BAF1189861EE0 /* README.md */; };
 		7583CAEF054CE325CE87A50E /* AnalyzerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E72755D12A517E5FAB6B957 /* AnalyzerEngine.swift */; };
 		7661F861DCA74D3790022F98 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C60CFFEAEA1891FAC4404D8 /* ContentView.swift */; };
@@ -31,7 +28,6 @@
 		91A83CBD7679566CDD334E26 /* DirectorySyncConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A31D482DDEFEC346595DC82 /* DirectorySyncConstants.swift */; };
 		96103BEDA9152C0B91D27274 /* NotificationPermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76E7B30AE9273246E8F00318 /* NotificationPermissionManager.swift */; };
 		A9E7F90A9445F30087F9748F /* AnalysisResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40B41025A54C8D5C622E2DB1 /* AnalysisResultView.swift */; };
-		C0D8084B5A80280EE0347E8B /* LegacyPreferencesMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57EADC2BF92F25F04E15D4E4 /* LegacyPreferencesMigration.swift */; };
 		D31B98BBBB5CA6AE3685F3B8 /* FileNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1D0F776E002B0358CAD4DF /* FileNode.swift */; };
 		E463D5065FEC9D4EC55DF5FF /* SizeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD3B5CF44E1098AACBCFE50 /* SizeFormatter.swift */; };
 		E4D1A9D20351E25BAE060608 /* FinderSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001B4E6E03F526E8D4BAB96D /* FinderSync.swift */; };
@@ -76,9 +72,7 @@
 		359E9C6B91CEFEB1A507CC23 /* BookmarkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkManager.swift; sourceTree = "<group>"; };
 		3AD3B5CF44E1098AACBCFE50 /* SizeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SizeFormatter.swift; sourceTree = "<group>"; };
 		40B41025A54C8D5C622E2DB1 /* AnalysisResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisResultView.swift; sourceTree = "<group>"; };
-		5247D2D48B5B869EA1F0AEAF /* DirectorySyncStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectorySyncStore.swift; sourceTree = "<group>"; };
 		572D9AA4E98BAF1189861EE0 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		57EADC2BF92F25F04E15D4E4 /* LegacyPreferencesMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyPreferencesMigration.swift; sourceTree = "<group>"; };
 		6EF18930B6899791C5E2A8F3 /* ExtensionSetupGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionSetupGuideView.swift; sourceTree = "<group>"; };
 		76E7B30AE9273246E8F00318 /* NotificationPermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPermissionManager.swift; sourceTree = "<group>"; };
 		7C12AF81166F4A84871D475A /* TreemapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TreemapView.swift; sourceTree = "<group>"; };
@@ -149,8 +143,6 @@
 			children = (
 				359E9C6B91CEFEB1A507CC23 /* BookmarkManager.swift */,
 				2A31D482DDEFEC346595DC82 /* DirectorySyncConstants.swift */,
-				5247D2D48B5B869EA1F0AEAF /* DirectorySyncStore.swift */,
-				57EADC2BF92F25F04E15D4E4 /* LegacyPreferencesMigration.swift */,
 				1BB8ECD562B5193B4268D253 /* AnalyzerEngineSubset */,
 			);
 			path = Shared;
@@ -320,10 +312,8 @@
 				7661F861DCA74D3790022F98 /* ContentView.swift in Sources */,
 				17CB01F58FEF2800E2DBEA61 /* DirectoryAuthorizationView.swift in Sources */,
 				84BF7E8FA22F7087EB6DBF54 /* DirectorySyncConstants.swift in Sources */,
-				06EA39BE1A5260826D7621A4 /* DirectorySyncStore.swift in Sources */,
 				06227F9F628537175A0D56E9 /* ExtensionSetupGuideView.swift in Sources */,
 				D31B98BBBB5CA6AE3685F3B8 /* FileNode.swift in Sources */,
-				C0D8084B5A80280EE0347E8B /* LegacyPreferencesMigration.swift in Sources */,
 				96103BEDA9152C0B91D27274 /* NotificationPermissionManager.swift in Sources */,
 				634D412ADBE3485CB997E3CC /* SizeFormatter.swift in Sources */,
 				2D17A457E34E97D8B1453391 /* SwiftSweepMASApp.swift in Sources */,
@@ -339,10 +329,8 @@
 				7583CAEF054CE325CE87A50E /* AnalyzerEngine.swift in Sources */,
 				52EA3208E7B3609AE064F9EE /* BookmarkManager.swift in Sources */,
 				91A83CBD7679566CDD334E26 /* DirectorySyncConstants.swift in Sources */,
-				680B7A7E0528B9330B72387E /* DirectorySyncStore.swift in Sources */,
 				2E3702B8DCDFAE8CB3EA255D /* FileNode.swift in Sources */,
 				E4D1A9D20351E25BAE060608 /* FinderSync.swift in Sources */,
-				696191CBA8CDE17C9FA40144 /* LegacyPreferencesMigration.swift in Sources */,
 				28132674F54FAA4636EE90EC /* ResultPresenter.swift in Sources */,
 				E463D5065FEC9D4EC55DF5FF /* SizeFormatter.swift in Sources */,
 			);
