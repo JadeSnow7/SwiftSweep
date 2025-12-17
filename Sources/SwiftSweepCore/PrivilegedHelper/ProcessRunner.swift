@@ -59,6 +59,29 @@ public struct ProcessRunnerConfig: Sendable {
         timeout: 5.0
     )
     
+    /// Package Finder 配置 - 允许常见包管理器工具
+    public static let packageFinder = ProcessRunnerConfig(
+        allowedExecutables: [
+            // Homebrew (Apple Silicon + Intel)
+            "/opt/homebrew/bin/brew",
+            "/usr/local/bin/brew",
+            // npm (Apple Silicon + Intel)
+            "/opt/homebrew/bin/npm",
+            "/usr/local/bin/npm",
+            // Python (System + Apple Silicon + Intel)
+            "/usr/bin/python3",
+            "/opt/homebrew/bin/python3",
+            "/usr/local/bin/python3",
+            // gem (System + Apple Silicon + Intel)
+            "/usr/bin/gem",
+            "/opt/homebrew/bin/gem",
+            "/usr/local/bin/gem"
+        ],
+        requireCodesign: false,  // 外部工具不需要验签
+        maxOutputSize: 10 * 1024 * 1024,  // 10MB
+        timeout: 60
+    )
+    
     public init(allowedExecutables: Set<String>, requireCodesign: Bool, maxOutputSize: Int, timeout: TimeInterval) {
         self.allowedExecutables = Set(allowedExecutables.map { Self.canonicalize($0) })
         self.requireCodesign = requireCodesign
@@ -83,7 +106,12 @@ public final class ProcessRunner: @unchecked Sendable {
     
     // MARK: - Public API
     
-    public func run(executable: String, arguments: [String]) async -> CommandResult {
+    /// Run a command with specified executable and arguments.
+    /// - Parameters:
+    ///   - executable: Path to the executable
+    ///   - arguments: Command line arguments
+    ///   - environment: Environment variables (default: empty for security)
+    public func run(executable: String, arguments: [String], environment: [String: String] = [:]) async -> CommandResult {
         // Canonicalize and validate
         let canonicalPath = ProcessRunnerConfig.canonicalize(executable)
         guard config.allowedExecutables.contains(canonicalPath) else {
@@ -108,7 +136,7 @@ public final class ProcessRunner: @unchecked Sendable {
         }
         
         return await withCheckedContinuation { continuation in
-            runProcess(executable: canonicalPath, arguments: arguments) { result in
+            runProcess(executable: canonicalPath, arguments: arguments, environment: environment) { result in
                 continuation.resume(returning: result)
             }
         }
@@ -116,12 +144,13 @@ public final class ProcessRunner: @unchecked Sendable {
     
     // MARK: - Private Implementation
     
-    private func runProcess(executable: String, arguments: [String], completion: @escaping (CommandResult) -> Void) {
+    private func runProcess(executable: String, arguments: [String], environment: [String: String], completion: @escaping (CommandResult) -> Void) {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
         process.standardInput = FileHandle.nullDevice
-        process.environment = [:] // Minimal environment
+        // Use provided environment (empty by default for security, or custom for Package Finder)
+        process.environment = environment.isEmpty ? [:] : environment
         
         // Pipes
         let stdoutPipe = Pipe()

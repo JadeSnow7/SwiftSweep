@@ -32,6 +32,7 @@ let package = Package(
                 "UninstallEngine",
                 "PrivilegedHelper",
                 "Shared",
+                "PackageScanner",
             ]
         ),
         
