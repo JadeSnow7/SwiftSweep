@@ -269,8 +269,8 @@ public struct PathValidator {
 
 extension UninstallEngine {
     
-    /// 创建删除计划
-    public func createDeletionPlan(for app: InstalledApp) throws -> DeletionPlan {
+    /// 创建删除计划（异步计算体积）
+    public func createDeletionPlan(for app: InstalledApp) async throws -> DeletionPlan {
         logger.info("Creating deletion plan for: \(app.name)")
         
         // 验证应用可删除
@@ -278,8 +278,8 @@ extension UninstallEngine {
         
         var items: [DeletionItem] = []
         
-        // 添加残留文件
-        let residuals = try findResidualFiles(for: app)
+        // 添加残留文件（计算体积用于显示）
+        let residuals = try findResidualFiles(for: app, calculateSizes: true)
         for residual in residuals {
             do {
                 let resolvedPath = try PathValidator.validate(path: residual.path)
@@ -296,12 +296,18 @@ extension UninstallEngine {
         }
         
         // 添加应用本体（放在最后删除）
+        // 计算应用体积（如果还没计算）
+        var appSize = app.size
+        if appSize == 0 {
+            appSize = await calculateSizeAsync(at: app.path)
+        }
+        
         let appResolvedPath = try PathValidator.validate(path: app.path)
         let appItem = DeletionItem(
             path: app.path,
             resolvedPath: appResolvedPath,
             kind: .app,
-            size: app.size
+            size: appSize
         )
         items.append(appItem)
         

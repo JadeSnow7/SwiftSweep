@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 
 struct CleanView: View {
     @StateObject private var viewModel = CleanupViewModel()

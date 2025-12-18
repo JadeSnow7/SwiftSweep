@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 
 struct SettingsView: View {
     @AppStorage("autoCleanOnLaunch") private var autoCleanOnLaunch = false

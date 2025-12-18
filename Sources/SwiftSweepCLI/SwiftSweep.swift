@@ -1,6 +1,8 @@
 import Foundation
 import ArgumentParser
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 
 @main
 struct SwiftSweep: ParsableCommand {
@@ -569,4 +571,3 @@ struct Uninstall: ParsableCommand {
         }
     }
 }
-

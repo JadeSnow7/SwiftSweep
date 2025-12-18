@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 
 /// Treemap visualization for disk usage - shows rectangles sized by file/folder size
 struct TreemapView: View {

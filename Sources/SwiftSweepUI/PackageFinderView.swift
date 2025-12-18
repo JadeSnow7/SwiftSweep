@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 
 #if !SWIFTSWEEP_MAS
 

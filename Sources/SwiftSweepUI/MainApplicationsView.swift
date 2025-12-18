@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 import AppInventoryUI
 
 /// Shared navigation state for passing data between views

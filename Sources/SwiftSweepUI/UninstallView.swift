@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 
 // MARK: - Apple App Confirmation Sheet
 
@@ -787,13 +789,16 @@ class UninstallViewModel: ObservableObject {
         var appWithResiduals = app
         appWithResiduals.residualFiles = residuals
         
-        do {
-            deletionPlan = try UninstallEngine.shared.createDeletionPlan(for: appWithResiduals)
-            deletionResult = nil
-            showingConfirmation = true
-        } catch {
-            errorMessage = error.localizedDescription
-            showingError = true
+        // Run async deletion plan creation
+        Task {
+            do {
+                deletionPlan = try await UninstallEngine.shared.createDeletionPlan(for: appWithResiduals)
+                deletionResult = nil
+                showingConfirmation = true
+            } catch {
+                errorMessage = error.localizedDescription
+                showingError = true
+            }
         }
     }
     

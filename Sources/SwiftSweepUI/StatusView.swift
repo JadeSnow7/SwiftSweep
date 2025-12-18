@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 
 struct StatusView: View {
     @StateObject private var monitor = StatusMonitorViewModel()

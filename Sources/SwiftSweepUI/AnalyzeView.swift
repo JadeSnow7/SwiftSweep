@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 
 struct AnalyzeView: View {
     @StateObject private var viewModel = AnalyzeViewModel()

@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 
 struct OptimizeView: View {
     @StateObject private var viewModel = OptimizeViewModel()

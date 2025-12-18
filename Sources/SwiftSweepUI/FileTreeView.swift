@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 
 /// Hierarchical tree view for disk analysis - shows folders and files in an outline
 struct FileTreeView: View {
