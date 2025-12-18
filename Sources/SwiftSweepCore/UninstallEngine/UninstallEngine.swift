@@ -55,20 +55,21 @@ public final class UninstallEngine {
     private init() {}
     
     /// 扫描已安装的应用
-    public func scanInstalledApps() async throws -> [InstalledApp] {
-        logger.info("Scanning installed applications...")
+    /// - Parameter includeSizes: 是否计算体积（默认 false 提升性能）
+    public func scanInstalledApps(includeSizes: Bool = false) async throws -> [InstalledApp] {
+        logger.info("Scanning installed applications (includeSizes: \(includeSizes))...")
         
         var apps: [InstalledApp] = []
         let fileManager = FileManager.default
         
         // 扫描 /Applications
-        let systemApps = try scanApplicationsDirectory(at: "/Applications")
+        let systemApps = try scanApplicationsDirectory(at: "/Applications", includeSizes: includeSizes)
         apps.append(contentsOf: systemApps)
         
         // 扫描 ~/Applications
         let userAppsPath = NSHomeDirectory() + "/Applications"
         if fileManager.fileExists(atPath: userAppsPath) {
-            let userApps = try scanApplicationsDirectory(at: userAppsPath)
+            let userApps = try scanApplicationsDirectory(at: userAppsPath, includeSizes: includeSizes)
             apps.append(contentsOf: userApps)
         }
         
@@ -77,7 +78,10 @@ public final class UninstallEngine {
     }
     
     /// 查找应用的残留文件
-    public func findResidualFiles(for app: InstalledApp) throws -> [ResidualFile] {
+    /// - Parameters:
+    ///   - app: 目标应用
+    ///   - calculateSizes: 是否计算体积（默认 false 提升性能）
+    public func findResidualFiles(for app: InstalledApp, calculateSizes: Bool = false) throws -> [ResidualFile] {
         var residuals: [ResidualFile] = []
         let fileManager = FileManager.default
         let home = NSHomeDirectory()
@@ -105,7 +109,8 @@ public final class UninstallEngine {
                        lowerItem.contains(lowerName) ||
                        lowerBundle.contains(lowerItem.replacingOccurrences(of: ".plist", with: "")) {
                         let fullPath = basePath + "/" + item
-                        let size = calculateSize(at: fullPath)
+                        // 仅在需要时计算体积
+                        let size: Int64 = calculateSizes ? calculateSize(at: fullPath) : 0
                         residuals.append(ResidualFile(path: fullPath, size: size, type: type))
                     }
                 }
@@ -115,9 +120,16 @@ public final class UninstallEngine {
         return residuals
     }
     
+    /// 计算单个路径的体积（异步，供懒加载使用）
+    public func calculateSizeAsync(at path: String) async -> Int64 {
+        return await Task.detached(priority: .utility) {
+            self.calculateSize(at: path)
+        }.value
+    }
+    
     // MARK: - Private Methods
     
-    private func scanApplicationsDirectory(at path: String) throws -> [InstalledApp] {
+    private func scanApplicationsDirectory(at path: String, includeSizes: Bool = false) throws -> [InstalledApp] {
         var apps: [InstalledApp] = []
         let fileManager = FileManager.default
         
@@ -137,8 +149,8 @@ public final class UninstallEngine {
                 bundleID = plist["CFBundleIdentifier"] as? String ?? "unknown"
             }
             
-            // 获取应用大小
-            let size = calculateSize(at: appPath)
+            // 获取应用大小（仅在需要时计算）
+            let size: Int64 = includeSizes ? calculateSize(at: appPath) : 0
             
             // 获取最后使用时间
             let lastUsed = try? fileManager.attributesOfItem(atPath: appPath)[.modificationDate] as? Date

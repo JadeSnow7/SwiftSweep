@@ -14,7 +14,6 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
         .package(url: "https://github.com/apple/swift-log", from: "1.4.0"),
-        .package(url: "https://github.com/groue/GRDB.swift", from: "6.29.0"),
         .package(path: "Packages/SwiftSweepAppInventory"),
     ],
     targets: [
@@ -23,7 +22,6 @@ let package = Package(
             name: "SwiftSweepCore",
             dependencies: [
                 .product(name: "Logging", package: "swift-log"),
-                .product(name: "GRDB", package: "GRDB.swift"),
             ],
             path: "Sources/SwiftSweepCore",
             sources: [

@@ -311,18 +311,15 @@ extension UninstallEngine {
     
     #if !SWIFTSWEEP_MAS
     /// 执行删除计划 (仅 Developer ID 版本)
+    /// - Parameters:
+    ///   - plan: 删除计划
+    ///   - permanentDelete: true 永久删除，false 移到废纸篓（默认）
     @available(macOS 13.0, *)
-    public func executeDeletionPlan(_ plan: DeletionPlan) async throws -> DeletionResult {
-        logger.info("Executing deletion plan for: \(plan.app.name)")
-        
-        let helper = HelperClient.shared
-        
-        // 检查 Helper 状态
-        guard helper.checkStatus() == .enabled else {
-            throw HelperClient.HelperError.notInstalled
-        }
+    public func executeDeletionPlan(_ plan: DeletionPlan, permanentDelete: Bool = false) async throws -> DeletionResult {
+        logger.info("Executing deletion plan for: \(plan.app.name), permanent: \(permanentDelete)")
         
         var results: [DeletionItemResult] = []
+        let fm = FileManager.default
         
         // 按顺序删除（残留文件先删，应用最后删）
         for item in plan.items {
@@ -330,9 +327,49 @@ extension UninstallEngine {
                 // 再次在执行前验证路径（双重保险）
                 _ = try PathValidator.validate(path: item.path)
                 
-                try await helper.deleteFile(at: item.path)
-                results.append(DeletionItemResult(item: item, success: true))
-                logger.info("Deleted: \(item.path)")
+                let url = URL(fileURLWithPath: item.path)
+                
+                // 策略：先尝试标准删除，权限不足时再调用 Helper
+                var deletedWithStandard = false
+                
+                do {
+                    if permanentDelete {
+                        // 永久删除
+                        try fm.removeItem(at: url)
+                    } else {
+                        // 移到废纸篓（推荐，用户可恢复）
+                        try fm.trashItem(at: url, resultingItemURL: nil)
+                    }
+                    deletedWithStandard = true
+                } catch let error as NSError {
+                    // 检查是否为权限错误
+                    let isPermissionError = error.domain == NSCocoaErrorDomain && 
+                        (error.code == NSFileWriteNoPermissionError || 
+                         error.code == NSFileReadNoPermissionError ||
+                         error.code == CocoaError.fileWriteNoPermission.rawValue)
+                    
+                    let isPosixPermError = error.domain == NSPOSIXErrorDomain &&
+                        (error.code == Int(EPERM) || error.code == Int(EACCES))
+                    
+                    if isPermissionError || isPosixPermError {
+                        // 权限不足，使用 Helper 提权删除
+                        logger.info("Permission denied for \(item.path), falling back to Helper")
+                        let helper = HelperClient.shared
+                        if helper.checkStatus() == .enabled {
+                            try await helper.deleteFile(at: item.path)
+                            deletedWithStandard = true
+                        } else {
+                            throw error // Helper 未安装，抛出原始错误
+                        }
+                    } else {
+                        throw error // 其他错误直接抛出
+                    }
+                }
+                
+                if deletedWithStandard {
+                    results.append(DeletionItemResult(item: item, success: true))
+                    logger.info("Deleted: \(item.path)")
+                }
             } catch {
                 logger.error("Failed to delete: \(item.path) - \(error)")
                 results.append(DeletionItemResult(item: item, success: false, error: error.localizedDescription))

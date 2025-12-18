@@ -631,7 +631,7 @@ class UninstallViewModel: ObservableObject {
     /// Scan apps with SWR pattern: load cache first, then background refresh
     func scanApps() async {
         // 1. Load from cache first (fast, < 200ms)
-        let cached = await UninstallCache.shared.loadCachedApps()
+        let cached = UninstallCacheStore.shared.loadCachedApps()
         if !cached.isEmpty {
             apps = cached.map { $0.toInstalledApp() }
             // Show background refresh indicator instead of full scanning
@@ -648,14 +648,15 @@ class UninstallViewModel: ObservableObject {
                 let freshApps = try await UninstallEngine.shared.scanInstalledApps()
                 let total = freshApps.count
                 
-                // Update progress and save to cache incrementally
-                for (index, app) in freshApps.enumerated() {
+                // Convert to cached format
+                let cachedApps = freshApps.map { CachedAppInfo(from: $0) }
+                
+                // Save all to cache at once
+                UninstallCacheStore.shared.saveApps(cachedApps)
+                
+                // Update progress
+                for (index, _) in freshApps.enumerated() {
                     if Task.isCancelled { break }
-                    
-                    // Save to cache
-                    await UninstallCache.shared.saveApp(app)
-                    
-                    // Update progress on main thread
                     await MainActor.run {
                         self.scanProgress = (index + 1, total)
                     }
@@ -670,7 +671,7 @@ class UninstallViewModel: ObservableObject {
                 }
                 
                 // 4. Cleanup stale cache entries
-                await UninstallCache.shared.cleanup()
+                UninstallCacheStore.shared.cleanup()
                 
             } catch {
                 await MainActor.run {
@@ -699,7 +700,7 @@ class UninstallViewModel: ObservableObject {
             guard let self = self else { return }
             
             // 1. Load from cache first
-            let cached = await UninstallCache.shared.loadResiduals(for: app.path)
+            let cached = UninstallCacheStore.shared.loadResiduals(for: app.path)
             if !cached.isEmpty {
                 let cachedResiduals = cached.map { $0.toResidualFile() }
                 await MainActor.run {
@@ -711,8 +712,9 @@ class UninstallViewModel: ObservableObject {
             do {
                 let freshResiduals = try UninstallEngine.shared.findResidualFiles(for: app)
                 
-                // Save to cache
-                await UninstallCache.shared.saveResiduals(freshResiduals, for: app.path)
+                // Convert and save to cache
+                let cachedResiduals = freshResiduals.map { CachedResidualInfo(from: $0, appPath: app.path) }
+                UninstallCacheStore.shared.saveResiduals(cachedResiduals, for: app.path)
                 
                 // Update UI
                 await MainActor.run {
