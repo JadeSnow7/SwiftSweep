@@ -47,28 +47,76 @@ public final class RecommendationEngine: @unchecked Sendable {
   // MARK: - Evaluation
 
   /// Evaluates all registered rules and returns sorted recommendations.
-  /// - Parameter context: The context containing data for rule evaluation.
+  /// - Parameters:
+  ///   - context: The context containing data for rule evaluation.
+  ///   - onProgress: Optional callback for progress updates (ruleName, current, total).
   /// - Returns: Recommendations sorted by severity, then by reclaim bytes.
-  public func evaluate(context: RecommendationContext) async throws -> [Recommendation] {
+  public func evaluate(
+    context: RecommendationContext,
+    onProgress: ((String, Int, Int) -> Void)? = nil
+  ) async throws -> [Recommendation] {
     let rulesToEvaluate: [any RecommendationRule]
 
     lock.lock()
-    rulesToEvaluate = rules
+    // Filter out disabled rules
+    let enabledRuleIDs = RuleSettings.shared.enabledRuleIDs
+    rulesToEvaluate = rules.filter { enabledRuleIDs.contains($0.id) }
     lock.unlock()
 
-    logger.info("Evaluating \(rulesToEvaluate.count) rules...")
+    let totalRules = rulesToEvaluate.count
+    logger.info("Evaluating \(totalRules) rules in parallel...")
 
-    var allRecommendations: [Recommendation] = []
+    // Parallel execution with TaskGroup
+    let allRecommendations = await withTaskGroup(
+      of: (String, [Recommendation]).self,
+      returning: [Recommendation].self
+    ) { group in
+      for (index, rule) in rulesToEvaluate.enumerated() {
+        group.addTask {
+          do {
+            // Timeout: 30 seconds per rule
+            let recommendations = try await withThrowingTaskGroup(of: [Recommendation].self) {
+              timeoutGroup in
+              timeoutGroup.addTask {
+                try await rule.evaluate(context: context)
+              }
+              timeoutGroup.addTask {
+                try await Task.sleep(nanoseconds: 30_000_000_000)  // 30 seconds
+                throw RuleError.timeout(ruleId: rule.id)
+              }
 
-    for rule in rulesToEvaluate {
-      do {
-        let recommendations = try await rule.evaluate(context: context)
-        allRecommendations.append(contentsOf: recommendations)
-        logger.debug("Rule '\(rule.id)' generated \(recommendations.count) recommendations")
-      } catch {
-        logger.error("Rule '\(rule.id)' failed: \(error.localizedDescription)")
-        // Continue with other rules
+              // Return first to complete (either result or timeout)
+              if let result = try await timeoutGroup.next() {
+                timeoutGroup.cancelAll()
+                return result
+              }
+              return []
+            }
+
+            return (rule.id, recommendations)
+          } catch let error as RuleError {
+            self.logger.warning("Rule '\(rule.id)' timed out")
+            return (rule.id, [])
+          } catch {
+            self.logger.error("Rule '\(rule.id)' failed: \(error.localizedDescription)")
+            return (rule.id, [])
+          }
+        }
       }
+
+      var results: [Recommendation] = []
+      var completed = 0
+
+      for await (ruleId, recommendations) in group {
+        completed += 1
+        results.append(contentsOf: recommendations)
+        onProgress?(ruleId, completed, totalRules)
+        self.logger.debug(
+          "Rule '\(ruleId)' generated \(recommendations.count) recommendations (\(completed)/\(totalRules))"
+        )
+      }
+
+      return results
     }
 
     // Sort: critical first, then by reclaim bytes (descending)
@@ -81,6 +129,11 @@ public final class RecommendationEngine: @unchecked Sendable {
 
     logger.info("Generated \(sorted.count) total recommendations")
     return sorted
+  }
+
+  /// Rule evaluation error types
+  enum RuleError: Error {
+    case timeout(ruleId: String)
   }
 
   /// Convenience method: builds context from system and evaluates.
@@ -141,6 +194,8 @@ public final class RecommendationEngine: @unchecked Sendable {
     register(rule: LargeCacheRule())
     register(rule: UnusedAppsRule())
     register(rule: ScreenshotCleanupRule())
+    register(rule: BrowserCacheRule())
+    register(rule: TrashReminderRule())
   }
 
   private func scanDownloadsDirectory() -> [FileInfo] {

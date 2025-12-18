@@ -147,6 +147,7 @@ public struct Action: Sendable, Codable {
 public enum ActionType: String, Sendable, Codable {
   case cleanupDelete = "cleanupDelete"  // Permanently delete
   case cleanupTrash = "cleanupTrash"  // Move to trash (safer)
+  case emptyTrash = "emptyTrash"  // Empty the Trash
   case optimizeTask = "optimizeTask"  // Run optimization task
   case openFinder = "openFinder"  // Reveal in Finder
   case uninstallPlan = "uninstallPlan"  // Invoke uninstall engine
