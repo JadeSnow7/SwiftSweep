@@ -1,0 +1,93 @@
+/* Navigation */
+"nav.system" = "System";
+"nav.status" = "Status";
+"nav.maintenance" = "Maintenance";
+"nav.clean" = "Clean";
+"nav.uninstall" = "Uninstall";
+"nav.optimize" = "Optimize";
+"nav.tools" = "Tools";
+"nav.analyze" = "Analyze";
+"nav.applications" = "Applications";
+"nav.packages" = "Packages";
+"nav.settings" = "Settings";
+
+/* Status View */
+"status.title" = "System Status";
+"status.cpu" = "CPU";
+"status.memory" = "Memory";
+"status.disk" = "Disk";
+"status.network" = "Network";
+"status.battery" = "Battery";
+"status.used" = "Used";
+"status.free" = "Free";
+"status.download" = "Download";
+"status.upload" = "Upload";
+
+/* Clean View */
+"clean.title" = "System Cleanup";
+"clean.scan" = "Scan";
+"clean.scanning" = "Scanning...";
+"clean.clean" = "Clean Selected";
+"clean.noItems" = "No cleanable items found";
+"clean.totalSize" = "Total: %@";
+"clean.selectAll" = "Select All";
+"clean.deselectAll" = "Deselect All";
+
+/* Uninstall View */
+"uninstall.title" = "Application Uninstaller";
+"uninstall.search" = "Search applications...";
+"uninstall.noApps" = "No applications found";
+"uninstall.loading" = "Loading applications...";
+"uninstall.appSize" = "App Size";
+"uninstall.residualFiles" = "Residual Files";
+"uninstall.totalSize" = "Total Size";
+"uninstall.uninstall" = "Uninstall";
+"uninstall.confirm" = "Confirm Uninstall";
+"uninstall.confirmMessage" = "Are you sure you want to uninstall %@?";
+"uninstall.cancel" = "Cancel";
+
+/* Optimize View */
+"optimize.title" = "System Optimization";
+"optimize.flushDNS" = "Flush DNS Cache";
+"optimize.flushDNS.desc" = "Resolve DNS issues by clearing the cache";
+"optimize.rebuildSpotlight" = "Rebuild Spotlight";
+"optimize.rebuildSpotlight.desc" = "Fix search issues by rebuilding the index";
+"optimize.clearMemory" = "Clear Memory";
+"optimize.clearMemory.desc" = "Free up inactive memory";
+"optimize.resetDock" = "Reset Dock";
+"optimize.resetDock.desc" = "Reset the Dock to default state";
+"optimize.run" = "Run";
+"optimize.running" = "Running...";
+"optimize.success" = "Success";
+"optimize.failed" = "Failed";
+
+/* Analyze View */
+"analyze.title" = "Disk Analyzer";
+"analyze.selectFolder" = "Select Folder";
+"analyze.analyzing" = "Analyzing...";
+"analyze.topFiles" = "Top Files";
+"analyze.topFolders" = "Top Folders";
+"analyze.totalSize" = "Total Size";
+
+/* Settings View */
+"settings.title" = "Settings";
+"settings.general" = "General";
+"settings.language" = "Language";
+"settings.about" = "About";
+"settings.version" = "Version";
+"settings.helper" = "Privileged Helper";
+"settings.helperInstalled" = "Installed";
+"settings.helperNotInstalled" = "Not Installed";
+"settings.installHelper" = "Install Helper";
+
+/* Common */
+"common.ok" = "OK";
+"common.cancel" = "Cancel";
+"common.done" = "Done";
+"common.error" = "Error";
+"common.success" = "Success";
+"common.loading" = "Loading...";
+"common.refresh" = "Refresh";
+"common.delete" = "Delete";
+"common.open" = "Open";
+"common.openInFinder" = "Show in Finder";

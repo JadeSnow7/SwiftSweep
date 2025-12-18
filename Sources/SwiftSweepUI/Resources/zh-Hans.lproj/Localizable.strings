@@ -1,0 +1,93 @@
+/* Navigation */
+"nav.system" = "系统";
+"nav.status" = "状态";
+"nav.maintenance" = "维护";
+"nav.clean" = "清理";
+"nav.uninstall" = "卸载";
+"nav.optimize" = "优化";
+"nav.tools" = "工具";
+"nav.analyze" = "分析";
+"nav.applications" = "应用程序";
+"nav.packages" = "软件包";
+"nav.settings" = "设置";
+
+/* Status View */
+"status.title" = "系统状态";
+"status.cpu" = "CPU";
+"status.memory" = "内存";
+"status.disk" = "磁盘";
+"status.network" = "网络";
+"status.battery" = "电池";
+"status.used" = "已用";
+"status.free" = "可用";
+"status.download" = "下载";
+"status.upload" = "上传";
+
+/* Clean View */
+"clean.title" = "系统清理";
+"clean.scan" = "扫描";
+"clean.scanning" = "扫描中...";
+"clean.clean" = "清理选中项";
+"clean.noItems" = "未发现可清理项目";
+"clean.totalSize" = "总计: %@";
+"clean.selectAll" = "全选";
+"clean.deselectAll" = "取消全选";
+
+/* Uninstall View */
+"uninstall.title" = "应用卸载器";
+"uninstall.search" = "搜索应用程序...";
+"uninstall.noApps" = "未找到应用程序";
+"uninstall.loading" = "正在加载应用程序...";
+"uninstall.appSize" = "应用大小";
+"uninstall.residualFiles" = "残留文件";
+"uninstall.totalSize" = "总大小";
+"uninstall.uninstall" = "卸载";
+"uninstall.confirm" = "确认卸载";
+"uninstall.confirmMessage" = "确定要卸载 %@ 吗？";
+"uninstall.cancel" = "取消";
+
+/* Optimize View */
+"optimize.title" = "系统优化";
+"optimize.flushDNS" = "刷新 DNS 缓存";
+"optimize.flushDNS.desc" = "通过清除缓存解决 DNS 问题";
+"optimize.rebuildSpotlight" = "重建 Spotlight 索引";
+"optimize.rebuildSpotlight.desc" = "通过重建索引修复搜索问题";
+"optimize.clearMemory" = "清理内存";
+"optimize.clearMemory.desc" = "释放非活跃内存";
+"optimize.resetDock" = "重置 Dock";
+"optimize.resetDock.desc" = "将 Dock 重置为默认状态";
+"optimize.run" = "运行";
+"optimize.running" = "运行中...";
+"optimize.success" = "成功";
+"optimize.failed" = "失败";
+
+/* Analyze View */
+"analyze.title" = "磁盘分析";
+"analyze.selectFolder" = "选择文件夹";
+"analyze.analyzing" = "分析中...";
+"analyze.topFiles" = "最大文件";
+"analyze.topFolders" = "最大文件夹";
+"analyze.totalSize" = "总大小";
+
+/* Settings View */
+"settings.title" = "设置";
+"settings.general" = "通用";
+"settings.language" = "语言";
+"settings.about" = "关于";
+"settings.version" = "版本";
+"settings.helper" = "特权助手";
+"settings.helperInstalled" = "已安装";
+"settings.helperNotInstalled" = "未安装";
+"settings.installHelper" = "安装助手";
+
+/* Common */
+"common.ok" = "确定";
+"common.cancel" = "取消";
+"common.done" = "完成";
+"common.error" = "错误";
+"common.success" = "成功";
+"common.loading" = "加载中...";
+"common.refresh" = "刷新";
+"common.delete" = "删除";
+"common.open" = "打开";
+"common.openInFinder" = "在访达中显示";
