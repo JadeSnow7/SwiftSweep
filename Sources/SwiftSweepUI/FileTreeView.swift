@@ -138,9 +138,9 @@ struct FileTreeRow: View {
                 }
             }
             
-            // Children (if expanded)
+            // Children (if expanded) - rely on Core pre-sorted order
             if isExpanded, let children = node.children {
-                ForEach(children.sorted { $0.size > $1.size }) { child in
+                ForEach(children) { child in
                     FileTreeRow(
                         node: child,
                         depth: depth + 1,

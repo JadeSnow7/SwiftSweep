@@ -662,21 +662,12 @@ class UninstallViewModel: ObservableObject {
 
       do {
         let freshApps = try await UninstallEngine.shared.scanInstalledApps()
-        let total = freshApps.count
 
         // Convert to cached format
         let cachedApps = freshApps.map { CachedAppInfo(from: $0) }
 
         // Save all to cache at once
         UninstallCacheStore.shared.saveApps(cachedApps)
-
-        // Update progress
-        for (index, _) in freshApps.enumerated() {
-          if Task.isCancelled { break }
-          await MainActor.run {
-            self.scanProgress = (index + 1, total)
-          }
-        }
 
         // 3. Update UI with fresh data
         await MainActor.run {
