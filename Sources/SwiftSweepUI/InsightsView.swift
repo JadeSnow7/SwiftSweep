@@ -398,6 +398,16 @@ struct ActionConfirmationSheet: View {
 
           await MainActor.run {
             isExecuting = false
+            
+            // Log the cleanup action
+            ActionLogger.shared.logCleanup(
+              ruleId: recommendation.id,
+              paths: pathsToClean,
+              totalSize: totalFreed,
+              success: true,
+              itemsMoved: movedCount
+            )
+            
             onComplete(
               ActionResult(
                 success: true,
@@ -730,7 +740,7 @@ struct BatchCleanupSheet: View {
       for rec in recommendations {
         for action in rec.actions {
           if action.type == .cleanupTrash || action.type == .cleanupDelete,
-             case .paths(let paths) = action.payload
+            case .paths(let paths) = action.payload
           {
             allPaths.append(contentsOf: paths)
           }
@@ -747,7 +757,7 @@ struct BatchCleanupSheet: View {
         if fm.fileExists(atPath: path) {
           do {
             if let attrs = try? fm.attributesOfItem(atPath: path),
-               let size = attrs[.size] as? Int64
+              let size = attrs[.size] as? Int64
             {
               totalFreed += size
             }
