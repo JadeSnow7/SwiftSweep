@@ -151,10 +151,36 @@ public struct PathValidator {
         "/Library/",  // 系统级 Library
     ]
     
-    /// 禁止删除的 Bundle ID 前缀
-    private static let blockedBundleIDPrefixes: [String] = [
-        "com.apple.",
-    ]
+    /// 禁止删除的 Bundle ID 前缀 (已废弃，改用路径判定)
+    // private static let blockedBundleIDPrefixes: [String] = ["com.apple."]
+    
+    /// Apple App Bundle ID 前缀 (需设置开关 + 二次确认)
+    private static let appleAppBundleIDPrefix = "com.apple."
+    
+    /// 检查是否为 Apple App（需设置开关 + 二次确认，但不阻止删除）
+    /// - Returns: true 如果是 Apple 官方应用
+    public static func isAppleApp(_ app: UninstallEngine.InstalledApp) -> Bool {
+        app.bundleID.lowercased().hasPrefix(appleAppBundleIDPrefix)
+    }
+    
+    /// 检查是否为系统只读卷上的 App（永远禁止删除）
+    /// - Returns: true 如果在 /System/ 或只读挂载点上
+    public static func isSystemReadOnlyApp(_ app: UninstallEngine.InstalledApp) -> Bool {
+        // 检查系统路径前缀
+        let systemPaths = ["/System/", "/System/Applications/"]
+        for prefix in systemPaths {
+            if app.path.hasPrefix(prefix) { return true }
+        }
+        
+        // 检查是否在只读挂载点（处理 firmlink 场景）
+        var statInfo = statfs()
+        if statfs(app.path, &statInfo) == 0 {
+            let flags = UInt32(statInfo.f_flags)
+            if (flags & UInt32(MNT_RDONLY)) != 0 { return true }
+        }
+        
+        return false
+    }
     
     /// 验证单个路径
     public static func validate(path: String) throws -> String {
@@ -225,17 +251,18 @@ public struct PathValidator {
     }
     
     /// 验证应用是否可以被删除
+    /// - Note: 不再根据 Bundle ID 阻止 Apple App，改用路径判定
+    ///         Apple App (com.apple.*) 在 /Applications/ 下可以删除，但需 UI 层确认
     public static func validateApp(_ app: UninstallEngine.InstalledApp) throws {
-        // 检查 Bundle ID
-        for blockedPrefix in blockedBundleIDPrefixes {
-            if app.bundleID.lowercased().hasPrefix(blockedPrefix) {
-                throw PathValidationError.appleAppBlocked(app.path)
-            }
+        // 系统只读卷上的 App 永远禁止删除
+        if isSystemReadOnlyApp(app) {
+            throw PathValidationError.systemPathBlocked(app.path)
         }
         
-        // 检查路径
+        // 检查路径是否在白名单中
         _ = try validate(path: app.path)
     }
+
 }
 
 // MARK: - UninstallEngine Extension

@@ -1,6 +1,46 @@
 import SwiftUI
 import SwiftSweepCore
 
+// MARK: - Apple App Confirmation Sheet
+
+struct AppleAppConfirmationSheet: View {
+    let appName: String
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 48))
+                .foregroundColor(.orange)
+            
+            Text("卸载 Apple 应用")
+                .font(.headline)
+            
+            Text("您正在尝试卸载 \(appName)。这是 Apple 官方应用，卸载后可能需要从 App Store 重新下载。")
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
+            
+            HStack(spacing: 16) {
+                Button("取消") {
+                    onCancel()
+                }
+                .keyboardShortcut(.escape)
+                
+                Button("确认卸载") {
+                    onConfirm()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
+            }
+            .padding(.top, 8)
+        }
+        .padding(24)
+        .frame(width: 380)
+    }
+}
+
 struct UninstallView: View {
     @StateObject private var viewModel = UninstallViewModel()
     @State private var searchText = ""
@@ -30,14 +70,33 @@ struct UninstallView: View {
                     Text("App Uninstaller")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                    Text("Remove apps and their residual files")
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 8) {
+                        Text("Remove apps and their residual files")
+                            .foregroundColor(.secondary)
+                        
+                        // Background refresh indicator
+                        if viewModel.isBackgroundRefreshing {
+                            if let progress = viewModel.scanProgress {
+                                Text("(\(progress.current)/\(progress.total))")
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+                            }
+                            ProgressView()
+                                .scaleEffect(0.6)
+                        }
+                    }
                 }
                 Spacer()
                 
                 if viewModel.isScanning {
                     ProgressView()
                         .scaleEffect(0.8)
+                } else if viewModel.isBackgroundRefreshing {
+                    Button(action: { viewModel.cancelScan() }) {
+                        Image(systemName: "xmark.circle")
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Cancel background scan")
                 } else {
                     Button(action: { Task { await viewModel.scanApps() }}) {
                         Image(systemName: "arrow.clockwise")
@@ -98,6 +157,21 @@ struct UninstallView: View {
                 UninstallConfirmationSheet(
                     plan: plan,
                     viewModel: viewModel
+                )
+            }
+        }
+        .sheet(isPresented: $viewModel.showingAppleAppConfirmation) {
+            if let app = viewModel.pendingAppleApp {
+                AppleAppConfirmationSheet(
+                    appName: app.name.replacingOccurrences(of: ".app", with: ""),
+                    onConfirm: {
+                        viewModel.showingAppleAppConfirmation = false
+                        viewModel.continueAppleAppUninstall()
+                    },
+                    onCancel: {
+                        viewModel.showingAppleAppConfirmation = false
+                        viewModel.pendingAppleApp = nil
+                    }
                 )
             }
         }
@@ -530,6 +604,14 @@ class UninstallViewModel: ObservableObject {
     @Published var showingError = false
     @Published var errorMessage: String?
     
+    // Apple App confirmation
+    @Published var showingAppleAppConfirmation = false
+    @Published var pendingAppleApp: UninstallEngine.InstalledApp?
+    @Published var pendingResiduals: [UninstallEngine.ResidualFile] = []
+    
+    // Settings
+    @AppStorage("allowAppleAppUninstall") private var allowAppleAppUninstall = false
+    
     #if !SWIFTSWEEP_MAS
     var isHelperAvailable: Bool {
         if #available(macOS 13.0, *) {
@@ -541,25 +623,109 @@ class UninstallViewModel: ObservableObject {
     var isHelperAvailable: Bool { false }
     #endif
     
+    // SWR (Stale-While-Revalidate) scanning
+    @Published var scanProgress: (current: Int, total: Int)?
+    @Published var isBackgroundRefreshing = false
+    private var scanTask: Task<Void, Never>?
+    
+    /// Scan apps with SWR pattern: load cache first, then background refresh
     func scanApps() async {
-        isScanning = true
-        do {
-            apps = try await UninstallEngine.shared.scanInstalledApps()
-        } catch {
-            print("Error scanning apps: \(error)")
+        // 1. Load from cache first (fast, < 200ms)
+        let cached = await UninstallCache.shared.loadCachedApps()
+        if !cached.isEmpty {
+            apps = cached.map { $0.toInstalledApp() }
+            // Show background refresh indicator instead of full scanning
+            isBackgroundRefreshing = true
+        } else {
+            isScanning = true
         }
-        isScanning = false
+        
+        // 2. Background scan for fresh data
+        scanTask = Task.detached { [weak self] in
+            guard let self = self else { return }
+            
+            do {
+                let freshApps = try await UninstallEngine.shared.scanInstalledApps()
+                let total = freshApps.count
+                
+                // Update progress and save to cache incrementally
+                for (index, app) in freshApps.enumerated() {
+                    if Task.isCancelled { break }
+                    
+                    // Save to cache
+                    await UninstallCache.shared.saveApp(app)
+                    
+                    // Update progress on main thread
+                    await MainActor.run {
+                        self.scanProgress = (index + 1, total)
+                    }
+                }
+                
+                // 3. Update UI with fresh data
+                await MainActor.run {
+                    self.apps = freshApps
+                    self.isScanning = false
+                    self.isBackgroundRefreshing = false
+                    self.scanProgress = nil
+                }
+                
+                // 4. Cleanup stale cache entries
+                await UninstallCache.shared.cleanup()
+                
+            } catch {
+                await MainActor.run {
+                    print("Error scanning apps: \(error)")
+                    self.isScanning = false
+                    self.isBackgroundRefreshing = false
+                    self.scanProgress = nil
+                }
+            }
+        }
     }
     
+    /// Cancel ongoing scan
+    func cancelScan() {
+        scanTask?.cancel()
+        isScanning = false
+        isBackgroundRefreshing = false
+        scanProgress = nil
+    }
+    
+    /// Load residuals with SWR pattern
     func loadResiduals(for app: UninstallEngine.InstalledApp) {
         isLoadingResiduals = true
-        do {
-            residualFiles = try UninstallEngine.shared.findResidualFiles(for: app)
-        } catch {
-            print("Error finding residuals: \(error)")
-            residualFiles = []
+        
+        Task.detached { [weak self] in
+            guard let self = self else { return }
+            
+            // 1. Load from cache first
+            let cached = await UninstallCache.shared.loadResiduals(for: app.path)
+            if !cached.isEmpty {
+                let cachedResiduals = cached.map { $0.toResidualFile() }
+                await MainActor.run {
+                    self.residualFiles = cachedResiduals
+                }
+            }
+            
+            // 2. Scan for fresh residuals in background
+            do {
+                let freshResiduals = try UninstallEngine.shared.findResidualFiles(for: app)
+                
+                // Save to cache
+                await UninstallCache.shared.saveResiduals(freshResiduals, for: app.path)
+                
+                // Update UI
+                await MainActor.run {
+                    self.residualFiles = freshResiduals
+                    self.isLoadingResiduals = false
+                }
+            } catch {
+                await MainActor.run {
+                    print("Error finding residuals: \(error)")
+                    self.isLoadingResiduals = false
+                }
+            }
         }
-        isLoadingResiduals = false
     }
     
     /// Select an app by its path URL (for navigation from Applications view)
@@ -589,6 +755,32 @@ class UninstallViewModel: ObservableObject {
     // MARK: - Uninstall Actions
     
     func prepareUninstall(app: UninstallEngine.InstalledApp, residuals: [UninstallEngine.ResidualFile]) {
+        // Check if this is an Apple App
+        if PathValidator.isAppleApp(app) {
+            if !allowAppleAppUninstall {
+                errorMessage = "请在设置中开启 'Allow Apple App Uninstall' 后重试"
+                showingError = true
+                return
+            }
+            // Need confirmation for Apple Apps
+            pendingAppleApp = app
+            pendingResiduals = residuals
+            showingAppleAppConfirmation = true
+            return
+        }
+        
+        // Non-Apple app, proceed directly
+        performUninstallPreparation(app: app, residuals: residuals)
+    }
+    
+    func continueAppleAppUninstall() {
+        guard let app = pendingAppleApp else { return }
+        performUninstallPreparation(app: app, residuals: pendingResiduals)
+        pendingAppleApp = nil
+        pendingResiduals = []
+    }
+    
+    private func performUninstallPreparation(app: UninstallEngine.InstalledApp, residuals: [UninstallEngine.ResidualFile]) {
         // Create a copy of app with residuals
         var appWithResiduals = app
         appWithResiduals.residualFiles = residuals

@@ -65,8 +65,13 @@ class HelperService: NSObject, HelperXPCProtocol {
     }
     
     func deleteFile(atPath path: String, withReply reply: @escaping (Bool, String) -> Void) {
+        // Determine if this is an uninstall operation (path starts with /Applications or ~/Applications or ~/Library)
+        let isUninstall = path.hasPrefix("/Applications/") || 
+                          path.hasPrefix(NSHomeDirectory() + "/Applications/") ||
+                          path.hasPrefix(NSHomeDirectory() + "/Library/")
+        
         do {
-            try safeDelete(at: path)
+            try safeDelete(at: path, forUninstall: isUninstall)
             reply(true, "Deleted: \(path)")
         } catch let error as HelperError {
             reply(false, "Error \(error.rawValue): \(error.description)")
@@ -75,10 +80,10 @@ class HelperService: NSObject, HelperXPCProtocol {
         }
     }
     
-    private func safeDelete(at path: String) throws {
+    private func safeDelete(at path: String, forUninstall: Bool = false) throws {
         // 1. Normalize and validate path
         guard let norm = CleanupAllowlist.normalize(path),
-              CleanupAllowlist.isTargetAllowed(norm) else {
+              CleanupAllowlist.isTargetAllowed(norm, forUninstall: forUninstall) else {
             throw HelperError.notAllowedPath
         }
         
@@ -95,7 +100,7 @@ class HelperService: NSObject, HelperXPCProtocol {
         let parentReal = String(cString: ptr)
         
         // 3. Verify parent is within allowed root
-        guard CleanupAllowlist.isParentAllowed(parentReal) else {
+        guard CleanupAllowlist.isParentAllowed(parentReal, forUninstall: forUninstall) else {
             throw HelperError.symlinkEscape
         }
         
@@ -118,11 +123,19 @@ class HelperService: NSObject, HelperXPCProtocol {
             throw HelperError.immutableFile
         }
         
-        // 6. Delete using unlinkat
         let isDir = (st.st_mode & S_IFMT) == S_IFDIR
-        let flags: Int32 = isDir ? AT_REMOVEDIR : 0
-        guard unlinkat(dirFD, name, flags) == 0 else {
-            throw HelperError.fromErrno(errno)
+        
+        // 6. Delete: use FileManager for directories (handles non-empty dirs like .app bundles)
+        if isDir {
+            // For directories (including .app bundles), use FileManager which handles recursive delete
+            let fm = FileManager.default
+            let fullPath = parentReal + "/" + name
+            try fm.removeItem(atPath: fullPath)
+        } else {
+            // For files, use unlinkat
+            guard unlinkat(dirFD, name, 0) == 0 else {
+                throw HelperError.fromErrno(errno)
+            }
         }
     }
     

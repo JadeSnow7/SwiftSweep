@@ -5,6 +5,7 @@ struct SettingsView: View {
     @AppStorage("autoCleanOnLaunch") private var autoCleanOnLaunch = false
     @AppStorage("showHiddenFiles") private var showHiddenFiles = false
     @AppStorage("defaultCleanCategory") private var defaultCleanCategory = "all"
+    @AppStorage("allowAppleAppUninstall") private var allowAppleAppUninstall = false
     @StateObject private var helperViewModel = HelperStatusViewModel()
     
     var body: some View {
@@ -35,6 +36,28 @@ struct SettingsView: View {
                         Text("Browser").tag("browser")
                     }
                     .pickerStyle(.menu)
+                }
+                
+                // Uninstall Settings
+                SettingsSection(title: "Uninstall", icon: "trash") {
+                    Toggle(isOn: $allowAppleAppUninstall) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Allow Apple App Uninstall")
+                            Text("Enable uninstalling iMovie, GarageBand, and other Apple apps from /Applications")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    if allowAppleAppUninstall {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                            Text("Apple apps can be reinstalled from the App Store")
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                        }
+                    }
                 }
                 
                 // About
