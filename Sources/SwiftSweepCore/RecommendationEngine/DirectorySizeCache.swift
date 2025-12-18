@@ -3,10 +3,12 @@ import Foundation
 // MARK: - DirectorySizeCache
 
 /// Caches directory size calculations to avoid redundant file system operations.
+/// I/O operations run outside actor isolation to allow parallel execution.
 public actor DirectorySizeCache {
   public static let shared = DirectorySizeCache()
 
   private var cache: [String: CachedSize] = [:]
+  private var inFlight: [String: Task<(Int64, Int), Never>] = [:]
   private let cacheTTL: TimeInterval = 60  // 1 minute TTL
 
   private struct CachedSize {
@@ -26,9 +28,24 @@ public actor DirectorySizeCache {
       }
     }
 
-    // Calculate
-    let (size, count) = await calculateSize(at: path)
+    // Check if already in flight
+    if let task = inFlight[path] {
+      let (size, _) = await task.value
+      return size
+    }
+
+    // Start calculation outside actor (non-isolated)
+    let task = Task.detached { () -> (Int64, Int) in
+      DirectorySizeCalculator.calculateSize(at: path)
+    }
+    inFlight[path] = task
+
+    let (size, count) = await task.value
+
+    // Update cache and remove from in-flight
     cache[path] = CachedSize(size: size, timestamp: Date(), fileCount: count)
+    inFlight.removeValue(forKey: path)
+
     return size
   }
 
@@ -41,14 +58,19 @@ public actor DirectorySizeCache {
   public func clearAll() {
     cache.removeAll()
   }
+}
 
-  private func calculateSize(at path: String) async -> (Int64, Int) {
+// MARK: - Non-isolated Size Calculator
+
+/// Performs directory size calculation outside actor isolation for parallel I/O
+public enum DirectorySizeCalculator {
+  /// Calculate total size and file count for a directory (runs on calling thread)
+  public static func calculateSize(at path: String) -> (Int64, Int) {
     let url = URL(fileURLWithPath: path)
     let fm = FileManager.default
     var totalSize: Int64 = 0
     var fileCount = 0
 
-    // Use async-friendly enumeration
     guard
       let enumerator = fm.enumerator(
         at: url,
@@ -77,7 +99,7 @@ public actor DirectorySizeCache {
 
 extension DirectorySizeCache {
   /// Quick size estimate using file system attributes (less accurate but faster)
-  public func quickSize(for path: String) -> Int64? {
+  public nonisolated func quickSize(for path: String) -> Int64? {
     let url = URL(fileURLWithPath: path)
 
     // Try to get directory size from resource values
@@ -87,7 +109,6 @@ extension DirectorySizeCache {
       return Int64(size)
     }
 
-    // Fallback to volumeAvailableCapacity calculation
     return nil
   }
 }
@@ -99,7 +120,7 @@ public actor ConcurrentDirectoryScanner {
 
   private init() {}
 
-  /// Scan multiple directories concurrently
+  /// Scan multiple directories concurrently (up to maxConcurrent at a time)
   public func scanDirectories(_ paths: [String], maxConcurrent: Int = 4) async -> [String: Int64] {
     await withTaskGroup(of: (String, Int64).self, returning: [String: Int64].self) { group in
       for path in paths.prefix(maxConcurrent) {
