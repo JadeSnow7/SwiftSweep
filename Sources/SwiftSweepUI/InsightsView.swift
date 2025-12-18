@@ -12,6 +12,7 @@ struct InsightsView: View {
   @State private var showActionSheet = false
   @State private var actionInProgress = false
   @State private var actionResult: ActionResult?
+  @State private var showBatchCleanup = false
 
   var body: some View {
     VStack(spacing: 0) {
@@ -55,6 +56,16 @@ struct InsightsView: View {
         dismissButton: .default(Text("OK"))
       )
     }
+    .sheet(isPresented: $showBatchCleanup) {
+      BatchCleanupSheet(
+        recommendations: cleanableRecommendations,
+        isPresented: $showBatchCleanup,
+        onComplete: { result in
+          actionResult = result
+          Task { await loadRecommendations() }
+        }
+      )
+    }
   }
 
   // MARK: - Header
@@ -83,6 +94,16 @@ struct InsightsView: View {
         .padding(.trailing)
       }
 
+      // Clean All button
+      if hasCleanableRecommendations {
+        Button(action: { showBatchCleanup = true }) {
+          Label("Clean All", systemImage: "trash")
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(.orange)
+        .disabled(isLoading)
+      }
+
       Button(action: { Task { await loadRecommendations() } }) {
         Label("Refresh", systemImage: "arrow.clockwise")
       }
@@ -94,6 +115,18 @@ struct InsightsView: View {
   private var totalPotentialSavings: Int64? {
     let total = recommendations.compactMap { $0.estimatedReclaimBytes }.reduce(0, +)
     return total > 0 ? total : nil
+  }
+
+  private var hasCleanableRecommendations: Bool {
+    recommendations.contains { rec in
+      rec.actions.contains { $0.type == .cleanupTrash || $0.type == .cleanupDelete }
+    }
+  }
+
+  private var cleanableRecommendations: [Recommendation] {
+    recommendations.filter { rec in
+      rec.actions.contains { $0.type == .cleanupTrash || $0.type == .cleanupDelete }
+    }
   }
 
   // MARK: - Loading View
@@ -589,6 +622,160 @@ struct EvidenceTag: View {
         Image(systemName: "sum")
       }
     }
+  }
+}
+
+// MARK: - Batch Cleanup Sheet
+
+struct BatchCleanupSheet: View {
+  let recommendations: [Recommendation]
+  @Binding var isPresented: Bool
+  let onComplete: (ActionResult) -> Void
+
+  @State private var isExecuting = false
+  @State private var progress: Double = 0
+  @State private var currentItem = ""
+
+  var body: some View {
+    VStack(spacing: 0) {
+      // Header
+      HStack {
+        Text("Clean All Recommendations")
+          .font(.headline)
+        Spacer()
+        Button(action: { isPresented = false }) {
+          Image(systemName: "xmark.circle.fill")
+            .foregroundColor(.secondary)
+            .font(.title2)
+        }
+        .buttonStyle(.plain)
+      }
+      .padding()
+
+      Divider()
+
+      // Summary
+      VStack(alignment: .leading, spacing: 12) {
+        Text("\(recommendations.count) recommendations with cleanable items")
+          .font(.subheadline)
+
+        let totalSize = recommendations.compactMap { $0.estimatedReclaimBytes }.reduce(0, +)
+        Text("Potential savings: \(formatBytes(totalSize))")
+          .font(.title2.bold())
+          .foregroundColor(.green)
+
+        // List of recommendations
+        List(recommendations, id: \.id) { rec in
+          HStack {
+            Image(systemName: "checkmark.circle.fill")
+              .foregroundColor(.green)
+            Text(rec.title)
+            Spacer()
+            if let size = rec.estimatedReclaimBytes {
+              Text(formatBytes(size))
+                .foregroundColor(.secondary)
+            }
+          }
+        }
+        .frame(height: 200)
+
+        if isExecuting {
+          VStack(alignment: .leading, spacing: 4) {
+            ProgressView(value: progress)
+            Text(currentItem)
+              .font(.caption)
+              .foregroundColor(.secondary)
+              .lineLimit(1)
+          }
+        }
+      }
+      .padding()
+
+      Divider()
+
+      // Actions
+      HStack {
+        Spacer()
+        Button("Cancel") { isPresented = false }
+          .keyboardShortcut(.escape)
+
+        Button(action: executeCleanup) {
+          if isExecuting {
+            ProgressView()
+              .scaleEffect(0.8)
+          } else {
+            Text("Clean All")
+          }
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(.orange)
+        .disabled(isExecuting)
+      }
+      .padding()
+    }
+    .frame(width: 500, height: 450)
+  }
+
+  private func executeCleanup() {
+    isExecuting = true
+    progress = 0
+
+    Task {
+      var totalMoved = 0
+      var totalFreed: Int64 = 0
+      let fm = FileManager.default
+
+      // Collect all paths
+      var allPaths: [String] = []
+      for rec in recommendations {
+        for action in rec.actions {
+          if action.type == .cleanupTrash || action.type == .cleanupDelete,
+             case .paths(let paths) = action.payload
+          {
+            allPaths.append(contentsOf: paths)
+          }
+        }
+      }
+
+      let total = allPaths.count
+      for (index, path) in allPaths.enumerated() {
+        await MainActor.run {
+          currentItem = (path as NSString).lastPathComponent
+          progress = Double(index) / Double(max(total, 1))
+        }
+
+        if fm.fileExists(atPath: path) {
+          do {
+            if let attrs = try? fm.attributesOfItem(atPath: path),
+               let size = attrs[.size] as? Int64
+            {
+              totalFreed += size
+            }
+            try fm.trashItem(at: URL(fileURLWithPath: path), resultingItemURL: nil)
+            totalMoved += 1
+          } catch {
+            // Skip failed items
+          }
+        }
+      }
+
+      await MainActor.run {
+        isExecuting = false
+        onComplete(
+          ActionResult(
+            success: true,
+            message: "Moved \(totalMoved) items to Trash. Freed \(formatBytes(totalFreed))."
+          ))
+        isPresented = false
+      }
+    }
+  }
+
+  private func formatBytes(_ bytes: Int64) -> String {
+    let gb = Double(bytes) / 1_000_000_000
+    if gb >= 1 { return String(format: "%.1f GB", gb) }
+    let mb = Double(bytes) / 1_000_000
+    return String(format: "%.0f MB", mb)
   }
 }
 

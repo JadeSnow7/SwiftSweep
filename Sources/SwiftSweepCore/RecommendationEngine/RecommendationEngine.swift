@@ -196,6 +196,7 @@ public final class RecommendationEngine: @unchecked Sendable {
     register(rule: ScreenshotCleanupRule())
     register(rule: BrowserCacheRule())
     register(rule: TrashReminderRule())
+    register(rule: MailAttachmentsRule())
   }
 
   private func scanDownloadsDirectory() -> [FileInfo] {
