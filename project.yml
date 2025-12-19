@@ -56,6 +56,7 @@ targets:
               - swiftsweep
         LSMinimumSystemVersion: "13.0"
         NSHighResolutionCapable: true
+        LSApplicationCategoryType: public.app-category.utilities
     dependencies:
       - target: SwiftSweepHelper
         embed: false
