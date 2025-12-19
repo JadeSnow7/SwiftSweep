@@ -36,6 +36,6 @@ echo "Resolving Swift Package dependencies..."
 xcodebuild -resolvePackageDependencies \
     -project SwiftSweepDevID.xcodeproj \
     -scheme SwiftSweepApp \
-    -clonedSourcePackagesDirPath /Volumes/workspace/SourcePackages
+    -disableAutomaticPackageResolution NO
 
 echo "=== ci_post_clone.sh completed ==="
