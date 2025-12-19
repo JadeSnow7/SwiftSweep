@@ -5,7 +5,11 @@
 set -euo pipefail
 
 echo "=== ci_post_clone.sh ==="
-echo "Working directory: $(pwd)"
+echo "Script directory: $(pwd)"
+
+# 切换到项目根目录 (ci_scripts 的父目录)
+cd "$(dirname "$0")/.."
+echo "Project root: $(pwd)"
 
 # 安装 XcodeGen (如果需要)
 if ! command -v xcodegen &> /dev/null; then
