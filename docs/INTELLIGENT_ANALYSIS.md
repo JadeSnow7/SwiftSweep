@@ -140,12 +140,13 @@ Core 已具备主要信号源：
   - lastUsedDate：基于文件元数据的启发式（可用性/准确性依赖系统行为）
 - **后续方向**：与 `SwiftSweepAppInventory` 的 lastUsed/智能过滤打通，提升准确性与可配置性。
 - **规则示例**：
-  - `lastUsedDate < now - 180d`
-  - `size >= 500MB`（可配置）
+  - `lastUsedDate < now - 90d`（可配置）
+  - `appSize >= 50MB`（可配置）
+  - `totalUnusedSize >= 500MB`（用于触发阈值）
   - `confidence`：若 lastUsedDate 为 nil，则不输出“未使用”，只输出“使用时间未知”（单独建议、低置信度）。
 - **输出动作**：
-  - `openFinder`（定位 .app）
-  - `uninstallPlan`（DevID 可用；MAS 版本显示限制）
+  - 当前：`openFinder`（定位 /Applications）
+  - 后续：`uninstallPlan`（DevID 可用；MAS 版本显示限制）
 
 #### B. Old Downloads（下载目录陈旧文件）
 
