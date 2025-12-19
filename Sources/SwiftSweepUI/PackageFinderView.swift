@@ -7,16 +7,22 @@ import SwiftUI
 #if !SWIFTSWEEP_MAS
 
   /// View for discovering installed packages from various package managers
-  @available(macOS 13.0, *)
-  public struct PackageFinderView: View {
+  @available(macOS 13.0, *) public struct PackageFinderView: View {
     @StateObject private var viewModel = PackageFinderViewModel()
     @State private var searchText = ""
 
-    // Operation confirmation state
+    // Package operation confirmation state
     @State private var showingConfirmation = false
     @State private var pendingOperation: PendingOperation?
     @State private var operationResult: PackageOperationResult?
     @State private var showingResult = false
+
+    // Git operation state
+    @State private var showingGitConfirmation = false
+    @State private var pendingGitOp: PendingGitOperation?
+    @State private var gitOperationResult: GitRepoScanner.GitOperationResult?
+    @State private var showingGitResult = false
+    @State private var cachedRemotes: [String: [String]] = [:]
 
     public init() {}
 
@@ -254,6 +260,38 @@ import SwiftUI
           NSPasteboard.general.clearContents()
           NSPasteboard.general.setString("cd \"\(repo.path)\"", forType: .string)
         }
+
+        Divider()
+
+        // Git operations
+        Button {
+          pendingGitOp = PendingGitOperation(type: .gc, repo: repo, remote: nil)
+          showingGitConfirmation = true
+        } label: {
+          Label("git gc --auto", systemImage: "arrow.triangle.2.circlepath")
+        }
+
+        Menu("Prune Remote") {
+          Button("Load remotes...") {
+            Task { await loadRemotes(for: repo) }
+          }
+          if let remotes = cachedRemotes[repo.id], !remotes.isEmpty {
+            Divider()
+            ForEach(remotes, id: \.self) { remote in
+              Button(remote) {
+                pendingGitOp = PendingGitOperation(type: .prune, repo: repo, remote: remote)
+                showingGitConfirmation = true
+              }
+            }
+          }
+        }
+
+        Divider()
+
+        Button("Copy gc Command") {
+          NSPasteboard.general.clearContents()
+          NSPasteboard.general.setString("git -C \"\(repo.path)\" gc --auto", forType: .string)
+        }
       }
     }
 
@@ -473,6 +511,43 @@ import SwiftUI
         return nil
       }
     }
+
+    // MARK: - Git Operations
+
+    private func loadRemotes(for repo: GitRepo) async {
+      let remotes = await viewModel.gitScanner.listRemotes(for: repo)
+      await MainActor.run {
+        cachedRemotes[repo.id] = remotes
+      }
+    }
+
+    private func executeGitOperation(_ op: PendingGitOperation) async {
+      viewModel.isOperating = true
+      defer { viewModel.isOperating = false }
+
+      let result: GitRepoScanner.GitOperationResult
+      switch op.type {
+      case .gc:
+        result = await viewModel.gitScanner.runGC(for: op.repo)
+      case .prune:
+        result = await viewModel.gitScanner.pruneRemote(for: op.repo, remote: op.remote ?? "origin")
+      }
+
+      gitOperationResult = result
+      showingGitResult = true
+
+      // Refresh sizes after gc
+      if result.success && op.type == .gc {
+        Task {
+          let sizes = await viewModel.gitScanner.getSizes(for: viewModel.gitRepos)
+          await MainActor.run {
+            for i in viewModel.gitRepos.indices {
+              viewModel.gitRepos[i].gitDirSize = sizes[viewModel.gitRepos[i].id]
+            }
+          }
+        }
+      }
+    }
   }
 
   // MARK: - Operation Types
@@ -504,6 +579,50 @@ import SwiftUI
     let providerID: String
     let executablePath: String
     let command: String
+  }
+
+  @available(macOS 13.0, *)
+  enum GitOperationType {
+    case gc
+    case prune
+
+    var title: String {
+      switch self {
+      case .gc: return "Git Garbage Collect"
+      case .prune: return "Prune Remote"
+      }
+    }
+
+    var icon: String {
+      switch self {
+      case .gc: return "arrow.triangle.2.circlepath"
+      case .prune: return "scissors"
+      }
+    }
+
+    var warning: String? {
+      switch self {
+      case .gc: return "This will clean up unnecessary files and optimize your local repository."
+      case .prune:
+        return "This will delete stale remote-tracking branches that no longer exist on the remote."
+      }
+    }
+  }
+
+  @available(macOS 13.0, *)
+  struct PendingGitOperation {
+    let type: GitOperationType
+    let repo: GitRepo
+    let remote: String?
+
+    var command: String {
+      switch type {
+      case .gc:
+        return "git -C \"\(repo.path)\" gc --auto"
+      case .prune:
+        return "git -C \"\(repo.path)\" remote prune \(remote ?? "origin")"
+      }
+    }
   }
 
   // MARK: - Confirmation Sheet
@@ -593,6 +712,81 @@ import SwiftUI
     }
   }
 
+  // MARK: - Git Operation Confirmation Sheet
+
+  @available(macOS 13.0, *)
+  struct GitOperationConfirmSheet: View {
+    let operation: PendingGitOperation
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+      VStack(spacing: 16) {
+        // Header
+        HStack {
+          Image(systemName: operation.type.icon)
+            .font(.title)
+            .foregroundColor(.accentColor)
+          VStack(alignment: .leading) {
+            Text(operation.type.title)
+              .font(.headline)
+            Text(operation.repo.name)
+              .foregroundColor(.secondary)
+          }
+          Spacer()
+        }
+
+        Divider()
+
+        // Details
+        VStack(alignment: .leading, spacing: 8) {
+          DetailRow(label: "Repository", value: operation.repo.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
+          DetailRow(label: "Command", value: operation.command)
+        }
+
+        // Warning
+        if let warning = operation.type.warning {
+          HStack {
+            Image(systemName: "info.circle")
+              .foregroundColor(.blue)
+            Text(warning)
+              .font(.caption)
+              .foregroundColor(.secondary)
+            Spacer()
+          }
+          .padding(8)
+          .background(Color.blue.opacity(0.1))
+          .cornerRadius(4)
+        }
+
+        Divider()
+
+        // Actions
+        HStack {
+          Button("Copy Command") {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(operation.command, forType: .string)
+          }
+          .buttonStyle(.bordered)
+
+          Spacer()
+
+          Button("Cancel", role: .cancel) {
+            onCancel()
+          }
+          .keyboardShortcut(.escape)
+
+          Button(operation.type == .gc ? "Run GC" : "Prune") {
+            onConfirm()
+          }
+          .buttonStyle(.borderedProminent)
+        }
+      }
+      .padding()
+      .frame(width: 450)
+    }
+  }
+
   @available(macOS 13.0, *)
   struct DetailRow: View {
     let label: String
@@ -621,7 +815,7 @@ import SwiftUI
     @Published var lastScanTime: Date?
 
     private let scanner = PackageScanner.shared
-    private let gitScanner = GitRepoScanner.shared
+    let gitScanner = GitRepoScanner.shared  // Exposed for git operations
     private let providers: [any PackageOperator] = [
       HomebrewFormulaProvider(),
       HomebrewCaskProvider(),

@@ -106,6 +106,101 @@ public actor GitRepoScanner {
     return results
   }
 
+  // MARK: - Operations
+
+  /// Result of a git operation
+  public struct GitOperationResult: Sendable {
+    public let success: Bool
+    public let message: String
+    public let command: String
+
+    public static func success(_ message: String, command: String) -> GitOperationResult {
+      GitOperationResult(success: true, message: message, command: command)
+    }
+
+    public static func failure(_ message: String, command: String) -> GitOperationResult {
+      GitOperationResult(success: false, message: message, command: command)
+    }
+  }
+
+  /// Run git gc --auto on a repository
+  public func runGC(for repo: GitRepo, aggressive: Bool = false) async -> GitOperationResult {
+    guard let gitURL = findGit() else {
+      return .failure("git not found", command: "")
+    }
+
+    let args =
+      aggressive
+      ? ["-C", repo.path, "gc", "--aggressive"]
+      : ["-C", repo.path, "gc", "--auto"]
+    let command = "git \(args.joined(separator: " "))"
+
+    let result = await runner.run(
+      executable: gitURL.path,
+      arguments: args,
+      environment: ToolLocator.packageFinderEnvironment
+    )
+
+    if result.reason == .exit, result.exitCode == 0 {
+      let stdout = String(data: result.stdout, encoding: .utf8) ?? ""
+      return .success(stdout.isEmpty ? "GC completed" : stdout, command: command)
+    } else {
+      let stderr = String(data: result.stderr, encoding: .utf8) ?? "Unknown error"
+      return .failure(stderr, command: command)
+    }
+  }
+
+  /// List remotes for a repository
+  public func listRemotes(for repo: GitRepo) async -> [String] {
+    guard let gitURL = findGit() else { return [] }
+
+    let result = await runner.run(
+      executable: gitURL.path,
+      arguments: ["-C", repo.path, "remote"],
+      environment: ToolLocator.packageFinderEnvironment
+    )
+
+    guard result.reason == .exit, result.exitCode == 0 else { return [] }
+
+    let output = String(data: result.stdout, encoding: .utf8) ?? ""
+    return output.split(separator: "\n").map { String($0).trimmingCharacters(in: .whitespaces) }
+  }
+
+  /// Prune a remote
+  public func pruneRemote(for repo: GitRepo, remote: String) async -> GitOperationResult {
+    guard let gitURL = findGit() else {
+      return .failure("git not found", command: "")
+    }
+
+    let args = ["-C", repo.path, "remote", "prune", remote]
+    let command = "git \(args.joined(separator: " "))"
+
+    let result = await runner.run(
+      executable: gitURL.path,
+      arguments: args,
+      environment: ToolLocator.packageFinderEnvironment
+    )
+
+    if result.reason == .exit, result.exitCode == 0 {
+      let stdout = String(data: result.stdout, encoding: .utf8) ?? ""
+      return .success(stdout.isEmpty ? "Pruned \(remote)" : stdout, command: command)
+    } else {
+      let stderr = String(data: result.stderr, encoding: .utf8) ?? "Unknown error"
+      return .failure(stderr, command: command)
+    }
+  }
+
+  /// Generate gc command for copying
+  public func gcCommand(for repo: GitRepo, aggressive: Bool = false) -> String {
+    let flag = aggressive ? "--aggressive" : "--auto"
+    return "git -C \"\(repo.path)\" gc \(flag)"
+  }
+
+  /// Generate prune command for copying
+  public func pruneCommand(for repo: GitRepo, remote: String) -> String {
+    "git -C \"\(repo.path)\" remote prune \(remote)"
+  }
+
   /// Calculate the size of a gitDir
   public func getSize(for repo: GitRepo) async -> Int64? {
     calculateDirectorySize(at: repo.gitDir)
