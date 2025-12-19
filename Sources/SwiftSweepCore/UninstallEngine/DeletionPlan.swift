@@ -333,7 +333,8 @@ extension UninstallEngine {
 
       // 按顺序删除（残留文件先删，应用最后删）
       for (index, item) in plan.items.enumerated() {
-        onProgress?(index + 1, total)
+        // 进度回调：开始处理当前项
+        onProgress?(index, total)
 
         do {
           // 再次在执行前验证路径（双重保险）
@@ -389,6 +390,9 @@ extension UninstallEngine {
           results.append(
             DeletionItemResult(item: item, success: false, error: error.localizedDescription))
         }
+
+        // 进度回调：当前项处理完成
+        onProgress?(index + 1, total)
       }
 
       let result = DeletionResult(itemResults: results)

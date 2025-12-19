@@ -429,17 +429,24 @@ struct UninstallConfirmationSheet: View {
       }
       .padding()
 
-      // Progress or Result
       if viewModel.isDeleting {
-        HStack {
-          ProgressView()
-            .scaleEffect(0.8)
-          if let progress = viewModel.deletionProgress {
-            Text("正在删除... (\(progress.current)/\(progress.total))")
-              .foregroundColor(.secondary)
-          } else {
-            Text("正在删除...")
-              .foregroundColor(.secondary)
+        VStack(spacing: 4) {
+          HStack {
+            ProgressView()
+              .scaleEffect(0.8)
+            if let progress = viewModel.deletionProgress {
+              Text("正在删除... (\(progress.current)/\(progress.total))")
+                .foregroundColor(.secondary)
+            } else {
+              Text("正在删除...")
+                .foregroundColor(.secondary)
+            }
+          }
+          if let currentItem = viewModel.deletionCurrentItem {
+            Text(currentItem)
+              .font(.caption)
+              .foregroundColor(.secondary.opacity(0.7))
+              .lineLimit(1)
           }
         }
         .padding()
@@ -813,6 +820,7 @@ class UninstallViewModel: ObservableObject {
 
   // Deletion progress
   @Published var deletionProgress: (current: Int, total: Int)?
+  @Published var deletionCurrentItem: String?
 
   #if !SWIFTSWEEP_MAS
     @available(macOS 13.0, *)
@@ -827,6 +835,13 @@ class UninstallViewModel: ObservableObject {
           [weak self] current, total in
           Task { @MainActor in
             self?.deletionProgress = (current, total)
+            // Show current item being deleted
+            if current < plan.items.count {
+              let itemPath = plan.items[current].path
+              self?.deletionCurrentItem = (itemPath as NSString).lastPathComponent
+            } else {
+              self?.deletionCurrentItem = nil
+            }
           }
         }
       } catch {
@@ -835,6 +850,7 @@ class UninstallViewModel: ObservableObject {
       }
       isDeleting = false
       deletionProgress = nil
+      deletionCurrentItem = nil
     }
 
     @available(macOS 13.0, *)
