@@ -34,6 +34,7 @@ let package = Package(
         "PrivilegedHelper",
         "Shared",
         "PackageScanner",
+        "GitRepoScanner",
         "RecommendationEngine",
         "RecommendationEngine/Rules",
       ]

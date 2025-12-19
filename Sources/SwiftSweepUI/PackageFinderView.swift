@@ -513,15 +513,16 @@ import SwiftUI
 
   // MARK: - View Model
 
-  @available(macOS 13.0, *)
-  @MainActor
+  @available(macOS 13.0, *) @MainActor
   final class PackageFinderViewModel: ObservableObject {
     @Published var results: [PackageScanResult] = []
+    @Published var gitRepos: [GitRepo] = []
     @Published var isScanning = false
     @Published var isOperating = false
     @Published var lastScanTime: Date?
 
     private let scanner = PackageScanner.shared
+    private let gitScanner = GitRepoScanner.shared
     private let providers: [any PackageOperator] = [
       HomebrewFormulaProvider(),
       HomebrewCaskProvider(),
@@ -535,7 +536,20 @@ import SwiftUI
       isScanning = true
       defer { isScanning = false }
 
-      results = await scanner.scanAll()
+      // Scan packages and git repos concurrently
+      async let packageResults = scanner.scanAll()
+      async let gitResult = gitScanner.scan()
+
+      results = await packageResults
+      let gitScanResult = await gitResult
+      gitRepos = gitScanResult.repos
+
+      // Load statuses for git repos
+      let statuses = await gitScanner.getStatuses(for: gitRepos)
+      for i in gitRepos.indices {
+        gitRepos[i].isDirty = statuses[gitRepos[i].id]
+      }
+
       lastScanTime = Date()
     }
 

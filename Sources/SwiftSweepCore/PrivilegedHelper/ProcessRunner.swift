@@ -60,7 +60,7 @@ public struct ProcessRunnerConfig: Sendable {
   )
 
   /// Package Finder 配置 - 允许常见包管理器工具
-  /// Extended for package operations (uninstall/update/cleanup)
+  /// Extended for package operations (uninstall/update/cleanup) and Git
   public static let packageFinder = ProcessRunnerConfig(
     allowedExecutables: [
       // Homebrew (Apple Silicon + Intel)
@@ -86,13 +86,17 @@ public struct ProcessRunnerConfig: Sendable {
       // Cargo/Rust (Apple Silicon + Intel)
       "/opt/homebrew/bin/cargo",
       "/usr/local/bin/cargo",
+      // Git (System + Apple Silicon + Intel)
+      "/usr/bin/git",
+      "/opt/homebrew/bin/git",
+      "/usr/local/bin/git",
       // du for size calculations
       "/usr/bin/du",
       "/bin/du",
     ],
     requireCodesign: false,  // 外部工具不需要验签
     maxOutputSize: 10 * 1024 * 1024,  // 10MB
-    timeout: 300  // 5 minutes for upgrade operations
+    timeout: 300  // 5 minutes for gc/upgrade operations
   )
 
   public init(
