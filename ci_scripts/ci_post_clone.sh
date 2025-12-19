@@ -14,7 +14,7 @@ echo "Project root: $(pwd)"
 # 安装 XcodeGen (如果需要)
 if ! command -v xcodegen &> /dev/null; then
     echo "Installing XcodeGen via Homebrew..."
-    brew install xcodegen
+    HOMEBREW_NO_AUTO_UPDATE=1 brew install xcodegen
 else
     echo "XcodeGen already installed: $(xcodegen --version)"
 fi
@@ -26,10 +26,16 @@ xcodegen generate
 # 验证
 if [ -d "SwiftSweepDevID.xcodeproj" ]; then
     echo "✅ SwiftSweepDevID.xcodeproj generated successfully"
-    ls -la SwiftSweepDevID.xcodeproj/
 else
     echo "❌ Failed to generate xcodeproj"
     exit 1
 fi
+
+# 解决包依赖 (Xcode Cloud 需要此步骤)
+echo "Resolving Swift Package dependencies..."
+xcodebuild -resolvePackageDependencies \
+    -project SwiftSweepDevID.xcodeproj \
+    -scheme SwiftSweepApp \
+    -clonedSourcePackagesDirPath /Volumes/workspace/SourcePackages
 
 echo "=== ci_post_clone.sh completed ==="
