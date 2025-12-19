@@ -23,8 +23,14 @@ Output/
 *~
 
 # SPM
-
 Package.resolved
+
+# Keep SwiftSweepDevID for Xcode Cloud (DevID builds)
+!SwiftSweepDevID.xcodeproj/
+!SwiftSweepDevID.xcodeproj/project.xcworkspace/
+!SwiftSweepDevID.xcodeproj/project.xcworkspace/xcshareddata/
+!SwiftSweepDevID.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+!SwiftSweepDevID.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 
 # Backup files
 *~.swift
