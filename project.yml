@@ -8,8 +8,8 @@ options:
 
 settings:
   DEVELOPMENT_TEAM: 6429YPLDYU
-  CODE_SIGN_STYLE: Manual
-  CODE_SIGN_IDENTITY: "Developer ID Application"
+  CODE_SIGN_STYLE: Automatic  # Xcode Cloud 需要自动签名
+  # CODE_SIGN_IDENTITY 由 Xcode Cloud 自动管理
 
 packages:
   SwiftSweepAppInventory:
@@ -38,6 +38,8 @@ targets:
       MARKETING_VERSION: "0.1.0"
       CURRENT_PROJECT_VERSION: 1
       SWIFT_VERSION: "5.9"
+      # Hardened Runtime (公证要求)
+      ENABLE_HARDENED_RUNTIME: YES
     entitlements:
       path: Entitlements/SwiftSweepApp.entitlements
       properties:
@@ -82,7 +84,8 @@ targets:
       INFOPLIST_FILE: Helper/Info.plist
       SWIFT_VERSION: "5.9"
       SKIP_INSTALL: YES
-      CODE_SIGN_IDENTITY: "Developer ID Application"
+      # Xcode Cloud 自动管理签名
+      ENABLE_HARDENED_RUNTIME: YES
       OTHER_LDFLAGS:
         - "-sectcreate"
         - "__TEXT"

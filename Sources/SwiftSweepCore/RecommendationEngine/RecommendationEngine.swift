@@ -165,7 +165,7 @@ public final class RecommendationEngine: @unchecked Sendable {
     let cleanupEngine = CleanupEngine.shared
     let items = try await cleanupEngine.scanForCleanableItems()
     let cleanupItems = items.map { item in
-      SwiftSweepCore.CleanupItem(
+      CleanupItem(
         path: item.path,
         sizeBytes: item.size,
         category: item.category.rawValue

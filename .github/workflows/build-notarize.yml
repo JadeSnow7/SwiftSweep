@@ -53,11 +53,14 @@ jobs:
       
       - name: Notarize + Staple
         env:
+          SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
           SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
         run: |
+          set -euo pipefail
+
           # Notarize app (zip), then staple app
           /usr/bin/ditto -c -k --keepParent "Output/SwiftSweep.app" "Output/SwiftSweep.zip"
           xcrun notarytool submit "Output/SwiftSweep.zip" \
@@ -71,7 +74,11 @@ jobs:
           rm -f "Output/SwiftSweep.dmg"
           hdiutil create -volname "SwiftSweep" -srcfolder "Output/SwiftSweep.app" \
             -ov -format UDZO "Output/SwiftSweep.dmg"
-          codesign --sign "$SIGNING_IDENTITY" --timestamp --verbose "Output/SwiftSweep.dmg"
+          echo "Signing DMG with identity: $SIGNING_IDENTITY"
+          codesign --force --timestamp --sign "$SIGNING_IDENTITY" "Output/SwiftSweep.dmg"
+          echo "DMG signature (pre-notary):"
+          codesign -dv --verbose=4 "Output/SwiftSweep.dmg" 2>&1 || :
+          codesign --verify --verbose=2 "Output/SwiftSweep.dmg"
           xcrun notarytool submit "Output/SwiftSweep.dmg" \
             --apple-id "$APPLE_ID" \
             --team-id "$APPLE_TEAM_ID" \
@@ -79,11 +86,15 @@ jobs:
             --wait
           
           xcrun stapler staple "Output/SwiftSweep.dmg"
+          echo "DMG signature (post-staple):"
+          codesign -dv --verbose=4 "Output/SwiftSweep.dmg" 2>&1 || :
+          codesign --verify --verbose=2 "Output/SwiftSweep.dmg"
+          xcrun stapler validate -v "Output/SwiftSweep.dmg"
 
           # Verify
           codesign --verify --deep --strict --verbose=2 "Output/SwiftSweep.app"
           spctl -a -vv "Output/SwiftSweep.app"
-          spctl -a -vv "Output/SwiftSweep.dmg"
+          spctl -a -vv --type open --context context:primary-signature "Output/SwiftSweep.dmg"
 
           # Checksums
           shasum -a 256 "Output/SwiftSweep.dmg" | awk '{print $1}' > "Output/SwiftSweep.dmg.sha256"

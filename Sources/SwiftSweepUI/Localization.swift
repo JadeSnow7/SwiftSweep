@@ -5,7 +5,12 @@ import SwiftUI
 extension String {
   /// Returns a localized string using the key as the lookup
   var localized: String {
-    NSLocalizedString(self, tableName: nil, bundle: Bundle.module, value: self, comment: "")
+    #if SWIFT_PACKAGE
+    let bundle = Bundle.module
+    #else
+    let bundle = Bundle.main
+    #endif
+    return NSLocalizedString(self, tableName: nil, bundle: bundle, value: self, comment: "")
   }
 
   /// Returns a localized string with format arguments

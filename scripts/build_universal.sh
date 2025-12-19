@@ -123,6 +123,12 @@ DMG_PATH="${OUTPUT_DIR}/${APP_NAME}.dmg"
 rm -f "${DMG_PATH}"
 hdiutil create -volname "${APP_NAME}" -srcfolder "${APP_BUNDLE}" -ov -format UDZO "${DMG_PATH}"
 
+echo -e "${YELLOW}Signing DMG...${NC}"
+codesign --force --timestamp --sign "${SIGNING_IDENTITY}" "${DMG_PATH}"
+
+echo -e "${YELLOW}Verifying DMG signature...${NC}"
+codesign --verify --verbose=2 "${DMG_PATH}"
+
 echo -e "${GREEN}=== Universal Build Complete ===${NC}"
 echo "App Bundle: ${APP_BUNDLE}"
 echo "DMG: ${DMG_PATH}"
