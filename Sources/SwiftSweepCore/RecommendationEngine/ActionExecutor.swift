@@ -149,14 +149,12 @@ public actor ActionExecutor {
     }
 
     // Execute with progress wrapper
-    var lastIndex = 0
     let result = await execute(
       paths: allPaths,
       mode: mode,
       dryRun: dryRun,
       ruleId: "batch_\(recommendations.count)_rules"
     ) { current, total in
-      lastIndex = current
       let currentItem =
         allPaths.indices.contains(current) ? (allPaths[current] as NSString).lastPathComponent : ""
       onProgress?(current, total, currentItem)

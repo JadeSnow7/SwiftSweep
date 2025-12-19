@@ -55,13 +55,9 @@ public final class RecommendationEngine: @unchecked Sendable {
     context: RecommendationContext,
     onProgress: ((String, Int, Int) -> Void)? = nil
   ) async throws -> [Recommendation] {
-    let rulesToEvaluate: [any RecommendationRule]
-
-    lock.lock()
-    // Filter out disabled rules
+    // Get rules with sync access before async work
     let enabledRuleIDs = RuleSettings.shared.enabledRuleIDs
-    rulesToEvaluate = rules.filter { enabledRuleIDs.contains($0.id) }
-    lock.unlock()
+    let rulesToEvaluate: [any RecommendationRule] = rules.filter { enabledRuleIDs.contains($0.id) }
 
     let totalRules = rulesToEvaluate.count
     logger.info("Evaluating \(totalRules) rules in parallel...")
@@ -71,7 +67,7 @@ public final class RecommendationEngine: @unchecked Sendable {
       of: (String, [Recommendation]).self,
       returning: [Recommendation].self
     ) { group in
-      for (index, rule) in rulesToEvaluate.enumerated() {
+      for rule in rulesToEvaluate {
         group.addTask {
           do {
             // Timeout: 30 seconds per rule
@@ -94,7 +90,7 @@ public final class RecommendationEngine: @unchecked Sendable {
             }
 
             return (rule.id, recommendations)
-          } catch let error as RuleError {
+          } catch _ as RuleError {
             self.logger.warning("Rule '\(rule.id)' timed out")
             return (rule.id, [])
           } catch {
