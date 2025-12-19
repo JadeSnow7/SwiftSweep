@@ -11,14 +11,14 @@ EXECUTABLE_NAME="SwiftSweepApp"
 HELPER_NAME="SwiftSweepHelper"
 BUNDLE_ID="com.swiftsweep.app"
 HELPER_BUNDLE_ID="com.swiftsweep.helper"
-VERSION="1.2.1"
+VERSION="${VERSION:-1.2.1}"
 OUTPUT_DIR="Output"
 APP_BUNDLE="${OUTPUT_DIR}/${APP_NAME}.app"
 INFO_PLIST="Resources/Info.plist"
 ENTITLEMENTS="Entitlements.plist"
 
 # Signing Identity
-SIGNING_IDENTITY="Developer ID Application: Aodong Hu (6429YPLDYU)"
+SIGNING_IDENTITY="${SIGNING_IDENTITY:-Developer ID Application: Aodong Hu (6429YPLDYU)}"
 
 # Temp build dirs
 ARM64_BUILD=".build/arm64-apple-macosx/release"

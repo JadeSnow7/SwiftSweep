@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-and-notarize:
     runs-on: macos-14
@@ -37,58 +40,65 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           rm certificate.p12
       
-      - name: Build Universal Binary
-        run: |
-          # Build for both architectures
-          swift build -c release --arch arm64 --arch x86_64 --product SwiftSweepApp
-          
-          # Create app bundle
-          mkdir -p Output/SwiftSweep.app/Contents/MacOS
-          mkdir -p Output/SwiftSweep.app/Contents/Resources
-          
-          cp .build/apple/Products/Release/SwiftSweepApp Output/SwiftSweep.app/Contents/MacOS/SwiftSweep
-          cp Resources/Info.plist Output/SwiftSweep.app/Contents/
-          cp Resources/AppIcon.icns Output/SwiftSweep.app/Contents/Resources/ 2>/dev/null || true
-      
-      - name: Code Sign
+      - name: Build (Universal) + Sign
         env:
           SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
         run: |
-          codesign --force --options runtime --sign "$SIGNING_IDENTITY" \
-            --entitlements Entitlements.plist \
-            Output/SwiftSweep.app
-          
-          codesign --verify --verbose Output/SwiftSweep.app
+          chmod +x ./scripts/build_universal.sh
+          export VERSION="${GITHUB_REF_NAME#v}"
+          ./scripts/build_universal.sh
+
+          echo "Verify universal binary:"
+          lipo -info Output/SwiftSweep.app/Contents/MacOS/SwiftSweep
       
-      - name: Create DMG
-        run: |
-          hdiutil create -volname "SwiftSweep" -srcfolder Output/SwiftSweep.app \
-            -ov -format UDZO Output/SwiftSweep.dmg
-      
-      - name: Notarize
+      - name: Notarize + Staple
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
-          xcrun notarytool submit Output/SwiftSweep.dmg \
+          # Notarize app (zip), then staple app
+          /usr/bin/ditto -c -k --keepParent "Output/SwiftSweep.app" "Output/SwiftSweep.zip"
+          xcrun notarytool submit "Output/SwiftSweep.zip" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --wait
+          xcrun stapler staple "Output/SwiftSweep.app"
+
+          # Recreate DMG from stapled app, then notarize+staple DMG
+          rm -f "Output/SwiftSweep.dmg"
+          hdiutil create -volname "SwiftSweep" -srcfolder "Output/SwiftSweep.app" \
+            -ov -format UDZO "Output/SwiftSweep.dmg"
+          xcrun notarytool submit "Output/SwiftSweep.dmg" \
             --apple-id "$APPLE_ID" \
             --team-id "$APPLE_TEAM_ID" \
             --password "$APPLE_APP_PASSWORD" \
             --wait
           
-          # Staple the notarization ticket
-          xcrun stapler staple Output/SwiftSweep.dmg
+          xcrun stapler staple "Output/SwiftSweep.dmg"
+
+          # Verify
+          codesign --verify --deep --strict --verbose=2 "Output/SwiftSweep.app"
+          spctl -a -vv "Output/SwiftSweep.app"
+          spctl -a -vv "Output/SwiftSweep.dmg"
+
+          # Checksums
+          shasum -a 256 "Output/SwiftSweep.dmg" | awk '{print $1}' > "Output/SwiftSweep.dmg.sha256"
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: SwiftSweep-${{ github.ref_name }}
-          path: Output/SwiftSweep.dmg
+          path: |
+            Output/SwiftSweep.dmg
+            Output/SwiftSweep.dmg.sha256
       
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          files: Output/SwiftSweep.dmg
+          files: |
+            Output/SwiftSweep.dmg
+            Output/SwiftSweep.dmg.sha256
           generate_release_notes: true
