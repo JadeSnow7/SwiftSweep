@@ -350,13 +350,44 @@ struct ActionConfirmationSheet: View {
   }
 
   private func pathSize(_ path: String) -> String {
+    let size = calculatePathSize(path)
+    return size > 0 ? formatBytes(size) : ""
+  }
+
+  private func calculatePathSize(_ path: String) -> Int64 {
     let fm = FileManager.default
-    if let attrs = try? fm.attributesOfItem(atPath: path),
-      let size = attrs[.size] as? Int64
-    {
-      return formatBytes(size)
+    var isDir: ObjCBool = false
+    guard fm.fileExists(atPath: path, isDirectory: &isDir) else { return 0 }
+
+    if isDir.boolValue {
+      // Directory: recursively calculate size
+      guard
+        let enumerator = fm.enumerator(
+          at: URL(fileURLWithPath: path),
+          includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey],
+          options: []
+        )
+      else { return 0 }
+
+      var total: Int64 = 0
+      for case let fileURL as URL in enumerator {
+        if let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]),
+          let isFile = values.isRegularFile, isFile,
+          let size = values.fileSize
+        {
+          total += Int64(size)
+        }
+      }
+      return total
+    } else {
+      // File: use attributes
+      if let attrs = try? fm.attributesOfItem(atPath: path),
+        let size = attrs[.size] as? Int64
+      {
+        return size
+      }
+      return 0
     }
-    return ""
   }
 
   private func executeAction() {
@@ -378,18 +409,14 @@ struct ActionConfirmationSheet: View {
         } else {
           // Actually move to trash
           var movedCount = 0
-          var totalFreed: Int64 = 0
+          var totalSize: Int64 = 0
           let fm = FileManager.default
 
           for path in pathsToClean {
             let url = URL(fileURLWithPath: path)
             if fm.fileExists(atPath: path) {
-              // Get size before deletion
-              if let attrs = try? fm.attributesOfItem(atPath: path),
-                let size = attrs[.size] as? Int64
-              {
-                totalFreed += size
-              }
+              // Get accurate size before deletion (recursive for directories)
+              totalSize += calculatePathSize(path)
 
               try fm.trashItem(at: url, resultingItemURL: nil)
               movedCount += 1
@@ -398,20 +425,21 @@ struct ActionConfirmationSheet: View {
 
           await MainActor.run {
             isExecuting = false
-            
+
             // Log the cleanup action
             ActionLogger.shared.logCleanup(
               ruleId: recommendation.id,
               paths: pathsToClean,
-              totalSize: totalFreed,
+              totalSize: totalSize,
               success: true,
               itemsMoved: movedCount
             )
-            
+
             onComplete(
               ActionResult(
                 success: true,
-                message: "Moved \(movedCount) items to Trash. Freed \(formatBytes(totalFreed))."
+                message:
+                  "Moved \(movedCount) items to Trash (est. \(formatBytes(totalSize))). Empty Trash to free space."
               ))
             isPresented = false
           }

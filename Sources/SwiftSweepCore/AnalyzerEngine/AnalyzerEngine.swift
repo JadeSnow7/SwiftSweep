@@ -121,13 +121,17 @@ public final class AnalyzerEngine: @unchecked Sendable {
   /// Build complete file tree with size aggregation
   /// - Parameters:
   ///   - path: Root path to analyze
+  ///   - includeHiddenFiles: Whether to include hidden files (default: false)
   ///   - onProgress: Progress callback (scanned items, current total size)
   /// - Returns: Root FileNode of the tree
-  public func buildTree(path: String, onProgress: ((Int, Int64) -> Void)? = nil) async throws
+  public func buildTree(
+    path: String, includeHiddenFiles: Bool = false, onProgress: ((Int, Int64) -> Void)? = nil
+  ) async throws
     -> FileNode
   {
     let fileManager = FileManager.default
     let rootURL = URL(fileURLWithPath: path)
+    let skipHidden = !includeHiddenFiles
 
     var scannedCount = 0
     var lastUIUpdate = Date()
@@ -167,7 +171,7 @@ public final class AnalyzerEngine: @unchecked Sendable {
       guard
         let contents = try? fileManager.contentsOfDirectory(
           at: url, includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
-          options: [.skipsHiddenFiles])
+          options: skipHidden ? [.skipsHiddenFiles] : [])
       else {
         return dirNode
       }
@@ -194,10 +198,10 @@ public final class AnalyzerEngine: @unchecked Sendable {
   // MARK: - Backward Compatible Analysis
 
   /// Perform disk analysis (backward compatible, now uses tree internally)
-  public func analyze(path: String, onProgress: ((Int, Int64) -> Void)? = nil) async throws
+  public func analyze(path: String, includeHiddenFiles: Bool = false, onProgress: ((Int, Int64) -> Void)? = nil) async throws
     -> AnalysisResult
   {
-    let root = try await buildTree(path: path, onProgress: onProgress)
+    let root = try await buildTree(path: path, includeHiddenFiles: includeHiddenFiles, onProgress: onProgress)
 
     let largestFiles = root.getLargestFiles(limit: 20)
     let topFiles = largestFiles.map { FileItem(path: $0.path, size: $0.size, isDirectory: false) }
