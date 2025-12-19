@@ -4,6 +4,24 @@
 
 ---
 
+## 0. 当前实现（Status）
+
+> 本文档最初是路线图；截至 `v1.2.1`，以下能力已落地（以 Developer ID 版本为主）。
+
+### 已实现
+
+- **Recommendation 数据模型**：`Sources/SwiftSweepCore/RecommendationEngine/Recommendation.swift`
+- **规则引擎与开关**：`RecommendationEngine` 并行评估 + 超时保护；`RuleSettings` 支持启用/禁用规则
+- **Smart Insights UI/CLI**：`Sources/SwiftSweepUI/InsightsView.swift` + `Sources/SwiftSweepCLI/SwiftSweep.swift`（`swiftsweep insights`）
+- **统一执行链路**：`ActionExecutor`（去重/dry-run/结果统计）+ `ActionLogger`（审计日志）
+- **已上线规则**：低磁盘空间、旧下载文件、开发者缓存、超大缓存、浏览器缓存、桌面旧截图/临时文件、废纸篓提醒、邮件附件、未使用应用（启发式）
+
+### 待完善
+
+- `installedApps` 与 `SwiftSweepAppInventory` 的深度集成（目前部分规则仍直接扫描 `/Applications`）
+- 重 I/O 计算（目录体积/哈希/Vision 特征）的统一缓存与复用（`DirectorySizeCache` 目前为基础设施）
+- 趋势洞察 / 媒体智能 / SweepAI（见 Roadmap 的 Phase 3+）
+
 ## 1. 目标（Goals）
 
 - **从数据到决策**：将 `AnalyzerEngine` / `CleanupEngine` / `SystemMonitor` / `UninstallEngine` / `PackageScanner` / `SwiftSweepAppInventory` 的原始输出，转化为结构化建议（Recommendations/Insights）。
@@ -38,7 +56,7 @@
 
 ## 4. 核心数据模型（Core Contract）
 
-建议在 `Sources/SwiftSweepCore/RecommendationEngine/` 下新增以下概念（命名可选 `Insight*` 或 `Recommendation*`，建议统一用 Recommendation）：
+当前已在 `Sources/SwiftSweepCore/RecommendationEngine/` 下实现以下核心概念（命名统一为 Recommendation）：
 
 ### 4.1 Recommendation（建议）
 
@@ -71,6 +89,8 @@ Action 是 Recommendation 的“可执行部分”，但执行必须通过统一
 - `supportsDryRun`：默认 true（能预览的尽量可预览）
 
 > 执行层建议抽象为 `RecommendationExecutor`（UI/CLI 共享），内部复用 `CleanupEngine.performRobustCleanup` 与 `OptimizationEngine.run` 等现有实现，保证一致的权限与安全策略。
+>
+> 现状：已实现 `ActionExecutor` actor 作为统一执行器（清理类动作），并在 UI/Insights 中复用；卸载执行走 `DeletionPlan` 的专用安全链路。
 
 ---
 
@@ -112,8 +132,13 @@ Core 已具备主要信号源：
 
 #### A. Unused Apps（长期未使用应用）
 
-- **目标**：找出 “> 180 天未使用且体积大” 的应用，给出卸载建议。
-- **数据源**：优先复用 `SwiftSweepAppInventory`（`AppItem.lastUsedDate` + `SmartFilters.unusedApps`）。
+- **目标**：找出“长期未使用且体积较大”的应用，给出可解释建议。
+- **当前实现（规则默认值）**：
+  - 未使用阈值：`90` 天
+  - 单应用最小体积：`50MB`
+  - 总量阈值：`500MB` 才生成建议
+  - lastUsedDate：基于文件元数据的启发式（可用性/准确性依赖系统行为）
+- **后续方向**：与 `SwiftSweepAppInventory` 的 lastUsed/智能过滤打通，提升准确性与可配置性。
 - **规则示例**：
   - `lastUsedDate < now - 180d`
   - `size >= 500MB`（可配置）
@@ -244,23 +269,25 @@ Core 已具备主要信号源：
 
 ## 8. 分期路线图（Roadmap）
 
-### Phase 0：基础设施（高优先级）
+### Phase 0：基础设施（已完成 ✅）
 
-- 定义 `Recommendation`/`Evidence`/`Action` 数据模型与排序规则
-- 新增 `RecommendationEngine` + 可测试的 `RecommendationRule` 抽象
-- UI：新增 Insights 页面（或 Status 顶部 Top 3 建议卡片）+ 详情与确认弹窗
-- CLI：新增 `swiftsweep insights [--json]`
+- [x] `Recommendation`/`Evidence`/`Action` 数据模型（含排序语义）
+- [x] `RecommendationEngine` + `RecommendationRule` + `RuleSettings`（并行评估 + 超时保护）
+- [x] UI：Insights 页面 + 详情/确认弹窗
+- [x] CLI：`swiftsweep insights [--json]`
+- [x] 统一执行器：`ActionExecutor` + `ActionLogger`
 
-**验收标准**
-- 任意建议可点击查看证据与预计收益
-- 任意 destructive action 支持 dry-run + 二次确认
+**验收标准（已满足）**
+- [x] 建议可查看证据与预计收益
+- [x] destructive action 支持 dry-run + 二次确认（UI）
 
 ### Phase 1：低成本高价值（MVP）
 
-- Unused apps（复用 AppInventory）
-- Old Downloads（文件属性 + 可选 Spotlight 增强）
-- Low disk / memory pressure（SystemMonitor）
-- Xcode/常见固定路径缓存建议
+- [x] Old Downloads（文件属性）
+- [x] Low Disk Space（SystemMonitor）
+- [x] Developer Caches / Large Caches / Browser Cache
+- [x] Screenshot/Temp / Trash Reminder / Mail Attachments
+- [x] Unused apps（启发式版本；AppInventory 深度集成待做）
 
 ### Phase 2：扩展扫描（控制误报）
 
@@ -299,4 +326,3 @@ Core 已具备主要信号源：
 - Snapshots 存储介质：JSON vs CoreData（建议先 JSON，schemaVersion 控制演进）
 - “桶”划分策略：先用固定路径桶，还是引入按文件类型聚合（建议先固定路径桶）
 - MAS 下目录授权的 UX：是否引入 Security-Scoped Bookmarks（建议引入，用于持久访问用户选定目录）
-

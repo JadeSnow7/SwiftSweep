@@ -18,14 +18,14 @@
 
 ## ✨ 特性
 
-- 🧠 **Smart Insights** — 基于规则的智能建议（证据 / 风险 / 预估收益），支持预览与一键清理
+- 🧠 **Smart Insights** — 基于规则的智能建议（证据 / 风险 / 置信度 / 预估收益），支持预览与一键清理
 - 🎨 **原生 SwiftUI** — 现代化 macOS 界面，支持暗色模式
 - 🔍 **磁盘分析** — Treemap / Tree / Top Files 三种视图，WizTree 风格定位大文件
-- 🗑️ **应用卸载** — 扫描应用及残留文件（Developer ID 版支持卸载；MAS 版受沙盒限制）
+- 🗑️ **应用卸载** — 残留扫描 + 删除计划预览 + 执行（Developer ID 版可执行；MAS 版受沙盒限制）
 - ⚡ **系统优化** — DNS 刷新、Spotlight 重建、内存清理、Dock/Finder 重置、字体缓存清理
-- 📦 **包与仓库管理** — Homebrew/npm/pip/gem 扫描与管理（卸载/升级/清理），并支持 Git 仓库发现与维护（状态/体积/GC/Prune）
+- 📦 **包与仓库管理** — Homebrew/npm/pip/gem 扫描与管理（卸载/升级），并支持 Git 仓库发现与维护（状态/体积/GC/Prune）
 - 🧩 **模块化架构** — CLI + GUI 共享 `SwiftSweepCore`
-- 🛡️ **安全至上** — 预览模式 (dry-run)、移入废纸篓优先、权限受控（Helper / AppleScript）
+- 🛡️ **安全至上** — 预览模式 (dry-run)、二次确认、移入废纸篓优先、执行审计日志、权限受控（Helper / AppleScript）
 
 ---
 
@@ -42,8 +42,15 @@ SwiftSweep 采用两栏式布局，包含以下功能模块：
 | **Optimize** | 系统优化（DNS 刷新、Spotlight 重建等）|
 | **Analyze** | 磁盘空间分析，定位大文件 (WizTree 风格) |
 | **Applications** | 应用清单：筛选/分类/深度扫描应用体积，并可一键跳转卸载 |
-| **Packages** | 包与仓库管理：Homebrew/npm/pip/gem + Git Repos（卸载/升级/清理/GC/Prune，仅非 MAS 版本） |
+| **Packages** | 包与仓库管理：Homebrew/npm/pip/gem + Git Repos（包卸载/升级，Git GC/Prune，仅非 MAS 版本） |
 | **Settings** | 偏好设置与 Helper 管理 |
+
+### 功能要点（Current）
+
+- **Insights 规则（内置）**：低磁盘空间、旧下载文件、开发者缓存、超大缓存、浏览器缓存、桌面旧截图/临时文件、废纸篓提醒、邮件附件、未使用应用
+- **统一执行链路**：清理动作走 `ActionExecutor`（去重、dry-run、结果统计、审计日志）
+- **卸载安全策略**：删除计划（DeletionPlan）→ 路径校验（allowlist + symlink escape 防护）→ 先标准删除，权限不足再降级调用 Helper
+- **Git 仓库维护**：扫描常用开发目录，显示 clean/dirty 与 `.git` 体积，支持 `git gc` / `git remote prune`
 
 ### 截图预览
 
@@ -115,6 +122,7 @@ SwiftSweep/
 │   │   ├── RecommendationEngine/ # 智能建议引擎
 │   │   ├── OptimizationEngine/   # 系统优化
 │   │   ├── PackageScanner/       # 包管理器扫描
+│   │   ├── GitRepoScanner/       # Git 仓库扫描与维护
 │   │   └── PrivilegedHelper/     # 权限管理
 │   ├── SwiftSweepCLI/            # 命令行工具
 │   └── SwiftSweepUI/             # SwiftUI 界面
@@ -146,6 +154,13 @@ swift run swiftsweep analyze ~/Documents
 
 ---
 
+## 📚 文档
+
+- `PROJECT_DESIGN.md`：整体架构与核心模块说明
+- `docs/INTELLIGENT_ANALYSIS.md`：智能分析能力边界与路线图
+
+---
+
 ## 🛠️ 技术栈
 
 | 组件 | 技术 |
@@ -153,7 +168,7 @@ swift run swiftsweep analyze ~/Documents
 | UI 框架 | SwiftUI |
 | CLI 框架 | Swift Argument Parser |
 | 日志系统 | swift-log |
-| 权限管理 | NSAppleScript / SMAppService |
+| 权限管理 | SMAppService + XPC Helper（优先）/ NSAppleScript（降级） |
 | 最低系统 | macOS 13.0+ |
 
 ---
@@ -167,7 +182,7 @@ swift run swiftsweep analyze ~/Documents
 - [x] Applications Inventory（应用清单）
 - [x] Package Finder（包管理器扫描）
 - [x] AppleScript 权限提升
-- [ ] SMAppService 完整集成
+- [x] SMAppService + XPC Helper（基础能力）
 - [ ] 更多清理规则 (Xcode, Docker, Homebrew)
 - [ ] 代码签名与公证
 
