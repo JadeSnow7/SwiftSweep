@@ -56,6 +56,7 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
         run: |
           # Notarize app (zip), then staple app
           /usr/bin/ditto -c -k --keepParent "Output/SwiftSweep.app" "Output/SwiftSweep.zip"
@@ -70,6 +71,7 @@ jobs:
           rm -f "Output/SwiftSweep.dmg"
           hdiutil create -volname "SwiftSweep" -srcfolder "Output/SwiftSweep.app" \
             -ov -format UDZO "Output/SwiftSweep.dmg"
+          codesign --sign "$SIGNING_IDENTITY" --timestamp --verbose "Output/SwiftSweep.dmg"
           xcrun notarytool submit "Output/SwiftSweep.dmg" \
             --apple-id "$APPLE_ID" \
             --team-id "$APPLE_TEAM_ID" \
