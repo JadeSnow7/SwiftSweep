@@ -18,11 +18,14 @@
 
 ## ✨ 特性
 
+- 🧠 **Smart Insights** — 基于规则的智能建议（证据 / 风险 / 预估收益），支持预览与一键清理
 - 🎨 **原生 SwiftUI** — 现代化 macOS 界面，支持暗色模式
-- ⚡ **高性能** — 直接调用系统 API，后台线程处理
-- 📦 **模块化架构** — CLI + GUI 共享核心逻辑
-- 🔐 **智能权限管理** — AppleScript 提权，安全可靠
-- 🛡️ **安全至上** — 白名单保护，预览模式 (dry-run)
+- 🔍 **磁盘分析** — Treemap / Tree / Top Files 三种视图，WizTree 风格定位大文件
+- 🗑️ **应用卸载** — 扫描应用及残留文件（Developer ID 版支持卸载；MAS 版受沙盒限制）
+- ⚡ **系统优化** — DNS 刷新、Spotlight 重建、内存清理、Dock/Finder 重置、字体缓存清理
+- 📦 **应用与包清单** — 应用清单（筛选/分类/体积深度扫描）+ 包管理器扫描（Homebrew/npm/pip/gem）
+- 🧩 **模块化架构** — CLI + GUI 共享 `SwiftSweepCore`
+- 🛡️ **安全至上** — 预览模式 (dry-run)、移入废纸篓优先、权限受控（Helper / AppleScript）
 
 ---
 
@@ -33,10 +36,14 @@ SwiftSweep 采用两栏式布局，包含以下功能模块：
 | 模块 | 功能 |
 |------|------|
 | **Status** | 系统仪表盘，实时监控 CPU、内存、磁盘 |
+| **Insights** | 智能建议：低磁盘空间、旧下载文件、开发者缓存、浏览器缓存、废纸篓提醒等 |
 | **Clean** | 清理系统缓存、日志、浏览器数据 |
 | **Uninstall** | 完整卸载应用及其残留文件 |
 | **Optimize** | 系统优化（DNS 刷新、Spotlight 重建等）|
 | **Analyze** | 磁盘空间分析，定位大文件 (WizTree 风格) |
+| **Applications** | 应用清单：筛选/分类/深度扫描应用体积，并可一键跳转卸载 |
+| **Packages** | 扫描包管理器：Homebrew、npm、pip、gem（仅非 MAS 版本） |
+| **Settings** | 偏好设置与 Helper 管理 |
 
 ### 截图预览
 
@@ -44,6 +51,16 @@ SwiftSweep 采用两栏式布局，包含以下功能模块：
   <img src="docs/screenshots/status.png" width="600" alt="System Status" />
 </p>
 <p align="center"><em>系统状态监控 - 实时显示 CPU、内存、磁盘、网络和电池使用情况</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/cleanup.png" width="600" alt="Cleanup" />
+</p>
+<p align="center"><em>系统清理 - 扫描缓存、日志、浏览器数据等可清理项</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/analyzer.png" width="600" alt="Disk Analyzer" />
+</p>
+<p align="center"><em>磁盘分析 - Treemap / Tree 视图快速定位占用空间的大文件与目录</em></p>
 
 <p align="center">
   <img src="docs/screenshots/uninstall.png" width="600" alt="App Uninstaller" />
@@ -95,10 +112,13 @@ SwiftSweep/
 │   │   ├── UninstallEngine/      # 卸载引擎
 │   │   ├── SystemMonitor/        # 系统监控
 │   │   ├── AnalyzerEngine/       # 磁盘分析
+│   │   ├── RecommendationEngine/ # 智能建议引擎
 │   │   ├── OptimizationEngine/   # 系统优化
+│   │   ├── PackageScanner/       # 包管理器扫描
 │   │   └── PrivilegedHelper/     # 权限管理
 │   ├── SwiftSweepCLI/            # 命令行工具
 │   └── SwiftSweepUI/             # SwiftUI 界面
+├── Packages/                     # 内置子包（应用清单等）
 ├── Helper/                       # Privileged Helper 源码
 └── Tests/                        # 单元测试
 ```
@@ -110,6 +130,9 @@ SwiftSweep/
 ```bash
 # 查看系统状态
 swift run swiftsweep status
+
+# 智能建议（可选 --json / --verbose）
+swift run swiftsweep insights
 
 # 扫描可清理项（预览模式）
 swift run swiftsweep clean --dry-run
@@ -140,6 +163,9 @@ swift run swiftsweep analyze ~/Documents
 - [x] 核心引擎实现 (Cleanup, Uninstall, Analyze, Optimize)
 - [x] 系统监控模块 (CPU, 内存, 磁盘, 网络)
 - [x] SwiftUI 界面框架
+- [x] Smart Insights（智能建议）
+- [x] Applications Inventory（应用清单）
+- [x] Package Finder（包管理器扫描）
 - [x] AppleScript 权限提升
 - [ ] SMAppService 完整集成
 - [ ] 更多清理规则 (Xcode, Docker, Homebrew)

@@ -157,11 +157,110 @@ import SwiftUI
 
     private var resultsList: some View {
       List {
+        // Git Repositories Section
+        if !viewModel.gitRepos.isEmpty {
+          gitReposSection
+        }
+
+        // Package Providers
         ForEach(viewModel.results, id: \.providerID) { result in
           providerSection(result)
         }
       }
       .listStyle(.inset)
+    }
+
+    // MARK: - Git Repos Section
+
+    private var gitReposSection: some View {
+      Section {
+        ForEach(filteredGitRepos) { repo in
+          gitRepoRow(repo)
+        }
+      } header: {
+        HStack {
+          Image(systemName: "arrow.triangle.branch")
+            .foregroundColor(.accentColor)
+          Text("Git Repositories")
+
+          Spacer()
+
+          Text("\(viewModel.gitRepos.count)")
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color(nsColor: .quaternaryLabelColor))
+            .cornerRadius(4)
+        }
+      }
+    }
+
+    private var filteredGitRepos: [GitRepo] {
+      guard !searchText.isEmpty else { return viewModel.gitRepos }
+      let query = searchText.lowercased()
+      return viewModel.gitRepos.filter {
+        $0.name.lowercased().contains(query) || $0.path.lowercased().contains(query)
+      }
+    }
+
+    private func gitRepoRow(_ repo: GitRepo) -> some View {
+      HStack {
+        VStack(alignment: .leading, spacing: 2) {
+          Text(repo.name)
+            .fontWeight(.medium)
+          Text(repo.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .lineLimit(1)
+        }
+
+        Spacer()
+
+        // Size badge
+        if let size = repo.gitDirSize {
+          Text(formatSize(size))
+            .font(.caption2)
+            .foregroundColor(.secondary)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color(nsColor: .quaternaryLabelColor))
+            .cornerRadius(4)
+        }
+
+        // Status badge
+        if let isDirty = repo.isDirty {
+          Text(isDirty ? "dirty" : "clean")
+            .font(.caption2)
+            .foregroundColor(isDirty ? .orange : .green)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background((isDirty ? Color.orange : Color.green).opacity(0.15))
+            .cornerRadius(4)
+        } else {
+          ProgressView()
+            .scaleEffect(0.5)
+        }
+      }
+      .contextMenu {
+        Button("Open in Finder") {
+          NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: repo.path)
+        }
+        Button("Copy Path") {
+          NSPasteboard.general.clearContents()
+          NSPasteboard.general.setString(repo.path, forType: .string)
+        }
+        Button("Copy cd Command") {
+          NSPasteboard.general.clearContents()
+          NSPasteboard.general.setString("cd \"\(repo.path)\"", forType: .string)
+        }
+      }
+    }
+
+    private func formatSize(_ bytes: Int64) -> String {
+      let formatter = ByteCountFormatter()
+      formatter.countStyle = .file
+      return formatter.string(fromByteCount: bytes)
     }
 
     @ViewBuilder
@@ -550,7 +649,18 @@ import SwiftUI
         gitRepos[i].isDirty = statuses[gitRepos[i].id]
       }
 
+      // Load sizes async (after initial display)
       lastScanTime = Date()
+
+      // Load sizes in background
+      Task {
+        let sizes = await gitScanner.getSizes(for: gitRepos)
+        await MainActor.run {
+          for i in self.gitRepos.indices {
+            self.gitRepos[i].gitDirSize = sizes[self.gitRepos[i].id]
+          }
+        }
+      }
     }
 
     func getOperator(for providerID: String) -> (any PackageOperator)? {
