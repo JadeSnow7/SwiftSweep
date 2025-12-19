@@ -829,28 +829,35 @@ class UninstallViewModel: ObservableObject {
 
       isDeleting = true
       deletionProgress = (0, plan.items.count)
+      objectWillChange.send()
 
       do {
         deletionResult = try await UninstallEngine.shared.executeDeletionPlan(plan) {
           [weak self] current, total in
-          Task { @MainActor in
+          // 使用 DispatchQueue.main 确保 UI 更新
+          DispatchQueue.main.async {
             self?.deletionProgress = (current, total)
-            // Show current item being deleted
+            // 显示当前正在删除的项目
             if current < plan.items.count {
               let itemPath = plan.items[current].path
               self?.deletionCurrentItem = (itemPath as NSString).lastPathComponent
             } else {
               self?.deletionCurrentItem = nil
             }
+            // 强制 UI 刷新
+            self?.objectWillChange.send()
           }
         }
       } catch {
         errorMessage = error.localizedDescription
         showingError = true
       }
+      
+      // 完成后显式更新 UI
       isDeleting = false
       deletionProgress = nil
       deletionCurrentItem = nil
+      objectWillChange.send()
     }
 
     @available(macOS 13.0, *)
