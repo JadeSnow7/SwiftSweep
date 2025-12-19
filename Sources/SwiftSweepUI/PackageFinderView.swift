@@ -514,11 +514,10 @@ import SwiftUI
 
     // MARK: - Git Operations
 
+    @MainActor
     private func loadRemotes(for repo: GitRepo) async {
       let remotes = await viewModel.gitScanner.listRemotes(for: repo)
-      await MainActor.run {
-        cachedRemotes[repo.id] = remotes
-      }
+      cachedRemotes[repo.id] = remotes
     }
 
     private func executeGitOperation(_ op: PendingGitOperation) async {
@@ -848,12 +847,10 @@ import SwiftUI
       lastScanTime = Date()
 
       // Load sizes in background
-      Task {
+      Task { @MainActor in
         let sizes = await gitScanner.getSizes(for: gitRepos)
-        await MainActor.run {
-          for i in self.gitRepos.indices {
-            self.gitRepos[i].gitDirSize = sizes[self.gitRepos[i].id]
-          }
+        for i in self.gitRepos.indices {
+          self.gitRepos[i].gitDirSize = sizes[self.gitRepos[i].id]
         }
       }
     }
