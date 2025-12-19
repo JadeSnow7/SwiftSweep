@@ -20,6 +20,7 @@ public final class RuleSettings: @unchecked Sendable {
     "screenshot_cleanup",
     "browser_cache",
     "trash_reminder",
+    "mail_attachments",
   ]
 
   private init() {}
@@ -98,6 +99,7 @@ extension RuleSettings {
     case "screenshot_cleanup": return "截图/临时文件"
     case "browser_cache": return "浏览器缓存"
     case "trash_reminder": return "废纸篓提醒"
+    case "mail_attachments": return "邮件附件"
     default: return ruleID
     }
   }
@@ -113,6 +115,7 @@ extension RuleSettings {
     case "screenshot_cleanup": return "检测桌面上的旧截图和临时文件"
     case "browser_cache": return "检测Safari、Chrome等浏览器缓存"
     case "trash_reminder": return "废纸篓超过1GB时提醒清空"
+    case "mail_attachments": return "检测并清理邮件附件缓存"
     default: return ""
     }
   }

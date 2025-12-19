@@ -18,8 +18,8 @@ public struct LargeCacheRule: RecommendationRule {
   public func evaluate(context: RecommendationContext) async throws -> [Recommendation] {
     guard let cleanupItems = context.cleanupItems, !cleanupItems.isEmpty else { return [] }
 
-    // Filter for cache categories
-    let cacheCategories = ["userCache", "systemCache", "browserCache"]
+    // Filter for cache categories (must match CleanupCategory.rawValue)
+    let cacheCategories = ["User Cache", "System Cache", "Browser Cache"]
     let cacheItems = cleanupItems.filter { item in
       cacheCategories.contains(item.category)
     }
