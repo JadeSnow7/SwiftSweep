@@ -423,6 +423,8 @@ struct ActionConfirmationSheet: View {
             }
           }
 
+          let finalMovedCount = movedCount
+          let finalTotalSize = totalSize
           await MainActor.run {
             isExecuting = false
 
@@ -430,16 +432,16 @@ struct ActionConfirmationSheet: View {
             ActionLogger.shared.logCleanup(
               ruleId: recommendation.id,
               paths: pathsToClean,
-              totalSize: totalSize,
+              totalSize: finalTotalSize,
               success: true,
-              itemsMoved: movedCount
+              itemsMoved: finalMovedCount
             )
 
             onComplete(
               ActionResult(
                 success: true,
                 message:
-                  "Moved \(movedCount) items to Trash (est. \(formatBytes(totalSize))). Empty Trash to free space."
+                  "Moved \(finalMovedCount) items to Trash (est. \(formatBytes(finalTotalSize))). Empty Trash to free space."
               ))
             isPresented = false
           }
@@ -797,12 +799,15 @@ struct BatchCleanupSheet: View {
         }
       }
 
+      let finalTotalMoved = totalMoved
+      let finalTotalFreed = totalFreed
       await MainActor.run {
         isExecuting = false
         onComplete(
           ActionResult(
             success: true,
-            message: "Moved \(totalMoved) items to Trash. Freed \(formatBytes(totalFreed))."
+            message:
+              "Moved \(finalTotalMoved) items to Trash. Freed \(formatBytes(finalTotalFreed))."
           ))
         isPresented = false
       }

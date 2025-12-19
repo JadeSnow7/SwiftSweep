@@ -538,12 +538,11 @@ import SwiftUI
 
       // Refresh sizes after gc
       if result.success && op.type == .gc {
+        let reposToCheck = viewModel.gitRepos
         Task {
-          let sizes = await viewModel.gitScanner.getSizes(for: viewModel.gitRepos)
-          await MainActor.run {
-            for i in viewModel.gitRepos.indices {
-              viewModel.gitRepos[i].gitDirSize = sizes[viewModel.gitRepos[i].id]
-            }
+          let sizes = await viewModel.gitScanner.getSizes(for: reposToCheck)
+          for i in viewModel.gitRepos.indices {
+            viewModel.gitRepos[i].gitDirSize = sizes[viewModel.gitRepos[i].id]
           }
         }
       }
@@ -740,7 +739,9 @@ import SwiftUI
 
         // Details
         VStack(alignment: .leading, spacing: 8) {
-          DetailRow(label: "Repository", value: operation.repo.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
+          DetailRow(
+            label: "Repository",
+            value: operation.repo.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
           DetailRow(label: "Command", value: operation.command)
         }
 
