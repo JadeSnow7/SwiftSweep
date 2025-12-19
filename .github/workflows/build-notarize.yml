@@ -1,0 +1,94 @@
+name: Build and Notarize
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-and-notarize:
+    runs-on: macos-14
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.0'
+      
+      - name: Import Code Signing Certificate
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          KEYCHAIN_PASSWORD: ${{ github.run_id }}
+        run: |
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          
+          # Import certificate
+          echo "$MACOS_CERTIFICATE" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          rm certificate.p12
+      
+      - name: Build Universal Binary
+        run: |
+          # Build for both architectures
+          swift build -c release --arch arm64 --arch x86_64 --product SwiftSweepApp
+          
+          # Create app bundle
+          mkdir -p Output/SwiftSweep.app/Contents/MacOS
+          mkdir -p Output/SwiftSweep.app/Contents/Resources
+          
+          cp .build/apple/Products/Release/SwiftSweepApp Output/SwiftSweep.app/Contents/MacOS/SwiftSweep
+          cp Resources/Info.plist Output/SwiftSweep.app/Contents/
+          cp Resources/AppIcon.icns Output/SwiftSweep.app/Contents/Resources/ 2>/dev/null || true
+      
+      - name: Code Sign
+        env:
+          SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
+        run: |
+          codesign --force --options runtime --sign "$SIGNING_IDENTITY" \
+            --entitlements Entitlements.plist \
+            Output/SwiftSweep.app
+          
+          codesign --verify --verbose Output/SwiftSweep.app
+      
+      - name: Create DMG
+        run: |
+          hdiutil create -volname "SwiftSweep" -srcfolder Output/SwiftSweep.app \
+            -ov -format UDZO Output/SwiftSweep.dmg
+      
+      - name: Notarize
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          xcrun notarytool submit Output/SwiftSweep.dmg \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --wait
+          
+          # Staple the notarization ticket
+          xcrun stapler staple Output/SwiftSweep.dmg
+      
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SwiftSweep-${{ github.ref_name }}
+          path: Output/SwiftSweep.dmg
+      
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: Output/SwiftSweep.dmg
+          generate_release_notes: true
