@@ -7,6 +7,7 @@ import SwiftUI
 /// Hierarchical tree view for disk analysis - shows folders and files in an outline
 struct FileTreeView: View {
   let rootNode: FileNode
+  var showLocalSizeOnly: Bool = false
   @State private var expandedNodes: Set<UUID> = []
   @State private var selectedNode: FileNode?
 
@@ -18,7 +19,8 @@ struct FileTreeView: View {
           depth: 0,
           expandedNodes: $expandedNodes,
           selectedNode: $selectedNode,
-          parentSize: rootNode.size
+          parentSize: showLocalSizeOnly ? rootNode.localSize : rootNode.size,
+          showLocalSizeOnly: showLocalSizeOnly
         )
       }
       .padding()
@@ -32,14 +34,19 @@ struct FileTreeRow: View {
   @Binding var expandedNodes: Set<UUID>
   @Binding var selectedNode: FileNode?
   let parentSize: Int64
+  var showLocalSizeOnly: Bool = false
 
   private var isExpanded: Bool {
     expandedNodes.contains(node.id)
   }
 
+  private var displaySize: Int64 {
+    showLocalSizeOnly ? node.localSize : node.size
+  }
+
   private var percentage: Double {
     guard parentSize > 0 else { return 0 }
-    return Double(node.size) / Double(parentSize) * 100
+    return Double(displaySize) / Double(parentSize) * 100
   }
 
   private var barWidth: CGFloat {
@@ -107,9 +114,12 @@ struct FileTreeRow: View {
         }
 
         // Size text
-        Text(formatBytes(node.size))
+        Text(formatBytes(displaySize))
           .font(.system(.caption, design: .monospaced))
-          .foregroundColor(.secondary)
+          .foregroundColor(
+            node.iCloudStatus == .cloudOnly && showLocalSizeOnly
+              ? .secondary.opacity(0.5) : .secondary
+          )
           .frame(width: 70, alignment: .trailing)
 
         // Percentage
@@ -156,7 +166,8 @@ struct FileTreeRow: View {
             depth: depth + 1,
             expandedNodes: $expandedNodes,
             selectedNode: $selectedNode,
-            parentSize: node.size
+            parentSize: showLocalSizeOnly ? node.localSize : node.size,
+            showLocalSizeOnly: showLocalSizeOnly
           )
         }
       }

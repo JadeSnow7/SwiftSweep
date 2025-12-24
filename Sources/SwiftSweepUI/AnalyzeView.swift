@@ -8,6 +8,7 @@ struct AnalyzeView: View {
   @StateObject private var viewModel = AnalyzeViewModel()
   @State private var targetPath: String = NSHomeDirectory()
   @State private var viewMode: ViewMode = .treemap
+  @State private var showLocalSizeOnly: Bool = false  // 是否仅显示本地文件体积
   @AppStorage("showHiddenFiles") private var showHiddenFiles = false
 
   enum ViewMode: String, CaseIterable {
@@ -49,7 +50,9 @@ struct AnalyzeView: View {
           }
           .buttonStyle(.bordered)
         } else {
-          Button(action: { viewModel.analyze(path: targetPath, includeHiddenFiles: showHiddenFiles) }) {
+          Button(action: {
+            viewModel.analyze(path: targetPath, includeHiddenFiles: showHiddenFiles)
+          }) {
             Label("Analyze", systemImage: "magnifyingglass")
           }
           .buttonStyle(.borderedProminent)
@@ -77,7 +80,7 @@ struct AnalyzeView: View {
         }
         .frame(maxWidth: .infinity)
       } else if let rootNode = viewModel.rootNode {
-        // View mode picker
+        // View mode picker and options
         HStack {
           Picker("View", selection: $viewMode) {
             ForEach(ViewMode.allCases, id: \.self) { mode in
@@ -87,13 +90,35 @@ struct AnalyzeView: View {
           .pickerStyle(.segmented)
           .frame(width: 300)
 
+          // iCloud size toggle (only show if there are cloud-only files)
+          if rootNode.cloudOnlyCount > 0 {
+            Toggle(isOn: $showLocalSizeOnly) {
+              Label("Local Only", systemImage: "internaldrive")
+            }
+            .toggleStyle(.button)
+            .controlSize(.small)
+          }
+
           Spacer()
 
           // Summary stats
           HStack(spacing: 16) {
-            Label("\(formatBytes(viewModel.totalSize))", systemImage: "internaldrive.fill")
+            // 根据切换显示本地体积或总体积
+            if showLocalSizeOnly {
+              Label("\(formatBytes(rootNode.localSize))", systemImage: "internaldrive.fill")
+                .foregroundColor(.primary)
+            } else {
+              Label("\(formatBytes(viewModel.totalSize))", systemImage: "internaldrive.fill")
+            }
+
             Label("\(viewModel.fileCount) files", systemImage: "doc.fill")
             Label("\(viewModel.dirCount) folders", systemImage: "folder.fill")
+
+            // 显示云端文件数量
+            if rootNode.cloudOnlyCount > 0 {
+              Label("\(rootNode.cloudOnlyCount) in iCloud", systemImage: "icloud")
+                .foregroundColor(.blue)
+            }
           }
           .font(.caption)
           .foregroundColor(.secondary)
@@ -106,7 +131,7 @@ struct AnalyzeView: View {
         case .treemap:
           TreemapView(rootNode: rootNode)
         case .tree:
-          FileTreeView(rootNode: rootNode)
+          FileTreeView(rootNode: rootNode, showLocalSizeOnly: showLocalSizeOnly)
         case .files:
           LargestFilesView(files: viewModel.topFiles, basePath: targetPath)
         }

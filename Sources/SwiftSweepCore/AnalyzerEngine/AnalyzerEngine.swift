@@ -33,6 +33,9 @@ public final class FileNode: Identifiable, Hashable, @unchecked Sendable {
   /// 子树中仅在云端的文件数量
   public private(set) var cloudOnlyCount: Int
 
+  /// 本地文件体积（排除仅在云端的文件）
+  public private(set) var localSize: Int64
+
   public init(
     name: String, path: String, isDirectory: Bool, size: Int64 = 0,
     iCloudStatus: ICloudStatus = .local
@@ -46,6 +49,8 @@ public final class FileNode: Identifiable, Hashable, @unchecked Sendable {
     self.fileCount = isDirectory ? 0 : 1
     self.dirCount = isDirectory ? 1 : 0
     self.cloudOnlyCount = (iCloudStatus == .cloudOnly && !isDirectory) ? 1 : 0
+    // 本地大小：如果是仅在云端的文件则为0，否则为实际大小
+    self.localSize = (iCloudStatus == .cloudOnly) ? 0 : size
   }
 
   public static func == (lhs: FileNode, rhs: FileNode) -> Bool {
@@ -61,6 +66,7 @@ public final class FileNode: Identifiable, Hashable, @unchecked Sendable {
     child.parent = self
     children?.append(child)
     size += child.size
+    localSize += child.localSize
     fileCount += child.fileCount
     dirCount += child.dirCount
     cloudOnlyCount += child.cloudOnlyCount
