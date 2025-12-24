@@ -315,117 +315,115 @@ extension UninstallEngine {
     return DeletionPlan(app: app, items: items)
   }
 
-  #if !SWIFTSWEEP_MAS
-    /// 执行删除计划 (仅 Developer ID 版本)
-    /// - Parameters:
-    ///   - plan: 删除计划
-    ///   - permanentDelete: true 永久删除，false 移到废纸篓（默认）
-    ///   - onProgress: 进度回调 (current, total)
-    @available(macOS 13.0, *)
-    public func executeDeletionPlan(
-      _ plan: DeletionPlan, permanentDelete: Bool = false, onProgress: ((Int, Int) -> Void)? = nil
-    ) async throws -> DeletionResult {
-      logger.info("Executing deletion plan for: \(plan.app.name), permanent: \(permanentDelete)")
+  /// 执行删除计划
+  /// - Parameters:
+  ///   - plan: 删除计划
+  ///   - permanentDelete: true 永久删除，false 移到废纸篓（默认）
+  ///   - onProgress: 进度回调 (current, total)
+  @available(macOS 13.0, *)
+  public func executeDeletionPlan(
+    _ plan: DeletionPlan, permanentDelete: Bool = false, onProgress: ((Int, Int) -> Void)? = nil
+  ) async throws -> DeletionResult {
+    logger.info("Executing deletion plan for: \(plan.app.name), permanent: \(permanentDelete)")
 
-      var results: [DeletionItemResult] = []
-      let fm = FileManager.default
-      let total = plan.items.count
+    var results: [DeletionItemResult] = []
+    let fm = FileManager.default
+    let total = plan.items.count
 
-      // 按顺序删除（残留文件先删，应用最后删）
-      for (index, item) in plan.items.enumerated() {
-        // 进度回调：开始处理当前项
-        onProgress?(index, total)
+    // 按顺序删除（残留文件先删，应用最后删）
+    for (index, item) in plan.items.enumerated() {
+      // 进度回调：开始处理当前项
+      onProgress?(index, total)
+
+      do {
+        // 再次在执行前验证路径（双重保险）
+        _ = try PathValidator.validate(path: item.path)
+
+        let url = URL(fileURLWithPath: item.path)
+
+        // 策略：先尝试标准删除，权限不足时再调用 Helper
+        var deletedWithStandard = false
 
         do {
-          // 再次在执行前验证路径（双重保险）
-          _ = try PathValidator.validate(path: item.path)
-
-          let url = URL(fileURLWithPath: item.path)
-
-          // 策略：先尝试标准删除，权限不足时再调用 Helper
-          var deletedWithStandard = false
-
-          do {
-            if permanentDelete {
-              // 永久删除
-              try fm.removeItem(at: url)
-            } else {
-              // 移到废纸篓（推荐，用户可恢复）
-              try fm.trashItem(at: url, resultingItemURL: nil)
-            }
-            deletedWithStandard = true
-          } catch let error as NSError {
-            // 检查是否为权限错误
-            let isPermissionError =
-              error.domain == NSCocoaErrorDomain
-              && (error.code == NSFileWriteNoPermissionError
-                || error.code == NSFileReadNoPermissionError
-                || error.code == CocoaError.fileWriteNoPermission.rawValue)
-
-            let isPosixPermError =
-              error.domain == NSPOSIXErrorDomain
-              && (error.code == Int(EPERM) || error.code == Int(EACCES))
-
-            if isPermissionError || isPosixPermError {
-              // 权限不足，使用 Helper 提权删除
-              logger.info("Permission denied for \(item.path), falling back to Helper")
-              let helper = HelperClient.shared
-              if helper.checkStatus() == .enabled {
-                try await helper.deleteFile(at: item.path)
-                deletedWithStandard = true
-              } else {
-                throw error  // Helper 未安装，抛出原始错误
-              }
-            } else {
-              throw error  // 其他错误直接抛出
-            }
+          if permanentDelete {
+            // 永久删除
+            try fm.removeItem(at: url)
+          } else {
+            // 移到废纸篓（推荐，用户可恢复）
+            try fm.trashItem(at: url, resultingItemURL: nil)
           }
+          deletedWithStandard = true
+        } catch let error as NSError {
+          // 检查是否为权限错误
+          let isPermissionError =
+            error.domain == NSCocoaErrorDomain
+            && (error.code == NSFileWriteNoPermissionError
+              || error.code == NSFileReadNoPermissionError
+              || error.code == CocoaError.fileWriteNoPermission.rawValue)
 
-          if deletedWithStandard {
-            results.append(DeletionItemResult(item: item, success: true))
-            logger.info("Deleted: \(item.path)")
+          let isPosixPermError =
+            error.domain == NSPOSIXErrorDomain
+            && (error.code == Int(EPERM) || error.code == Int(EACCES))
+
+          if isPermissionError || isPosixPermError {
+            // 权限不足，使用 Helper 提权删除
+            logger.info("Permission denied for \(item.path), falling back to Helper")
+            let helper = HelperClient.shared
+            if helper.checkStatus() == .enabled {
+              try await helper.deleteFile(at: item.path)
+              deletedWithStandard = true
+            } else {
+              throw error  // Helper 未安装，抛出原始错误
+            }
+          } else {
+            throw error  // 其他错误直接抛出
           }
-        } catch {
-          logger.error("Failed to delete: \(item.path) - \(error)")
-          results.append(
-            DeletionItemResult(item: item, success: false, error: error.localizedDescription))
         }
 
-        // 进度回调：当前项处理完成
-        onProgress?(index + 1, total)
-      }
-
-      let result = DeletionResult(itemResults: results)
-      logger.info(
-        "Deletion complete: \(result.successCount) success, \(result.failureCount) failed")
-
-      return result
-    }
-
-    /// 重试删除失败的项目
-    @available(macOS 13.0, *)
-    public func retryFailedDeletions(_ failedItems: [DeletionItem]) async throws -> DeletionResult {
-      logger.info("Retrying \(failedItems.count) failed deletions")
-
-      let helper = HelperClient.shared
-      guard helper.checkStatus() == .enabled else {
-        throw HelperClient.HelperError.notInstalled
-      }
-
-      var results: [DeletionItemResult] = []
-
-      for item in failedItems {
-        do {
-          _ = try PathValidator.validate(path: item.path)
-          try await helper.deleteFile(at: item.path)
+        if deletedWithStandard {
           results.append(DeletionItemResult(item: item, success: true))
-        } catch {
-          results.append(
-            DeletionItemResult(item: item, success: false, error: error.localizedDescription))
+          logger.info("Deleted: \(item.path)")
         }
+      } catch {
+        logger.error("Failed to delete: \(item.path) - \(error)")
+        results.append(
+          DeletionItemResult(item: item, success: false, error: error.localizedDescription))
       }
 
-      return DeletionResult(itemResults: results)
+      // 进度回调：当前项处理完成
+      onProgress?(index + 1, total)
     }
-  #endif
+
+    let result = DeletionResult(itemResults: results)
+    logger.info(
+      "Deletion complete: \(result.successCount) success, \(result.failureCount) failed")
+
+    return result
+  }
+
+  /// 重试删除失败的项目
+  @available(macOS 13.0, *)
+  public func retryFailedDeletions(_ failedItems: [DeletionItem]) async throws -> DeletionResult {
+    logger.info("Retrying \(failedItems.count) failed deletions")
+
+    let helper = HelperClient.shared
+    guard helper.checkStatus() == .enabled else {
+      throw HelperClient.HelperError.notInstalled
+    }
+
+    var results: [DeletionItemResult] = []
+
+    for item in failedItems {
+      do {
+        _ = try PathValidator.validate(path: item.path)
+        try await helper.deleteFile(at: item.path)
+        results.append(DeletionItemResult(item: item, success: true))
+      } catch {
+        results.append(
+          DeletionItemResult(item: item, success: false, error: error.localizedDescription))
+      }
+    }
+
+    return DeletionResult(itemResults: results)
+  }
 }

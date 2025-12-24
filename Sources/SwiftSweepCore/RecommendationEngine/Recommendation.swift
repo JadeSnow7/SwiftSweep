@@ -210,5 +210,4 @@ public enum Requirement: String, Sendable, Codable {
   case helperInstalled = "helperInstalled"  // Needs privileged helper
   case directoryAccess = "directoryAccess"  // Needs user-selected directory
   case fullDiskAccess = "fullDiskAccess"  // Needs FDA entitlement
-  case notAvailableInMAS = "notAvailableInMAS"  // Feature unavailable in MAS build
 }

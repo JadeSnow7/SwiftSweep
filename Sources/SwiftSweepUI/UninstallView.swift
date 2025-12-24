@@ -268,25 +268,15 @@ struct AppDetailPanel: View {
             .scaleEffect(0.7)
         }
 
-        #if SWIFTSWEEP_MAS
-          // MAS 版本：显示沙盒限制提示
-          Button(action: {}) {
-            Label("Uninstall", systemImage: "trash")
-          }
-          .buttonStyle(.borderedProminent)
-          .tint(.gray)
-          .disabled(true)
-        #else
-          // Developer ID 版本：可用
-          Button(action: {
-            viewModel.prepareUninstall(app: app, residuals: residuals)
-          }) {
-            Label("Uninstall", systemImage: "trash")
-          }
-          .buttonStyle(.borderedProminent)
-          .tint(.red)
-          .disabled(viewModel.isDeleting || !viewModel.isHelperAvailable)
-        #endif
+        // Developer ID 版本：可用
+        Button(action: {
+          viewModel.prepareUninstall(app: app, residuals: residuals)
+        }) {
+          Label("Uninstall", systemImage: "trash")
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(.red)
+        .disabled(viewModel.isDeleting || !viewModel.isHelperAvailable)
       }
 
       if !residuals.isEmpty {
@@ -307,29 +297,23 @@ struct AppDetailPanel: View {
         }
       }
 
-      #if SWIFTSWEEP_MAS
-        Text("⚠️ App Store 版不支持卸载功能（沙盒限制）")
-          .font(.caption)
-          .foregroundColor(.orange)
-      #else
-        if !viewModel.isHelperAvailable {
-          HStack {
-            Text("⚠️ 需要安装 Helper 才能卸载应用")
-              .font(.caption)
-              .foregroundColor(.orange)
+      if !viewModel.isHelperAvailable {
+        HStack {
+          Text("⚠️ 需要安装 Helper 才能卸载应用")
+            .font(.caption)
+            .foregroundColor(.orange)
 
-            if #available(macOS 13.0, *) {
-              Button("安装 Helper") {
-                Task {
-                  await viewModel.installHelper()
-                }
+          if #available(macOS 13.0, *) {
+            Button("安装 Helper") {
+              Task {
+                await viewModel.installHelper()
               }
-              .font(.caption)
-              .buttonStyle(.link)
             }
+            .font(.caption)
+            .buttonStyle(.link)
           }
         }
-      #endif
+      }
     }
     .padding()
     .background(Color(nsColor: .controlBackgroundColor))
@@ -635,16 +619,12 @@ class UninstallViewModel: ObservableObject {
   // Settings
   @AppStorage("allowAppleAppUninstall") private var allowAppleAppUninstall = false
 
-  #if !SWIFTSWEEP_MAS
-    var isHelperAvailable: Bool {
-      if #available(macOS 13.0, *) {
-        return HelperClient.shared.checkStatus() == .enabled
-      }
-      return false
+  var isHelperAvailable: Bool {
+    if #available(macOS 13.0, *) {
+      return HelperClient.shared.checkStatus() == .enabled
     }
-  #else
-    var isHelperAvailable: Bool { false }
-  #endif
+    return false
+  }
 
   // SWR (Stale-While-Revalidate) scanning
   @Published var scanProgress: (current: Int, total: Int)?
@@ -822,73 +802,71 @@ class UninstallViewModel: ObservableObject {
   @Published var deletionProgress: (current: Int, total: Int)?
   @Published var deletionCurrentItem: String?
 
-  #if !SWIFTSWEEP_MAS
-    @available(macOS 13.0, *)
-    func executeUninstall() async {
-      guard let plan = deletionPlan else { return }
+  @available(macOS 13.0, *)
+  func executeUninstall() async {
+    guard let plan = deletionPlan else { return }
 
-      isDeleting = true
-      deletionProgress = (0, plan.items.count)
-      objectWillChange.send()
+    isDeleting = true
+    deletionProgress = (0, plan.items.count)
+    objectWillChange.send()
 
-      do {
-        deletionResult = try await UninstallEngine.shared.executeDeletionPlan(plan) {
-          [weak self] current, total in
-          // 使用 DispatchQueue.main 确保 UI 更新
-          DispatchQueue.main.async {
-            self?.deletionProgress = (current, total)
-            // 显示当前正在删除的项目
-            if current < plan.items.count {
-              let itemPath = plan.items[current].path
-              self?.deletionCurrentItem = (itemPath as NSString).lastPathComponent
-            } else {
-              self?.deletionCurrentItem = nil
-            }
-            // 强制 UI 刷新
-            self?.objectWillChange.send()
+    do {
+      deletionResult = try await UninstallEngine.shared.executeDeletionPlan(plan) {
+        [weak self] current, total in
+        // 使用 DispatchQueue.main 确保 UI 更新
+        DispatchQueue.main.async {
+          self?.deletionProgress = (current, total)
+          // 显示当前正在删除的项目
+          if current < plan.items.count {
+            let itemPath = plan.items[current].path
+            self?.deletionCurrentItem = (itemPath as NSString).lastPathComponent
+          } else {
+            self?.deletionCurrentItem = nil
           }
+          // 强制 UI 刷新
+          self?.objectWillChange.send()
         }
-      } catch {
-        errorMessage = error.localizedDescription
-        showingError = true
       }
-      
-      // 完成后显式更新 UI
-      isDeleting = false
-      deletionProgress = nil
-      deletionCurrentItem = nil
+    } catch {
+      errorMessage = error.localizedDescription
+      showingError = true
+    }
+
+    // 完成后显式更新 UI
+    isDeleting = false
+    deletionProgress = nil
+    deletionCurrentItem = nil
+    objectWillChange.send()
+  }
+
+  @available(macOS 13.0, *)
+  func retryFailedItems() async {
+    guard let result = deletionResult else { return }
+
+    isDeleting = true
+    do {
+      let retryResult = try await UninstallEngine.shared.retryFailedDeletions(result.failedItems)
+      // Merge results
+      var newResults = result.itemResults.filter { $0.success }
+      newResults.append(contentsOf: retryResult.itemResults)
+      deletionResult = DeletionResult(itemResults: newResults)
+    } catch {
+      errorMessage = error.localizedDescription
+      showingError = true
+    }
+    isDeleting = false
+  }
+
+  @available(macOS 13.0, *)
+  func installHelper() async {
+    do {
+      try await HelperClient.shared.registerHelper()
       objectWillChange.send()
+    } catch {
+      errorMessage = error.localizedDescription
+      showingError = true
     }
-
-    @available(macOS 13.0, *)
-    func retryFailedItems() async {
-      guard let result = deletionResult else { return }
-
-      isDeleting = true
-      do {
-        let retryResult = try await UninstallEngine.shared.retryFailedDeletions(result.failedItems)
-        // Merge results
-        var newResults = result.itemResults.filter { $0.success }
-        newResults.append(contentsOf: retryResult.itemResults)
-        deletionResult = DeletionResult(itemResults: newResults)
-      } catch {
-        errorMessage = error.localizedDescription
-        showingError = true
-      }
-      isDeleting = false
-    }
-
-    @available(macOS 13.0, *)
-    func installHelper() async {
-      do {
-        try await HelperClient.shared.registerHelper()
-        objectWillChange.send()
-      } catch {
-        errorMessage = error.localizedDescription
-        showingError = true
-      }
-    }
-  #endif
+  }
 
   func cancelUninstall() {
     deletionPlan = nil

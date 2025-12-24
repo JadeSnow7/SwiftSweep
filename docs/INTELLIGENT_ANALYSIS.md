@@ -46,7 +46,7 @@
 2. **Explainable & Auditable**
    - 每条建议必须输出：触发规则、证据摘要、预计收益（空间/性能）、风险等级、可执行动作列表。
 3. **Minimal Permissions**
-   - 在 MAS（沙盒）下，只做“可用能力的最佳版本”；需要更高权限的功能在 UI 中明确标注（并解释原因）。
+   - 需要更高权限的功能在 UI 中明确标注（并解释原因）。
 4. **Performance & Caching**
    - 重计算（目录递归大小、哈希、Vision 特征）必须可取消、后台执行、可缓存，避免重复工作。
 5. **Stable API Contract**
@@ -69,7 +69,7 @@
 - `estimatedPerformanceImpact`: 预计性能收益（可为空）
 - `evidence`: `[Evidence]`（必须非空）
 - `actions`: `[Action]`（可为空：仅提示类 Insight）
-- `requirements`: 权限/能力需求（例如：需要用户选择目录、需要 Helper、MAS 不支持等）
+- `requirements`: 权限/能力需求（例如：需要用户选择目录、需要 Helper 等）
 
 ### 4.2 Evidence（证据）
 
@@ -146,7 +146,7 @@ Core 已具备主要信号源：
   - `confidence`：若 lastUsedDate 为 nil，则不输出“未使用”，只输出“使用时间未知”（单独建议、低置信度）。
 - **输出动作**：
   - 当前：`openFinder`（定位 /Applications）
-  - 后续：`uninstallPlan`（DevID 可用；MAS 版本显示限制）
+  - 后续：`uninstallPlan`（卸载计划）
 
 #### B. Old Downloads（下载目录陈旧文件）
 
@@ -203,7 +203,7 @@ Core 已具备主要信号源：
   - `buckets`: 少量类别桶（Downloads/DeveloperCaches/AppCaches/Photos/Other）体积估算（可为空）
 - **采样策略**：
   - 默认前台采样：App 启动 + 每 6 小时（避免依赖后台必跑）
-  - 后台采样作为增强：MAS 用 `BGAppRefreshTask`（不保证准时）；DevID 可用 LaunchAgent（不建议 LaunchDaemon）
+  - 后台采样作为增强：可用 LaunchAgent（不建议 LaunchDaemon）
 
 #### B. Growth Explanation（增长解释）
 
@@ -256,19 +256,7 @@ Core 已具备主要信号源：
 
 ---
 
-## 7. MAS vs Developer ID 能力矩阵（建议）
-
-| 能力 | DevID（非沙盒） | MAS（沙盒） | 备注 |
-|---|---|---|---|
-| Smart Recommendations（基础） | ✅ | ✅（受目录访问限制） | 需要让用户选择目录/使用安全书签 |
-| Uninstall（执行） | ✅（需 Helper） | ❌ | 现有 UI 已区分 |
-| BG 采样 | ⚠️（LaunchAgent） | ⚠️（BGTask） | 都不保证准时；以前台采样为主 |
-| 全盘扫描 | ✅（需权限） | ❌ | 建议用范围选择替代 |
-| Vision 相似图片 | ✅ | ✅ | 但扫描范围应由用户授权 |
-
----
-
-## 8. 分期路线图（Roadmap）
+## 7. 分期路线图（Roadmap）
 
 ### Phase 0：基础设施（已完成 ✅）
 
@@ -314,7 +302,7 @@ Core 已具备主要信号源：
 
 ---
 
-## 9. 测试与验证（Testing）
+## 8. 测试与验证（Testing）
 
 - **规则单测**：每条 `RecommendationRule` 使用合成的 `RecommendationContext` 输入，断言输出 recommendation 的 risk/confidence/bytes/证据完整性。
 - **性能回归**：大目录扫描必须可取消；UI 不阻塞主线程；缓存命中可显著降低二次扫描耗时。
@@ -322,8 +310,7 @@ Core 已具备主要信号源：
 
 ---
 
-## 10. 开放问题（Open Questions）
+## 9. 开放问题（Open Questions）
 
 - Snapshots 存储介质：JSON vs CoreData（建议先 JSON，schemaVersion 控制演进）
 - “桶”划分策略：先用固定路径桶，还是引入按文件类型聚合（建议先固定路径桶）
-- MAS 下目录授权的 UX：是否引入 Security-Scoped Bookmarks（建议引入，用于持久访问用户选定目录）

@@ -21,7 +21,7 @@
 - 🧠 **Smart Insights** — 基于规则的智能建议（证据 / 风险 / 置信度 / 预估收益），支持预览与一键清理
 - 🎨 **原生 SwiftUI** — 现代化 macOS 界面，支持暗色模式
 - 🔍 **磁盘分析** — Treemap / Tree / Top Files 三种视图，WizTree 风格定位大文件
-- 🗑️ **应用卸载** — 残留扫描 + 删除计划预览 + 执行（Developer ID 版可执行；MAS 版受沙盒限制）
+- 🗑️ **应用卸载** — 残留扫描 + 删除计划预览 + 执行
 - ⚡ **系统优化** — DNS 刷新、Spotlight 重建、内存清理、Dock/Finder 重置、字体缓存清理
 - 📦 **包与仓库管理** — Homebrew/npm/pip/gem 扫描与管理（卸载/升级），并支持 Git 仓库发现与维护（状态/体积/GC/Prune）
 - 🧩 **模块化架构** — CLI + GUI 共享 `SwiftSweepCore`
@@ -42,7 +42,7 @@ SwiftSweep 采用两栏式布局，包含以下功能模块：
 | **Optimize** | 系统优化（DNS 刷新、Spotlight 重建等）|
 | **Analyze** | 磁盘空间分析，定位大文件 (WizTree 风格) |
 | **Applications** | 应用清单：筛选/分类/深度扫描应用体积，并可一键跳转卸载 |
-| **Packages** | 包与仓库管理：Homebrew/npm/pip/gem + Git Repos（包卸载/升级，Git GC/Prune，仅非 MAS 版本） |
+| **Packages** | 包与仓库管理：Homebrew/npm/pip/gem + Git Repos（包卸载/升级，Git GC/Prune） |
 | **Settings** | 偏好设置与 Helper 管理 |
 
 ### 功能要点（Current）

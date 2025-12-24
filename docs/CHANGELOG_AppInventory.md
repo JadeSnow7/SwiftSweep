@@ -6,7 +6,7 @@
 
 ## 📦 新增模块：`SwiftSweepAppInventory`
 
-独立的 Swift Package，位于 `Packages/SwiftSweepAppInventory`，提供 MAS 安全的应用程序管理功能。
+独立的 Swift Package，位于 `Packages/SwiftSweepAppInventory`，提供应用程序管理功能。
 
 ### 架构设计
 
@@ -77,44 +77,6 @@
 
 ---
 
-## 🍎 MAS 版本集成 (`SwiftSweepMAS`)
-
-### 修改文件
-| 文件 | 变更 |
-|------|------|
-| `project.yml` | 添加 `SwiftSweepAppInventory` 本地包依赖 |
-| `ContentView.swift` | 使用共享 `ApplicationsView`，移除本地实现 (~180 行) |
-
-### 功能特性
-- ✅ 查看已安装应用程序
-- ✅ 智能筛选
-- ✅ 手动分类管理
-- ✅ 右键菜单：打开 / 在 Finder 中显示
-- ✅ 授权 `/Applications` 后精确计算大小
-- ⛔ 卸载功能 (MAS 沙盒限制)
-
-### 沙盒合规
-- 使用 App Group (`group.com.swiftsweep.mas`) 存储授权和分类数据
-- 深度扫描需用户通过 `fileImporter` 授权 `/Applications`
-- 严格校验授权路径 `== "/Applications"`
-
----
-
-## 📊 功能对比
-
-| 功能 | Main | MAS |
-|------|:----:|:---:|
-| 查看应用列表 | ✅ | ✅ |
-| Spotlight 快速列表 | ✅ | ✅ |
-| FileManager 备用列表 | ✅ | ✅ |
-| 深度扫描 (精确大小) | ✅ | ✅ |
-| 智能筛选 | ✅ | ✅ |
-| 手动分类 | ✅ | ✅ |
-| 卸载应用 | ✅ | ⛔ |
-| 查找残留文件 | ✅ | ⛔ |
-
----
-
 ## 📁 新增文件列表
 
 ```
@@ -150,4 +112,3 @@ Sources/SwiftSweepUI/
 | 目标 | 状态 |
 |------|------|
 | `swift build --target SwiftSweepUI` | ✅ 成功 |
-| `xcodebuild -scheme SwiftSweepMAS` | ✅ 成功 |

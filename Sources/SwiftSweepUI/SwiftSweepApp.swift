@@ -43,9 +43,7 @@ struct ContentView: View {
     case optimize
     case analyze
     case applications
-    #if !SWIFTSWEEP_MAS
-      case packages
-    #endif
+    case packages
     case settings
   }
 
@@ -80,11 +78,9 @@ struct ContentView: View {
           NavigationLink(value: NavigationItem.applications) {
             Label(L10n.Nav.applications.localized, systemImage: "square.grid.2x2")
           }
-          #if !SWIFTSWEEP_MAS
-            NavigationLink(value: NavigationItem.packages) {
-              Label(L10n.Nav.packages.localized, systemImage: "shippingbox")
-            }
-          #endif
+          NavigationLink(value: NavigationItem.packages) {
+            Label(L10n.Nav.packages.localized, systemImage: "shippingbox")
+          }
         }
 
         Section(L10n.Nav.settings.localized) {
@@ -115,14 +111,12 @@ struct ContentView: View {
           AnalyzeView()
         case .applications:
           MainApplicationsView()
-        #if !SWIFTSWEEP_MAS
-          case .packages:
-            if #available(macOS 13.0, *) {
-              PackageFinderView()
-            } else {
-              Text("Package Finder requires macOS 13.0 or later")
-            }
-        #endif
+        case .packages:
+          if #available(macOS 13.0, *) {
+            PackageFinderView()
+          } else {
+            Text("Package Finder requires macOS 13.0 or later")
+          }
         case .settings:
           SettingsView()
         case .none:
