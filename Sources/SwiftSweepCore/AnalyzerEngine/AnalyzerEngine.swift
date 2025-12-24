@@ -1,5 +1,15 @@
 import Foundation
 
+// MARK: - iCloud Status
+
+/// iCloud 文件下载状态
+public enum ICloudStatus: String, Sendable {
+  case local = "local"  // 本地文件（非 iCloud）
+  case downloaded = "downloaded"  // iCloud 文件，已下载到本地
+  case cloudOnly = "cloudOnly"  // iCloud 文件，仅在云端（占位符）
+  case downloading = "downloading"  // 正在下载中
+}
+
 // MARK: - FileNode (Recursive Tree Structure)
 
 /// Represents a node in the file system tree (file or directory)
@@ -12,19 +22,30 @@ public final class FileNode: Identifiable, Hashable, @unchecked Sendable {
   public private(set) var children: [FileNode]?
   public weak var parent: FileNode?
 
+  /// iCloud 文件状态
+  public let iCloudStatus: ICloudStatus
+
   /// Number of files in this subtree (including self if file)
   public private(set) var fileCount: Int
   /// Number of directories in this subtree (including self if directory)
   public private(set) var dirCount: Int
 
-  public init(name: String, path: String, isDirectory: Bool, size: Int64 = 0) {
+  /// 子树中仅在云端的文件数量
+  public private(set) var cloudOnlyCount: Int
+
+  public init(
+    name: String, path: String, isDirectory: Bool, size: Int64 = 0,
+    iCloudStatus: ICloudStatus = .local
+  ) {
     self.name = name
     self.path = path
     self.isDirectory = isDirectory
     self.size = size
+    self.iCloudStatus = iCloudStatus
     self.children = isDirectory ? [] : nil
     self.fileCount = isDirectory ? 0 : 1
     self.dirCount = isDirectory ? 1 : 0
+    self.cloudOnlyCount = (iCloudStatus == .cloudOnly && !isDirectory) ? 1 : 0
   }
 
   public static func == (lhs: FileNode, rhs: FileNode) -> Bool {
@@ -42,6 +63,7 @@ public final class FileNode: Identifiable, Hashable, @unchecked Sendable {
     size += child.size
     fileCount += child.fileCount
     dirCount += child.dirCount
+    cloudOnlyCount += child.cloudOnlyCount
   }
 
   /// Sort children by size descending (largest first)
@@ -133,8 +155,50 @@ public final class AnalyzerEngine: @unchecked Sendable {
     let rootURL = URL(fileURLWithPath: path)
     let skipHidden = !includeHiddenFiles
 
+    // iCloud 相关的 URL 资源键
+    let resourceKeys: [URLResourceKey] = [
+      .isDirectoryKey,
+      .fileSizeKey,
+      .isUbiquitousItemKey,
+      .ubiquitousItemDownloadingStatusKey,
+      .ubiquitousItemIsDownloadingKey,
+    ]
+
     var scannedCount = 0
     var lastUIUpdate = Date()
+
+    /// 检测 iCloud 文件状态
+    func getICloudStatus(for url: URL) -> ICloudStatus {
+      guard let values = try? url.resourceValues(forKeys: Set(resourceKeys)) else {
+        return .local
+      }
+
+      // 检查是否为 iCloud 项目
+      guard values.isUbiquitousItem == true else {
+        return .local
+      }
+
+      // 检查是否正在下载
+      if values.ubiquitousItemIsDownloading == true {
+        return .downloading
+      }
+
+      // 检查下载状态
+      if let downloadStatus = values.ubiquitousItemDownloadingStatus {
+        switch downloadStatus {
+        case .current:
+          return .downloaded
+        case .downloaded:
+          return .downloaded
+        case .notDownloaded:
+          return .cloudOnly
+        default:
+          return .local
+        }
+      }
+
+      return .local
+    }
 
     // Recursive function to build tree
     func scanDirectory(_ url: URL) -> FileNode {
@@ -148,12 +212,22 @@ public final class AnalyzerEngine: @unchecked Sendable {
 
       var isDir: ObjCBool = false
       guard fileManager.fileExists(atPath: nodePath, isDirectory: &isDir) else {
+        // 可能是仅在云端的文件（占位符）
+        let iCloudStatus = getICloudStatus(for: url)
+        if iCloudStatus == .cloudOnly {
+          // 尝试获取云端文件大小
+          let size =
+            (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map { Int64($0) } ?? 0
+          return FileNode(
+            name: name, path: nodePath, isDirectory: false, size: size, iCloudStatus: .cloudOnly)
+        }
         return FileNode(name: name, path: nodePath, isDirectory: false, size: 0)
       }
 
       if !isDir.boolValue {
         // It's a file
         let size = (try? fileManager.attributesOfItem(atPath: nodePath)[.size] as? Int64) ?? 0
+        let iCloudStatus = getICloudStatus(for: url)
         scannedCount += 1
 
         // Throttle progress updates
@@ -162,7 +236,8 @@ public final class AnalyzerEngine: @unchecked Sendable {
           onProgress?(scannedCount, 0)  // Size will be computed after tree is built
         }
 
-        return FileNode(name: name, path: nodePath, isDirectory: false, size: size)
+        return FileNode(
+          name: name, path: nodePath, isDirectory: false, size: size, iCloudStatus: iCloudStatus)
       }
 
       // It's a directory
@@ -170,7 +245,7 @@ public final class AnalyzerEngine: @unchecked Sendable {
 
       guard
         let contents = try? fileManager.contentsOfDirectory(
-          at: url, includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+          at: url, includingPropertiesForKeys: resourceKeys,
           options: skipHidden ? [.skipsHiddenFiles] : [])
       else {
         return dirNode
@@ -198,10 +273,13 @@ public final class AnalyzerEngine: @unchecked Sendable {
   // MARK: - Backward Compatible Analysis
 
   /// Perform disk analysis (backward compatible, now uses tree internally)
-  public func analyze(path: String, includeHiddenFiles: Bool = false, onProgress: ((Int, Int64) -> Void)? = nil) async throws
+  public func analyze(
+    path: String, includeHiddenFiles: Bool = false, onProgress: ((Int, Int64) -> Void)? = nil
+  ) async throws
     -> AnalysisResult
   {
-    let root = try await buildTree(path: path, includeHiddenFiles: includeHiddenFiles, onProgress: onProgress)
+    let root = try await buildTree(
+      path: path, includeHiddenFiles: includeHiddenFiles, onProgress: onProgress)
 
     let largestFiles = root.getLargestFiles(limit: 20)
     let topFiles = largestFiles.map { FileItem(path: $0.path, size: $0.size, isDirectory: false) }
