@@ -9,6 +9,7 @@ struct AnalyzeView: View {
   @State private var targetPath: String = NSHomeDirectory()
   @State private var viewMode: ViewMode = .treemap
   @State private var showLocalSizeOnly: Bool = false  // 是否仅显示本地文件体积
+  @State private var showPhysicalSize: Bool = false  // 是否显示实际磁盘占用（物理大小）
   @AppStorage("showHiddenFiles") private var showHiddenFiles = false
 
   enum ViewMode: String, CaseIterable {
@@ -99,17 +100,35 @@ struct AnalyzeView: View {
             .controlSize(.small)
           }
 
+          // 物理大小切换（显示实际磁盘占用 vs 逻辑大小）
+          Toggle(isOn: $showPhysicalSize) {
+            Label("Actual", systemImage: "externaldrive")
+          }
+          .toggleStyle(.button)
+          .controlSize(.small)
+          .help("Show actual disk usage (physical size) instead of apparent size")
+
           Spacer()
 
           // Summary stats
           HStack(spacing: 16) {
-            // 根据切换显示本地体积或总体积
-            if showLocalSizeOnly {
-              Label("\(formatBytes(rootNode.localSize))", systemImage: "internaldrive.fill")
-                .foregroundColor(.primary)
-            } else {
-              Label("\(formatBytes(viewModel.totalSize))", systemImage: "internaldrive.fill")
-            }
+            // 根据切换显示不同的大小
+            let displaySize: Int64 = {
+              if showPhysicalSize {
+                return rootNode.physicalSize
+              } else if showLocalSizeOnly {
+                return rootNode.localSize
+              } else {
+                return viewModel.totalSize
+              }
+            }()
+
+            Label(
+              "\(formatBytes(displaySize))",
+              systemImage: showPhysicalSize ? "externaldrive.fill" : "internaldrive.fill"
+            )
+            .foregroundColor(
+              showPhysicalSize ? .orange : (showLocalSizeOnly ? .primary : .secondary))
 
             Label("\(viewModel.fileCount) files", systemImage: "doc.fill")
             Label("\(viewModel.dirCount) folders", systemImage: "folder.fill")
@@ -131,7 +150,9 @@ struct AnalyzeView: View {
         case .treemap:
           TreemapView(rootNode: rootNode)
         case .tree:
-          FileTreeView(rootNode: rootNode, showLocalSizeOnly: showLocalSizeOnly)
+          FileTreeView(
+            rootNode: rootNode, showLocalSizeOnly: showLocalSizeOnly,
+            showPhysicalSize: showPhysicalSize)
         case .files:
           LargestFilesView(files: viewModel.topFiles, basePath: targetPath)
         }

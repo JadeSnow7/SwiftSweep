@@ -18,7 +18,7 @@ public final class FileNode: Identifiable, Hashable, @unchecked Sendable {
   public let name: String
   public let path: String
   public let isDirectory: Bool
-  public private(set) var size: Int64
+  public private(set) var size: Int64  // 逻辑大小（表观大小）
   public private(set) var children: [FileNode]?
   public weak var parent: FileNode?
 
@@ -36,14 +36,18 @@ public final class FileNode: Identifiable, Hashable, @unchecked Sendable {
   /// 本地文件体积（排除仅在云端的文件）
   public private(set) var localSize: Int64
 
+  /// 实际磁盘占用（物理大小，考虑稀疏文件）
+  public private(set) var physicalSize: Int64
+
   public init(
     name: String, path: String, isDirectory: Bool, size: Int64 = 0,
-    iCloudStatus: ICloudStatus = .local
+    physicalSize: Int64? = nil, iCloudStatus: ICloudStatus = .local
   ) {
     self.name = name
     self.path = path
     self.isDirectory = isDirectory
     self.size = size
+    self.physicalSize = physicalSize ?? size  // 默认等于逻辑大小
     self.iCloudStatus = iCloudStatus
     self.children = isDirectory ? [] : nil
     self.fileCount = isDirectory ? 0 : 1
@@ -66,6 +70,7 @@ public final class FileNode: Identifiable, Hashable, @unchecked Sendable {
     child.parent = self
     children?.append(child)
     size += child.size
+    physicalSize += child.physicalSize
     localSize += child.localSize
     fileCount += child.fileCount
     dirCount += child.dirCount
@@ -225,14 +230,33 @@ public final class AnalyzerEngine: @unchecked Sendable {
           let size =
             (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map { Int64($0) } ?? 0
           return FileNode(
-            name: name, path: nodePath, isDirectory: false, size: size, iCloudStatus: .cloudOnly)
+            name: name, path: nodePath, isDirectory: false, size: size,
+            physicalSize: 0, iCloudStatus: .cloudOnly)  // 云端文件物理大小为0
         }
         return FileNode(name: name, path: nodePath, isDirectory: false, size: 0)
       }
 
       if !isDir.boolValue {
-        // It's a file
-        let size = (try? fileManager.attributesOfItem(atPath: nodePath)[.size] as? Int64) ?? 0
+        // It's a file - 获取逻辑大小和物理大小
+        let logicalSize =
+          (try? fileManager.attributesOfItem(atPath: nodePath)[.size] as? Int64) ?? 0
+
+        // 获取物理大小（实际磁盘占用）
+        let physicalSize: Int64
+        if let allocatedSize = try? url.resourceValues(forKeys: [.totalFileAllocatedSizeKey])
+          .totalFileAllocatedSize
+        {
+          physicalSize = Int64(allocatedSize)
+        } else {
+          // Fallback: 使用 stat 获取块大小
+          var statInfo = stat()
+          if stat(nodePath, &statInfo) == 0 {
+            physicalSize = Int64(statInfo.st_blocks) * 512  // st_blocks 以 512 字节块为单位
+          } else {
+            physicalSize = logicalSize  // 无法获取时使用逻辑大小
+          }
+        }
+
         let iCloudStatus = getICloudStatus(for: url)
         scannedCount += 1
 
@@ -243,7 +267,8 @@ public final class AnalyzerEngine: @unchecked Sendable {
         }
 
         return FileNode(
-          name: name, path: nodePath, isDirectory: false, size: size, iCloudStatus: iCloudStatus)
+          name: name, path: nodePath, isDirectory: false, size: logicalSize,
+          physicalSize: physicalSize, iCloudStatus: iCloudStatus)
       }
 
       // It's a directory

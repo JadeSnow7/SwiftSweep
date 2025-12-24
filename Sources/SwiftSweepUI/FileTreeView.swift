@@ -8,6 +8,7 @@ import SwiftUI
 struct FileTreeView: View {
   let rootNode: FileNode
   var showLocalSizeOnly: Bool = false
+  var showPhysicalSize: Bool = false
   @State private var expandedNodes: Set<UUID> = []
   @State private var selectedNode: FileNode?
 
@@ -19,11 +20,22 @@ struct FileTreeView: View {
           depth: 0,
           expandedNodes: $expandedNodes,
           selectedNode: $selectedNode,
-          parentSize: showLocalSizeOnly ? rootNode.localSize : rootNode.size,
-          showLocalSizeOnly: showLocalSizeOnly
+          parentSize: getParentSize(for: rootNode),
+          showLocalSizeOnly: showLocalSizeOnly,
+          showPhysicalSize: showPhysicalSize
         )
       }
       .padding()
+    }
+  }
+
+  private func getParentSize(for node: FileNode) -> Int64 {
+    if showPhysicalSize {
+      return node.physicalSize
+    } else if showLocalSizeOnly {
+      return node.localSize
+    } else {
+      return node.size
     }
   }
 }
@@ -35,13 +47,20 @@ struct FileTreeRow: View {
   @Binding var selectedNode: FileNode?
   let parentSize: Int64
   var showLocalSizeOnly: Bool = false
+  var showPhysicalSize: Bool = false
 
   private var isExpanded: Bool {
     expandedNodes.contains(node.id)
   }
 
   private var displaySize: Int64 {
-    showLocalSizeOnly ? node.localSize : node.size
+    if showPhysicalSize {
+      return node.physicalSize
+    } else if showLocalSizeOnly {
+      return node.localSize
+    } else {
+      return node.size
+    }
   }
 
   private var percentage: Double {
@@ -166,8 +185,9 @@ struct FileTreeRow: View {
             depth: depth + 1,
             expandedNodes: $expandedNodes,
             selectedNode: $selectedNode,
-            parentSize: showLocalSizeOnly ? node.localSize : node.size,
-            showLocalSizeOnly: showLocalSizeOnly
+            parentSize: getParentSize(for: node),
+            showLocalSizeOnly: showLocalSizeOnly,
+            showPhysicalSize: showPhysicalSize
           )
         }
       }
@@ -179,6 +199,16 @@ struct FileTreeRow: View {
       expandedNodes.remove(node.id)
     } else {
       expandedNodes.insert(node.id)
+    }
+  }
+
+  private func getParentSize(for node: FileNode) -> Int64 {
+    if showPhysicalSize {
+      return node.physicalSize
+    } else if showLocalSizeOnly {
+      return node.localSize
+    } else {
+      return node.size
     }
   }
 
