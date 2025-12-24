@@ -1,6 +1,45 @@
 import Foundation
 import Logging
 
+// MARK: - AppleScript Fallback Helper
+
+/// 使用 AppleScript 执行需要管理员权限的删除操作
+/// 这是当 Helper XPC 失败时的 fallback 方案
+@available(macOS 13.0, *)
+private func deleteWithAppleScript(path: String) async throws {
+  // 转义路径中的特殊字符
+  let escapedPath = path.replacingOccurrences(of: "\\", with: "\\\\")
+    .replacingOccurrences(of: "\"", with: "\\\"")
+
+  let script = """
+    do shell script "rm -rf \\\"\(escapedPath)\\\"" with administrator privileges
+    """
+
+  return try await withCheckedThrowingContinuation { continuation in
+    DispatchQueue.global(qos: .userInitiated).async {
+      var error: NSDictionary?
+      if let appleScript = NSAppleScript(source: script) {
+        let result = appleScript.executeAndReturnError(&error)
+        if let error = error {
+          let errorMessage =
+            error["NSAppleScriptErrorMessage"] as? String ?? "Unknown AppleScript error"
+          continuation.resume(
+            throwing: NSError(
+              domain: "AppleScript", code: -1, userInfo: [NSLocalizedDescriptionKey: errorMessage]))
+        } else {
+          _ = result  // Silence unused variable warning
+          continuation.resume(returning: ())
+        }
+      } else {
+        continuation.resume(
+          throwing: NSError(
+            domain: "AppleScript", code: -1,
+            userInfo: [NSLocalizedDescriptionKey: "Failed to create AppleScript"]))
+      }
+    }
+  }
+}
+
 // MARK: - Timeout Helper
 
 /// 带超时的异步操作包装器
@@ -412,10 +451,20 @@ extension UninstallEngine {
             logger.info("Permission denied for \(item.path), falling back to Helper")
             let helper = HelperClient.shared
             if helper.checkStatus() == .enabled {
-              try await helper.deleteFile(at: item.path)
-              deletedSuccessfully = true
+              do {
+                try await helper.deleteFile(at: item.path)
+                deletedSuccessfully = true
+              } catch {
+                // Helper failed, try AppleScript as last resort
+                logger.warning("Helper failed: \(error), trying AppleScript")
+                try await deleteWithAppleScript(path: item.path)
+                deletedSuccessfully = true
+              }
             } else {
-              throw error  // Helper 未安装，抛出原始错误
+              // No helper, try AppleScript directly
+              logger.info("Helper not available, trying AppleScript")
+              try await deleteWithAppleScript(path: item.path)
+              deletedSuccessfully = true
             }
           } else {
             throw error  // 其他错误直接抛出
@@ -423,13 +472,21 @@ extension UninstallEngine {
         } catch {
           // 处理超时错误
           if "\(error)".contains("timed out") {
-            logger.warning("Standard deletion timed out for \(item.path), trying Helper")
+            logger.warning(
+              "Standard deletion timed out for \(item.path), trying Helper/AppleScript")
             let helper = HelperClient.shared
             if helper.checkStatus() == .enabled {
-              try await helper.deleteFile(at: item.path)
-              deletedSuccessfully = true
+              do {
+                try await helper.deleteFile(at: item.path)
+                deletedSuccessfully = true
+              } catch {
+                logger.warning("Helper also failed, trying AppleScript")
+                try await deleteWithAppleScript(path: item.path)
+                deletedSuccessfully = true
+              }
             } else {
-              throw error
+              try await deleteWithAppleScript(path: item.path)
+              deletedSuccessfully = true
             }
           } else {
             throw error

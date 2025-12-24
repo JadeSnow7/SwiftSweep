@@ -1,6 +1,40 @@
 import Foundation
 import ServiceManagement
 
+// MARK: - Timeout Helper Actor
+
+/// 用于在多个 detached task 之间安全地传递结果
+/// 只接受第一个设置的结果，后续的会被忽略
+@available(macOS 13.0, *)
+private actor TimeoutResultActor<T> {
+  private var result: Result<T, Error>?
+  private var continuation: CheckedContinuation<Result<T, Error>, Never>?
+
+  func setResult(_ result: Result<T, Error>) {
+    // 只接受第一个结果
+    guard self.result == nil else { return }
+    self.result = result
+
+    // 如果有等待者，唤醒它
+    if let cont = continuation {
+      continuation = nil
+      cont.resume(returning: result)
+    }
+  }
+
+  func waitForResult() async -> Result<T, Error> {
+    // 如果已经有结果，直接返回
+    if let result = result {
+      return result
+    }
+
+    // 否则等待
+    return await withCheckedContinuation { cont in
+      self.continuation = cont
+    }
+  }
+}
+
 /// SwiftSweep 权限助手客户端
 /// 使用 SMAppService (macOS 13+) 管理特权助手
 @available(macOS 13.0, *)
@@ -240,29 +274,41 @@ public final class HelperClient: @unchecked Sendable, PrivilegedDeleting {
 
   /// 删除需要权限的文件
   public func deleteFile(at path: String) async throws {
-    guard checkStatus() == .enabled else {
+    let status = checkStatus()
+
+    guard status == .enabled else {
       throw HelperError.notInstalled
     }
 
-    // 添加超时机制，防止 XPC 无响应时永久阻塞
-    return try await withThrowingTaskGroup(of: Void.self) { group in
-      group.addTask {
-        try await self.deleteFileInternal(at: path)
-      }
 
-      group.addTask {
-        try await Task.sleep(nanoseconds: 30_000_000_000)  // 30秒超时
-        throw HelperError.executionFailed("Operation timed out after 30 seconds")
-      }
+    // 使用简单的竞态模式：同时启动操作和超时，先完成的决定结果
+    let resultActor = TimeoutResultActor<Void>()
 
-      // 等待第一个完成的任务
+    // 启动 XPC 操作（detached 不继承取消状态）
+    Task.detached { [self] in
       do {
-        try await group.next()
-        group.cancelAll()
+        try await self.deleteFileInternal(at: path)
+        await resultActor.setResult(.success(()))
       } catch {
-        group.cancelAll()
-        throw error
+        await resultActor.setResult(.failure(error))
       }
+    }
+
+    // 启动超时计时器
+    Task.detached {
+      try? await Task.sleep(nanoseconds: 30_000_000_000)  // 30秒
+      await resultActor.setResult(
+        .failure(HelperError.executionFailed("Operation timed out after 30 seconds")))
+    }
+
+    // 等待第一个结果
+    let result = await resultActor.waitForResult()
+
+    switch result {
+    case .success:
+      return
+    case .failure(let error):
+      throw error
     }
   }
 
