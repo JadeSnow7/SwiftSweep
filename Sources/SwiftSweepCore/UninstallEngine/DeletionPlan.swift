@@ -1,6 +1,47 @@
 import Foundation
 import Logging
 
+// MARK: - Timeout Helper
+
+/// 带超时的异步操作包装器
+/// 将同步阻塞操作移到后台线程，并设置超时
+@available(macOS 13.0, *)
+private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () throws -> T) async throws
+  -> T
+{
+  try await withThrowingTaskGroup(of: T.self) { group in
+    group.addTask {
+      // 在后台线程执行可能阻塞的操作
+      try await withCheckedThrowingContinuation { continuation in
+        DispatchQueue.global(qos: .userInitiated).async {
+          do {
+            let result = try operation()
+            continuation.resume(returning: result)
+          } catch {
+            continuation.resume(throwing: error)
+          }
+        }
+      }
+    }
+
+    group.addTask {
+      try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+      throw NSError(
+        domain: "DeletionPlan", code: -1,
+        userInfo: [NSLocalizedDescriptionKey: "Operation timed out after \(Int(seconds)) seconds"])
+    }
+
+    // 等待第一个完成的任务
+    guard let result = try await group.next() else {
+      throw NSError(
+        domain: "DeletionPlan", code: -1,
+        userInfo: [NSLocalizedDescriptionKey: "No result from task group"])
+    }
+    group.cancelAll()
+    return result
+  }
+}
+
 // MARK: - Deletion Types
 
 /// 待删除项的类型
@@ -341,18 +382,19 @@ extension UninstallEngine {
 
         let url = URL(fileURLWithPath: item.path)
 
-        // 策略：先尝试标准删除，权限不足时再调用 Helper
-        var deletedWithStandard = false
+        // 策略：先尝试标准删除（带超时），权限不足时再调用 Helper
+        var deletedSuccessfully = false
 
         do {
-          if permanentDelete {
-            // 永久删除
-            try fm.removeItem(at: url)
-          } else {
-            // 移到废纸篓（推荐，用户可恢复）
-            try fm.trashItem(at: url, resultingItemURL: nil)
+          // 使用超时包装 FileManager 操作，防止大文件操作阻塞
+          try await withTimeout(seconds: 60) {
+            if permanentDelete {
+              try fm.removeItem(at: url)
+            } else {
+              try fm.trashItem(at: url, resultingItemURL: nil)
+            }
           }
-          deletedWithStandard = true
+          deletedSuccessfully = true
         } catch let error as NSError {
           // 检查是否为权限错误
           let isPermissionError =
@@ -371,16 +413,30 @@ extension UninstallEngine {
             let helper = HelperClient.shared
             if helper.checkStatus() == .enabled {
               try await helper.deleteFile(at: item.path)
-              deletedWithStandard = true
+              deletedSuccessfully = true
             } else {
               throw error  // Helper 未安装，抛出原始错误
             }
           } else {
             throw error  // 其他错误直接抛出
           }
+        } catch {
+          // 处理超时错误
+          if "\(error)".contains("timed out") {
+            logger.warning("Standard deletion timed out for \(item.path), trying Helper")
+            let helper = HelperClient.shared
+            if helper.checkStatus() == .enabled {
+              try await helper.deleteFile(at: item.path)
+              deletedSuccessfully = true
+            } else {
+              throw error
+            }
+          } else {
+            throw error
+          }
         }
 
-        if deletedWithStandard {
+        if deletedSuccessfully {
           results.append(DeletionItemResult(item: item, success: true))
           logger.info("Deleted: \(item.path)")
         }
