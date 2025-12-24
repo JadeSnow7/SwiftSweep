@@ -92,6 +92,9 @@ struct TreemapView: View {
   }
 
   private func colorForNode(_ node: FileNode) -> Color {
+    if node.isGitRepo {
+      return .purple  // Git 仓库专用颜色
+    }
     if node.isDirectory {
       return .blue
     }
@@ -356,6 +359,9 @@ struct TreemapCell: View {
   let onTap: () -> Void
 
   private var color: Color {
+    if node.isGitRepo {
+      return .purple  // Git 仓库专用颜色
+    }
     if node.isDirectory {
       return .blue
     }

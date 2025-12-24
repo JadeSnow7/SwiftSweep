@@ -39,9 +39,22 @@ public final class FileNode: Identifiable, Hashable, @unchecked Sendable {
   /// 实际磁盘占用（物理大小，考虑稀疏文件）
   public private(set) var physicalSize: Int64
 
+  /// 是否为 Git 仓库根目录
+  public let isGitRepo: Bool
+
+  /// .git 目录路径（已解析，支持 worktree/submodule）
+  public let gitDir: String?
+
+  /// .git 目录大小（延迟加载，初始为 nil）
+  public var gitDirSize: Int64?
+
+  /// 子树中的 Git 仓库数量
+  public private(set) var gitRepoCount: Int
+
   public init(
     name: String, path: String, isDirectory: Bool, size: Int64 = 0,
-    physicalSize: Int64? = nil, iCloudStatus: ICloudStatus = .local
+    physicalSize: Int64? = nil, iCloudStatus: ICloudStatus = .local,
+    isGitRepo: Bool = false, gitDir: String? = nil
   ) {
     self.name = name
     self.path = path
@@ -55,6 +68,10 @@ public final class FileNode: Identifiable, Hashable, @unchecked Sendable {
     self.cloudOnlyCount = (iCloudStatus == .cloudOnly && !isDirectory) ? 1 : 0
     // 本地大小：如果是仅在云端的文件则为0，否则为实际大小
     self.localSize = (iCloudStatus == .cloudOnly) ? 0 : size
+    self.isGitRepo = isGitRepo
+    self.gitDir = gitDir
+    self.gitDirSize = nil  // 初始不计算，避免拖慢扫描
+    self.gitRepoCount = isGitRepo ? 1 : 0
   }
 
   public static func == (lhs: FileNode, rhs: FileNode) -> Bool {
@@ -75,6 +92,7 @@ public final class FileNode: Identifiable, Hashable, @unchecked Sendable {
     fileCount += child.fileCount
     dirCount += child.dirCount
     cloudOnlyCount += child.cloudOnlyCount
+    gitRepoCount += child.gitRepoCount
   }
 
   /// Sort children by size descending (largest first)
@@ -133,18 +151,20 @@ public final class AnalyzerEngine: @unchecked Sendable {
     public let totalSize: Int64
     public let fileCount: Int
     public let dirCount: Int
+    public let gitRepoCount: Int  // Git 仓库数量
 
     /// New: Full tree structure
     public let rootNode: FileNode?
 
     public init(
       topFiles: [FileItem], totalSize: Int64, fileCount: Int, dirCount: Int,
-      rootNode: FileNode? = nil
+      gitRepoCount: Int = 0, rootNode: FileNode? = nil
     ) {
       self.topFiles = topFiles
       self.totalSize = totalSize
       self.fileCount = fileCount
       self.dirCount = dirCount
+      self.gitRepoCount = gitRepoCount
       self.rootNode = rootNode
     }
   }
@@ -271,7 +291,45 @@ public final class AnalyzerEngine: @unchecked Sendable {
           physicalSize: physicalSize, iCloudStatus: iCloudStatus)
       }
 
-      // It's a directory
+      // It's a directory - check if it's a Git repository
+      let gitPath = nodePath + "/.git"
+      var isGitDir: ObjCBool = false
+      let hasGit = fileManager.fileExists(atPath: gitPath, isDirectory: &isGitDir)
+
+      if hasGit {
+        // Resolve gitDir (支持 worktree/submodule)
+        let resolvedGitDir: String
+        if isGitDir.boolValue {
+          // 标准仓库 - .git 是目录
+          resolvedGitDir = gitPath
+        } else {
+          // Worktree/submodule - .git 是文件，包含 "gitdir: <path>"
+          if let content = try? String(contentsOfFile: gitPath, encoding: .utf8) {
+            let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.hasPrefix("gitdir:") {
+              var gitdir = String(trimmed.dropFirst(7)).trimmingCharacters(in: .whitespaces)
+              // 处理相对路径
+              if !gitdir.hasPrefix("/") {
+                gitdir = nodePath + "/" + gitdir
+              }
+              // 标准化路径
+              resolvedGitDir = URL(fileURLWithPath: gitdir).standardized.path
+            } else {
+              resolvedGitDir = gitPath
+            }
+          } else {
+            resolvedGitDir = gitPath
+          }
+        }
+
+        // 创建 Git 仓库节点（不递归进入）
+        return FileNode(
+          name: name, path: nodePath, isDirectory: true,
+          isGitRepo: true, gitDir: resolvedGitDir
+        )
+      }
+
+      // Not a Git repo - create normal directory node
       let dirNode = FileNode(name: name, path: nodePath, isDirectory: true)
 
       guard
@@ -320,6 +378,7 @@ public final class AnalyzerEngine: @unchecked Sendable {
       totalSize: root.size,
       fileCount: root.fileCount,
       dirCount: root.dirCount,
+      gitRepoCount: root.gitRepoCount,
       rootNode: root
     )
   }

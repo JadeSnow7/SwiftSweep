@@ -217,6 +217,9 @@ struct FileTreeRow: View {
   }
 
   private func iconForNode(_ node: FileNode) -> String {
+    if node.isGitRepo {
+      return "arrow.triangle.branch"  // Git 图标
+    }
     if node.isDirectory {
       return isExpanded ? "folder.fill" : "folder"
     }
@@ -234,6 +237,9 @@ struct FileTreeRow: View {
   }
 
   private func colorForNode(_ node: FileNode) -> Color {
+    if node.isGitRepo {
+      return .purple  // Git 仓库专用颜色
+    }
     if node.isDirectory {
       return .blue
     }

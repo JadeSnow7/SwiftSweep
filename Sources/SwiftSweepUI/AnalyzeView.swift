@@ -138,6 +138,12 @@ struct AnalyzeView: View {
               Label("\(rootNode.cloudOnlyCount) in iCloud", systemImage: "icloud")
                 .foregroundColor(.blue)
             }
+
+            // 显示 Git 仓库数量
+            if rootNode.gitRepoCount > 0 {
+              Label("\(rootNode.gitRepoCount) repos", systemImage: "arrow.triangle.branch")
+                .foregroundColor(.purple)
+            }
           }
           .font(.caption)
           .foregroundColor(.secondary)
