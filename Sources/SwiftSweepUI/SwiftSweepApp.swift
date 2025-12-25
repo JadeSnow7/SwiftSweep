@@ -44,6 +44,7 @@ struct ContentView: View {
     case analyze
     case applications
     case packages
+    case ghostBuster
     case settings
   }
 
@@ -81,6 +82,9 @@ struct ContentView: View {
           NavigationLink(value: NavigationItem.packages) {
             Label(L10n.Nav.packages.localized, systemImage: "shippingbox")
           }
+          NavigationLink(value: NavigationItem.ghostBuster) {
+            Label("Ghost Buster", systemImage: "ghost")
+          }
         }
 
         Section(L10n.Nav.settings.localized) {
@@ -116,6 +120,12 @@ struct ContentView: View {
             PackageFinderView()
           } else {
             Text("Package Finder requires macOS 13.0 or later")
+          }
+        case .ghostBuster:
+          if #available(macOS 13.0, *) {
+            GhostBusterView()
+          } else {
+            Text("Ghost Buster requires macOS 13.0 or later")
           }
         case .settings:
           SettingsView()
