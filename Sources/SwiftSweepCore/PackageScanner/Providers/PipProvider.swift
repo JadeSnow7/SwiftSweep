@@ -192,7 +192,16 @@ public struct PipProvider: PackageOperator, Sendable {
       else {
         return nil
       }
-      return Package(name: name, version: version, providerID: id)
+
+      // Note: pip installPath would require 'pip show' for each package
+      // to get Location field. Skipping for performance - can add later.
+
+      return Package(
+        name: name,
+        version: version,
+        providerID: id,
+        installPath: nil  // TODO: Implement with pip show
+      )
     }
   }
 }

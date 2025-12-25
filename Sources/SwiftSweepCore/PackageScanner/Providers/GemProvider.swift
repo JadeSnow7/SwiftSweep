@@ -49,7 +49,9 @@ public struct GemProvider: PackageOperator, Sendable {
 
     // Parse output
     let stdout = String(data: result.stdout, encoding: .utf8) ?? ""
-    let packages = parseGemOutput(stdout)
+    // Get gem directory for installPath
+    let gemDir = await getGemDir()
+    let packages = parseGemOutput(stdout, gemDir: gemDir)
 
     return PackageScanResult(
       providerID: id,
@@ -131,7 +133,9 @@ public struct GemProvider: PackageOperator, Sendable {
 
     if result.reason == .exit, result.exitCode == 0 {
       let stdout = String(data: result.stdout, encoding: .utf8) ?? ""
-      return .success("Gem cleanup complete. \(stdout.split(separator: "\n").count) items processed", command: command)
+      return .success(
+        "Gem cleanup complete. \(stdout.split(separator: "\n").count) items processed",
+        command: command)
     } else {
       let stderr = String(data: result.stderr, encoding: .utf8) ?? "Unknown error"
       return .failure(stderr, command: command)
@@ -176,7 +180,24 @@ public struct GemProvider: PackageOperator, Sendable {
 
   // MARK: - Parsing
 
-  private func parseGemOutput(_ output: String) -> [Package] {
+  /// Get gem installation directory
+  private func getGemDir() async -> String? {
+    guard let gemURL = ToolLocator.find("gem") else { return nil }
+
+    let result = await runner.run(
+      executable: gemURL.path,
+      arguments: ["env", "gemdir"],
+      environment: ToolLocator.packageFinderEnvironment
+    )
+
+    guard result.reason == .exit, result.exitCode == 0 else { return nil }
+
+    let dir = String(data: result.stdout, encoding: .utf8)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    return dir?.isEmpty == false ? dir : nil
+  }
+
+  private func parseGemOutput(_ output: String, gemDir: String?) -> [Package] {
     output
       .split(separator: "\n")
       .compactMap { line -> Package? in
@@ -197,8 +218,20 @@ public struct GemProvider: PackageOperator, Sendable {
           return nil
         }
 
-        return Package(name: name, version: firstVersion, providerID: id)
+        // Construct installPath: <gemdir>/gems/<name>-<version>
+        let installPath: String?
+        if let dir = gemDir {
+          installPath = "\(dir)/gems/\(name)-\(firstVersion)"
+        } else {
+          installPath = nil
+        }
+
+        return Package(
+          name: name,
+          version: firstVersion,
+          providerID: id,
+          installPath: installPath
+        )
       }
   }
 }
-

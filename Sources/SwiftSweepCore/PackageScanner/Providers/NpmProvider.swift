@@ -45,7 +45,9 @@ public struct NpmProvider: PackageOperator, Sendable {
     }
 
     do {
-      let packages = try parseNpmJson(jsonData)
+      // Get npm global root for install paths
+      let globalRoot = await getNpmGlobalRoot()
+      let packages = try parseNpmJson(jsonData, globalRoot: globalRoot)
       var warning: String? = nil
       if result.exitCode != 0 && !stderr.isEmpty {
         warning = "npm reported warnings: \(stderr.prefix(200))"
@@ -174,7 +176,24 @@ public struct NpmProvider: PackageOperator, Sendable {
 
   // MARK: - Parsing
 
-  private func parseNpmJson(_ data: Data) throws -> [Package] {
+  /// Get npm global modules root directory
+  private func getNpmGlobalRoot() async -> String? {
+    guard let npmURL = ToolLocator.find("npm") else { return nil }
+
+    let result = await runner.run(
+      executable: npmURL.path,
+      arguments: ["root", "-g"],
+      environment: ToolLocator.packageFinderEnvironment
+    )
+
+    guard result.reason == .exit, result.exitCode == 0 else { return nil }
+
+    let root = String(data: result.stdout, encoding: .utf8)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    return root?.isEmpty == false ? root : nil
+  }
+
+  private func parseNpmJson(_ data: Data, globalRoot: String?) throws -> [Package] {
     guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
       let dependencies = json["dependencies"] as? [String: Any]
     else {
@@ -187,7 +206,21 @@ public struct NpmProvider: PackageOperator, Sendable {
       else {
         return nil
       }
-      return Package(name: name, version: version, providerID: id)
+
+      // Construct installPath: <globalRoot>/<name>
+      let installPath: String?
+      if let root = globalRoot {
+        installPath = "\(root)/\(name)"
+      } else {
+        installPath = nil
+      }
+
+      return Package(
+        name: name,
+        version: version,
+        providerID: id,
+        installPath: installPath
+      )
     }
   }
 }
