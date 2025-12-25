@@ -41,11 +41,12 @@ public struct PathNormalizer: Sendable {
   public func resolve(_ normalized: String) -> String {
     var result = normalized
 
-    result = result.replacingOccurrences(of: "$HOME", with: homeDir)
-
+    // 优先替换 $HOMEBREW_PREFIX (避免与 $HOME 冲突)
     if let bp = brewPrefix {
       result = result.replacingOccurrences(of: "$HOMEBREW_PREFIX", with: bp)
     }
+
+    result = result.replacingOccurrences(of: "$HOME", with: homeDir)
 
     return result
   }
