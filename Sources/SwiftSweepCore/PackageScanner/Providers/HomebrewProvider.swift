@@ -47,7 +47,9 @@ public struct HomebrewFormulaProvider: PackageOperator, Sendable {
     }
 
     let stdout = String(data: result.stdout, encoding: .utf8) ?? ""
-    let packages = parseBrewOutput(stdout)
+    // Get Homebrew prefix for installPath
+    let brewPrefix = await getBrewPrefix()
+    let packages = parseBrewOutput(stdout, brewPrefix: brewPrefix)
 
     return PackageScanResult(
       providerID: id,
@@ -171,7 +173,24 @@ public struct HomebrewFormulaProvider: PackageOperator, Sendable {
 
   // MARK: - Parsing
 
-  private func parseBrewOutput(_ output: String) -> [Package] {
+  /// Get Homebrew installation prefix (e.g., "/opt/homebrew" or "/usr/local")
+  private func getBrewPrefix() async -> String? {
+    guard let brewURL = ToolLocator.find("brew") else { return nil }
+
+    let result = await runner.run(
+      executable: brewURL.path,
+      arguments: ["--prefix"],
+      environment: ToolLocator.packageFinderEnvironment
+    )
+
+    guard result.reason == .exit, result.exitCode == 0 else { return nil }
+
+    let prefix = String(data: result.stdout, encoding: .utf8)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    return prefix?.isEmpty == false ? prefix : nil
+  }
+
+  private func parseBrewOutput(_ output: String, brewPrefix: String?) -> [Package] {
     output
       .split(separator: "\n")
       .compactMap { line -> Package? in
@@ -179,7 +198,21 @@ public struct HomebrewFormulaProvider: PackageOperator, Sendable {
         guard parts.count >= 2 else { return nil }
         let name = String(parts[0])
         let version = String(parts[1])
-        return Package(name: name, version: version, providerID: id)
+
+        // Construct installPath: <prefix>/Cellar/<name>/<version>
+        let installPath: String?
+        if let prefix = brewPrefix {
+          installPath = "\(prefix)/Cellar/\(name)/\(version)"
+        } else {
+          installPath = nil
+        }
+
+        return Package(
+          name: name,
+          version: version,
+          providerID: id,
+          installPath: installPath
+        )
       }
   }
 }
@@ -229,7 +262,9 @@ public struct HomebrewCaskProvider: PackageOperator, Sendable {
     }
 
     let stdout = String(data: result.stdout, encoding: .utf8) ?? ""
-    let packages = parseBrewCaskOutput(stdout)
+    // Get Homebrew prefix for installPath
+    let brewPrefix = await getBrewPrefix()
+    let packages = parseBrewCaskOutput(stdout, brewPrefix: brewPrefix)
 
     return PackageScanResult(
       providerID: id,
@@ -319,7 +354,24 @@ public struct HomebrewCaskProvider: PackageOperator, Sendable {
     }
   }
 
-  private func parseBrewCaskOutput(_ output: String) -> [Package] {
+  /// Get Homebrew installation prefix
+  private func getBrewPrefix() async -> String? {
+    guard let brewURL = ToolLocator.find("brew") else { return nil }
+
+    let result = await runner.run(
+      executable: brewURL.path,
+      arguments: ["--prefix"],
+      environment: ToolLocator.packageFinderEnvironment
+    )
+
+    guard result.reason == .exit, result.exitCode == 0 else { return nil }
+
+    let prefix = String(data: result.stdout, encoding: .utf8)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    return prefix?.isEmpty == false ? prefix : nil
+  }
+
+  private func parseBrewCaskOutput(_ output: String, brewPrefix: String?) -> [Package] {
     output
       .split(separator: "\n")
       .compactMap { line -> Package? in
@@ -327,7 +379,21 @@ public struct HomebrewCaskProvider: PackageOperator, Sendable {
         guard parts.count >= 2 else { return nil }
         let name = String(parts[0])
         let version = String(parts[1])
-        return Package(name: name, version: version, providerID: id)
+
+        // Construct installPath: <prefix>/Caskroom/<name>/<version>
+        let installPath: String?
+        if let prefix = brewPrefix {
+          installPath = "\(prefix)/Caskroom/\(name)/\(version)"
+        } else {
+          installPath = nil
+        }
+
+        return Package(
+          name: name,
+          version: version,
+          providerID: id,
+          installPath: installPath
+        )
       }
   }
 }
