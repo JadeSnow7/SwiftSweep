@@ -1,0 +1,219 @@
+import Foundation
+
+// MARK: - DependencyGraphService
+
+/// 依赖图服务 - 协调采集、存储和查询
+public actor DependencyGraphService {
+
+  public static let shared = DependencyGraphService()
+
+  private let store: SQLiteGraphStore
+  private var providers: [any PackageMetadataProvider] = []
+  private var isInitialized = false
+
+  public init(store: SQLiteGraphStore = SQLiteGraphStore()) {
+    self.store = store
+  }
+
+  // MARK: - Setup
+
+  /// 初始化服务
+  public func initialize() async throws {
+    guard !isInitialized else { return }
+
+    try await store.open()
+
+    // 注册默认 providers
+    let normalizer = await createNormalizer()
+    providers = [
+      BrewJsonProvider(normalizer: normalizer),
+      NpmJsonProvider(normalizer: normalizer),
+    ]
+
+    isInitialized = true
+  }
+
+  private func createNormalizer() async -> PathNormalizer {
+    // 获取 brew prefix
+    var brewPrefix: String? = nil
+    let brewPath = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"].first {
+      FileManager.default.fileExists(atPath: $0)
+    }
+
+    if let path = brewPath {
+      let process = Process()
+      process.executableURL = URL(fileURLWithPath: path)
+      process.arguments = ["--prefix"]
+      let pipe = Pipe()
+      process.standardOutput = pipe
+      try? process.run()
+      process.waitUntilExit()
+      let data = pipe.fileHandleForReading.readDataToEndOfFile()
+      brewPrefix = String(data: data, encoding: .utf8)?.trimmingCharacters(
+        in: .whitespacesAndNewlines)
+    }
+
+    return PathNormalizer(brewPrefix: brewPrefix)
+  }
+
+  // MARK: - Scanning
+
+  /// 扫描所有 provider 并构建图
+  public func scanAll() async -> DependencyGraphResult {
+    var allNodes: [PackageNode] = []
+    var allEdges: [DependencyEdge] = []
+    var errors: [IngestionError] = []
+
+    for provider in providers {
+      let result = await provider.fetchInstalledRecords()
+
+      // 处理错误
+      errors.append(contentsOf: result.errors)
+
+      // 转换 records 为 nodes
+      for record in result.records {
+        let metadata: PackageMetadata
+        do {
+          metadata = try record.parseMetadata()
+        } catch {
+          metadata = PackageMetadata()
+        }
+
+        let node = PackageNode(identity: record.identity, metadata: metadata)
+        allNodes.append(node)
+
+        // 提取依赖边 (仅 Brew 有依赖信息)
+        if let brewMeta = try? JSONDecoder().decode(BrewPackageMetadata.self, from: record.rawJSON)
+        {
+          for dep in brewMeta.dependencies {
+            let edge = DependencyEdge(
+              source: record.identity,
+              target: PackageRef(ecosystemId: result.ecosystemId, scope: nil, name: dep),
+              constraint: .any
+            )
+            allEdges.append(edge)
+          }
+        }
+      }
+    }
+
+    // 存储到 GraphStore
+    do {
+      try await store.clear()
+      try await store.insertNodes(allNodes)
+      for edge in allEdges {
+        try await store.insertEdge(edge)
+      }
+    } catch {
+      errors.append(
+        IngestionError(phase: "store", message: error.localizedDescription, recoverable: false))
+    }
+
+    return DependencyGraphResult(
+      nodeCount: allNodes.count,
+      edgeCount: allEdges.count,
+      errors: errors
+    )
+  }
+
+  // MARK: - Queries
+
+  /// 获取所有节点
+  public func getAllNodes() async throws -> [PackageNode] {
+    try await store.getAllNodes()
+  }
+
+  /// 获取节点的依赖
+  public func getDependencies(of node: PackageNode) async throws -> [PackageRef] {
+    try await store.getDependencies(of: node.identity.canonicalKey)
+  }
+
+  /// 获取依赖该节点的包
+  public func getDependents(of node: PackageNode) async throws -> [PackageRef] {
+    try await store.getDependents(of: node.identity.canonicalKey)
+  }
+
+  /// 获取孤儿节点 (Ghost Buster)
+  public func getOrphanNodes() async throws -> [PackageNode] {
+    try await store.getOrphanNodes()
+  }
+
+  /// 模拟删除影响
+  public func simulateRemoval(of node: PackageNode) async throws -> RemovalImpact {
+    let dependents = try await getDependents(of: node)
+
+    // 递归获取所有受影响的包
+    var affected: Set<String> = []
+    var queue = dependents.map { $0.key }
+
+    while let key = queue.first {
+      queue.removeFirst()
+      if affected.contains(key) { continue }
+      affected.insert(key)
+
+      // 获取这个包的 dependents
+      if let depNode = try await store.getNode(by: key) {
+        let moreDeps = try await store.getDependents(of: depNode.identity.canonicalKey)
+        queue.append(contentsOf: moreDeps.map { $0.key })
+      }
+    }
+
+    return RemovalImpact(
+      directDependents: dependents,
+      totalAffected: affected.count,
+      isSafeToRemove: affected.isEmpty
+    )
+  }
+
+  // MARK: - Statistics
+
+  /// 获取图统计
+  public func getStatistics() async throws -> GraphStatistics {
+    let allNodes = try await store.getAllNodes()
+    let orphans = try await store.getOrphanNodes()
+
+    var byEcosystem: [String: Int] = [:]
+    var totalSize: Int64 = 0
+
+    for node in allNodes {
+      byEcosystem[node.identity.ecosystemId, default: 0] += 1
+      if let size = node.metadata.size {
+        totalSize += size
+      }
+    }
+
+    return GraphStatistics(
+      totalNodes: allNodes.count,
+      orphanCount: orphans.count,
+      byEcosystem: byEcosystem,
+      totalSize: totalSize
+    )
+  }
+}
+
+// MARK: - Result Types
+
+/// 扫描结果
+public struct DependencyGraphResult: Sendable {
+  public let nodeCount: Int
+  public let edgeCount: Int
+  public let errors: [IngestionError]
+
+  public var isSuccess: Bool { errors.isEmpty }
+  public var isPartial: Bool { !errors.isEmpty && nodeCount > 0 }
+}
+
+/// 删除影响分析
+public struct RemovalImpact: Sendable {
+  public let directDependents: [PackageRef]
+  public let totalAffected: Int
+  public let isSafeToRemove: Bool
+}
+
+/// 图统计
+public struct GraphStatistics: Sendable {
+  public let totalNodes: Int
+  public let orphanCount: Int
+  public let byEcosystem: [String: Int]
+  public let totalSize: Int64
+}
