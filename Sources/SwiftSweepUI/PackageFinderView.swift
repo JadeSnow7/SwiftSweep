@@ -21,6 +21,8 @@ import SwiftUI
   @State private var gitOperationResult: GitRepoScanner.GitOperationResult?
   @State private var showingGitResult = false
   @State private var cachedRemotes: [String: [String]] = [:]
+  @State private var packageSizes: [String: Int64] = [:]
+  @State private var isCalculatingSizes = false
 
   public init() {}
 
@@ -44,12 +46,23 @@ import SwiftUI
     .toolbar {
       ToolbarItem(placement: .primaryAction) {
         Button {
+          Task { await calculateSizes() }
+        } label: {
+          Label("Calculate Sizes", systemImage: "scale.3d")
+        }
+        .disabled(viewModel.isScanning || viewModel.isOperating || isCalculatingSizes)
+      }
+      ToolbarItem(placement: .primaryAction) {
+        Button {
           Task { await viewModel.scan() }
         } label: {
           Label("Refresh", systemImage: "arrow.clockwise")
         }
-        .disabled(viewModel.isScanning || viewModel.isOperating)
+        .disabled(viewModel.isScanning || viewModel.isOperating || isCalculatingSizes)
       }
+    }
+    .onChange(of: viewModel.lastScanTime) { _ in
+      packageSizes = [:]
     }
     .task {
       await viewModel.scan()
@@ -352,9 +365,27 @@ import SwiftUI
 
   private func packageRow(_ package: Package, result: PackageScanResult) -> some View {
     HStack {
-      Text(package.name)
-        .fontWeight(.medium)
+      VStack(alignment: .leading, spacing: 2) {
+        Text(package.name)
+          .fontWeight(.medium)
+        if let path = package.installPath {
+          Text(path)
+            .font(.caption2)
+            .foregroundColor(.secondary)
+            .lineLimit(1)
+            .truncationMode(.middle)
+        }
+      }
       Spacer()
+      if let size = package.size ?? packageSizes[package.id] {
+        Text(formatSize(size))
+          .font(.caption)
+          .foregroundColor(.blue)
+          .padding(.horizontal, 6)
+          .padding(.vertical, 2)
+          .background(Color.blue.opacity(0.1))
+          .cornerRadius(4)
+      }
       Text(package.version)
         .font(.callout)
         .foregroundColor(.secondary)
@@ -543,6 +574,19 @@ import SwiftUI
         }
       }
     }
+  }
+
+  @MainActor
+  private func calculateSizes() async {
+    guard !isCalculatingSizes else { return }
+    isCalculatingSizes = true
+    defer { isCalculatingSizes = false }
+
+    let sizes = await PackageSizeCalculator.calculateSizes(
+      for: viewModel.allPackages,
+      maxConcurrent: 4
+    )
+    packageSizes = sizes
   }
 }
 
@@ -811,6 +855,9 @@ final class PackageFinderViewModel: ObservableObject {
   @Published var isScanning = false
   @Published var isOperating = false
   @Published var lastScanTime: Date?
+  var allPackages: [Package] {
+    results.flatMap { $0.packages }
+  }
 
   private let scanner = PackageScanner.shared
   let gitScanner = GitRepoScanner.shared  // Exposed for git operations
