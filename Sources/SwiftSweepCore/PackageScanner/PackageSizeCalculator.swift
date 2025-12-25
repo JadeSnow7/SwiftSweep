@@ -30,7 +30,7 @@ public enum PackageSizeCalculator {
   ) async -> [String: Int64] {
     await withTaskGroup(of: (String, Int64?).self) { group in
       var results: [String: Int64] = [:]
-      var packagesWithPath = packages.filter { $0.installPath != nil }
+      let packagesWithPath = packages.filter { $0.installPath != nil }
 
       // Start initial batch
       for package in packagesWithPath.prefix(maxConcurrent) {
