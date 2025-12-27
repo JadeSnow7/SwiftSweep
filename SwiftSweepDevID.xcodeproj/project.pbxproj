@@ -9,7 +9,10 @@
 /* Begin PBXBuildFile section */
 		007207C9DE593EB59A1640E0 /* AnalyzeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED0E1B4392753994B17E45A3 /* AnalyzeView.swift */; };
 		02424FF142D6463C125228D2 /* PackageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C41740C17ED53D8FF4E9E42 /* PackageProvider.swift */; };
+		080CEEBF3ECFD7C9124777B6 /* BrewJsonProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EDC6F3B0B3E52E1D8B37E14 /* BrewJsonProvider.swift */; };
+		08B5C2338A4191637C04FF7C /* PackageNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78A3ADC70BDF7CDD35FE498 /* PackageNode.swift */; };
 		099DEBE1C4FFCCC7A4E4AAFB /* GitRepo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5523065B491745A41D29236 /* GitRepo.swift */; };
+		0D37B0DD6786C0618E5BD55D /* GhostBusterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEEB25BEB2922724F82EED6 /* GhostBusterView.swift */; };
 		12655A389CFB667A2435A3E7 /* ScreenshotCleanupRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8611145D32CDE04879E237D0 /* ScreenshotCleanupRule.swift */; };
 		12B9F6AB2F3EABC602298D7F /* TreemapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193D7959249EC8B109E3DE8E /* TreemapView.swift */; };
 		13A8D389A43062D276269FCF /* HelperClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53AD6D1C11B4F08FC5E58B5E /* HelperClient.swift */; };
@@ -24,6 +27,7 @@
 		2A451A7E7F2CE28B1C356E6C /* UnusedAppsRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2396C4875731341B8DDF05B6 /* UnusedAppsRule.swift */; };
 		2D9E5335BD3090DFBC8109E5 /* SMJobBlessClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E82006A607E5210A3AA07 /* SMJobBlessClient.swift */; };
 		302C4D33136607A74E81519F /* CleanupEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6068C461B90B43A44F60CD /* CleanupEngine.swift */; };
+		30E88DC5095BE6F14092F480 /* PathNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3298AE85D27A6C3754A6C36D /* PathNormalizer.swift */; };
 		32AB2640821CD6974C1D0034 /* PipProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595B8CFC4E24FAB8F309060F /* PipProvider.swift */; };
 		3581613B5505F2E2CFA0EF6A /* OldDownloadsRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8135AB1BD261E7011231C5 /* OldDownloadsRule.swift */; };
 		36247687B6A6762E702316F9 /* SMJobBlessClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E82006A607E5210A3AA07 /* SMJobBlessClient.swift */; };
@@ -44,9 +48,12 @@
 		63427A8727C534551E120847 /* GitRepo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5523065B491745A41D29236 /* GitRepo.swift */; };
 		639199F51CA519F4A02F279C /* PackageOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2DD34F3967CDC5AFADF093B /* PackageOperator.swift */; };
 		666DF1C74DA1F0CDF275151B /* TrashReminderRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126F1612875FF543B8D5D3A3 /* TrashReminderRule.swift */; };
+		6721EF2FBDFFCE69BA967F76 /* DependencyGraphService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38316AF8DFA762607F92DB57 /* DependencyGraphService.swift */; };
 		699AD1C67AFC1C11E40C3230 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69EE801D6F61B93790BE3CF8 /* Localization.swift */; };
 		6A5CC6756F732784388896AF /* AnalyzerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5920ED5BCAC470BD9871338D /* AnalyzerEngine.swift */; };
+		6B0E5912B389DFBDE67D351D /* PackageIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45756DADD4A1526871D1EFF6 /* PackageIdentity.swift */; };
 		6B2BAC6FC9A34B3B35F30CC1 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = 82535F075C24E45CD4626F9A /* ArgumentParser */; };
+		6D7092A56D37497DBCA1A07D /* PackageSizeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE46F5514AF4A95D0CE85A0 /* PackageSizeCalculator.swift */; };
 		6DCDFC3CF05956F2E0610DB3 /* SystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3806F4C5F0D603942F5F1B40 /* SystemMonitor.swift */; };
 		6DF5A5C5F459DB3AA2563C34 /* SwiftSweepApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDD502DFEA142AD633EC8160 /* SwiftSweepApp.swift */; };
 		7035C482965BCA83839F82A0 /* PipProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595B8CFC4E24FAB8F309060F /* PipProvider.swift */; };
@@ -57,6 +64,7 @@
 		776CA40CF2BC2709247DA877 /* MainApplicationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24095CAF50FD31E0F277F138 /* MainApplicationsView.swift */; };
 		79BD97381D59C321218D20C5 /* DeveloperCacheRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A6A64472255CD6EF1D73B6 /* DeveloperCacheRule.swift */; };
 		7A5ED4253713F89DDCFCEE71 /* MailAttachmentsRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5235A0883863E00CE30F6B56 /* MailAttachmentsRule.swift */; };
+		7BEADEC5CF11CC717EB37546 /* GraphStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B02230150D7C1F168F916FB /* GraphStore.swift */; };
 		7C279652649F65C1EAA94FA8 /* RuleSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDA0A91838A4AA366C56EB79 /* RuleSettings.swift */; };
 		7C4A439ABF884667ABE7169B /* CleanupEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6068C461B90B43A44F60CD /* CleanupEngine.swift */; };
 		7D17C0259ECBE188B1E5C391 /* CleanupAllowlist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF77FF306DD193669624B7A /* CleanupAllowlist.swift */; };
@@ -72,8 +80,10 @@
 		8B5852315331A760DA3F941B /* ToolLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6ADB45695DFD3649CDCE33 /* ToolLocator.swift */; };
 		9189ED29CFF7415AFC75CF0A /* GitRepoScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015010576BED1F646B80672A /* GitRepoScanner.swift */; };
 		932E76888546D37FAC12647A /* HomebrewProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1AFA72F5AE1CBCB003AC30 /* HomebrewProvider.swift */; };
+		95AA49B6018C01D4F7668231 /* BrewJsonProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EDC6F3B0B3E52E1D8B37E14 /* BrewJsonProvider.swift */; };
 		95BDB885D1F6154DD0F77544 /* ProcessRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7714DB08E840A4C694F5F7D /* ProcessRunner.swift */; };
 		96C16A519C81BAA2ECCED03B /* DeletionPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D19FF450DE2C15D5E26F29 /* DeletionPlan.swift */; };
+		98C8A7E09E726BE51E9C35C0 /* DependencyGraphService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38316AF8DFA762607F92DB57 /* DependencyGraphService.swift */; };
 		98E332084A03F6605174AAD3 /* SystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3806F4C5F0D603942F5F1B40 /* SystemMonitor.swift */; };
 		98F63F3DC95CAE6D7F47871D /* GemProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5AA81A68E30A722DE0AC190 /* GemProvider.swift */; };
 		99A80C4B8B6CBD1CE5877953 /* ProcessRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7714DB08E840A4C694F5F7D /* ProcessRunner.swift */; };
@@ -81,33 +91,42 @@
 		9BDC448921E17DE99ACE2FF6 /* AnalyzerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5920ED5BCAC470BD9871338D /* AnalyzerEngine.swift */; };
 		9C7B3D124D10B52FBF3F34A2 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = BB9BB5C32CA4EC58C1BFE0F1 /* Localizable.strings */; };
 		9E324DADC4CF6AB952D86B3F /* NpmProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD3AEE910539103740AF661D /* NpmProvider.swift */; };
+		A18CED3BDB8A67BE998DCC67 /* PathNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3298AE85D27A6C3754A6C36D /* PathNormalizer.swift */; };
 		A24594257E72552F88ECD6BF /* BrowserCacheRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65B36142B70F448F3601681 /* BrowserCacheRule.swift */; };
 		A30354D9D76345F72DEF3F3F /* PrivilegedDeleting.swift in Sources */ = {isa = PBXBuildFile; fileRef = D768177BC39540073011FEC3 /* PrivilegedDeleting.swift */; };
 		A64DD46819472FC7C3926AE0 /* LargeCacheRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADCAC4E4AFB9DEF4ABAEDBE /* LargeCacheRule.swift */; };
+		AC6E00E70B2650182D20027E /* PackageIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45756DADD4A1526871D1EFF6 /* PackageIdentity.swift */; };
 		ADB6E7E7106A86857FC368E8 /* DirectorySizeCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F539166B61D2A4E990D78C1 /* DirectorySizeCache.swift */; };
 		B0AFD640CFDD9B8AA02D83F7 /* UninstallEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A975CE98FBDC7EF022755BEA /* UninstallEngine.swift */; };
 		B20054AC2BF62B8F198CFC32 /* UninstallEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A975CE98FBDC7EF022755BEA /* UninstallEngine.swift */; };
 		B3889EBB5B448B2EA59BBCFC /* HelperClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53AD6D1C11B4F08FC5E58B5E /* HelperClient.swift */; };
+		B75A3080FB51C459F7BCA2AF /* GraphStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B02230150D7C1F168F916FB /* GraphStore.swift */; };
 		B81615CE24AFCBDE4294047F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EC414EA68F888C69D022A902 /* Assets.xcassets */; };
 		B8B13416400D5885E8C9B2C9 /* LowDiskSpaceRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83614B56481CF8F4FC78E00 /* LowDiskSpaceRule.swift */; };
 		B8C5249A3C3147DC64710607 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA561F9CAA20228329C3D13 /* main.swift */; };
 		C74DA856B98C9E6DEAE5D65A /* StatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF230230B3E8C6A26A67ED90 /* StatusView.swift */; };
+		CA97D481D45124088D4C5EF4 /* EcosystemRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33DD48A77760EAE73BFEBE90 /* EcosystemRegistry.swift */; };
 		CB4052EBF1DDA6DC1BEA5DBD /* DeletionPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D19FF450DE2C15D5E26F29 /* DeletionPlan.swift */; };
 		CE93F467BD2C84CCB4DE1C2E /* ScreenshotCleanupRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8611145D32CDE04879E237D0 /* ScreenshotCleanupRule.swift */; };
 		D3CC47D7A639E93938643F97 /* RecommendationContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = A89D0856329A4461454F046D /* RecommendationContext.swift */; };
 		D574C8D0A6285EA9F4A346BF /* UninstallCacheStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5BB76487B49303D580D852 /* UninstallCacheStore.swift */; };
 		D58D90BD611E8E4838820B9D /* FileTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E638A75A374AE294E286E4B /* FileTreeView.swift */; };
+		D5F229ED5C163523E817ECAE /* NpmJsonProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C4A9505686DC86E4FCD917 /* NpmJsonProvider.swift */; };
 		D6237F372EEEF6A86D4BF60F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8D04377DDF6FACF86EB83E /* SettingsView.swift */; };
 		DA1E0D4BBA67E9B308253EB3 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 2ABFE6083FBE8FF03E9D0E02 /* Logging */; };
+		E0CF524845C77E03CEE089FB /* PackageSizeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE46F5514AF4A95D0CE85A0 /* PackageSizeCalculator.swift */; };
 		E117650714D03FEADBEEE3C7 /* GemProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5AA81A68E30A722DE0AC190 /* GemProvider.swift */; };
 		E325FBEAE9064E3B87FD91C5 /* Recommendation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 568DBC900A688E1C6F8682D1 /* Recommendation.swift */; };
 		EB6A6A26AC6AA4DD24FF7870 /* PackageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C41740C17ED53D8FF4E9E42 /* PackageProvider.swift */; };
+		EBA872140561F9D906B1D16E /* NpmJsonProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C4A9505686DC86E4FCD917 /* NpmJsonProvider.swift */; };
+		ECCBDB18D714FAC924F3DD2E /* EcosystemRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33DD48A77760EAE73BFEBE90 /* EcosystemRegistry.swift */; };
 		ED3D35DE7AC4A2C68EBB2A99 /* ToolLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6ADB45695DFD3649CDCE33 /* ToolLocator.swift */; };
 		F06A6973F9B22AD18281031F /* SwiftSweep.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCDB24ECB3136D1C64FE216F /* SwiftSweep.swift */; };
 		F16D1C2242079AA6D82D8BB7 /* OldDownloadsRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8135AB1BD261E7011231C5 /* OldDownloadsRule.swift */; };
 		F3979A3F34C8551333274433 /* RecommendationRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D92F3811846DEC331C55600 /* RecommendationRule.swift */; };
 		F65B162291160FACBC36141C /* HelperErrorCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E25303826EB5E937D787FE /* HelperErrorCodes.swift */; };
 		F66B63C36A4240015E6F516B /* OptimizationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2B067E8A821D69C6D3DFCF /* OptimizationEngine.swift */; };
+		F81EAD27E9D32CAB3140F11B /* PackageNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78A3ADC70BDF7CDD35FE498 /* PackageNode.swift */; };
 		FCA63A3024A13325FC797E45 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C1C2A17944BE9D79268865E /* InsightsView.swift */; };
 		FF3571FF74CD026760299429 /* CleanupAllowlist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E78AD94E3B3CD6FC5935918 /* CleanupAllowlist.swift */; };
 /* End PBXBuildFile section */
@@ -126,17 +145,25 @@
 		015010576BED1F646B80672A /* GitRepoScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitRepoScanner.swift; sourceTree = "<group>"; };
 		06AE729A52B7F14140C24366 /* ActionLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionLogger.swift; sourceTree = "<group>"; };
 		0ADCAC4E4AFB9DEF4ABAEDBE /* LargeCacheRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LargeCacheRule.swift; sourceTree = "<group>"; };
+		0AEEB25BEB2922724F82EED6 /* GhostBusterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostBusterView.swift; sourceTree = "<group>"; };
 		0EF5885EFD75AF6B9C3DF721 /* SwiftSweepHelper */ = {isa = PBXFileReference; includeInIndex = 0; path = SwiftSweepHelper; sourceTree = BUILT_PRODUCTS_DIR; };
 		10070FC013910ADB5A991DA7 /* PackageFinderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageFinderView.swift; sourceTree = "<group>"; };
 		126F1612875FF543B8D5D3A3 /* TrashReminderRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrashReminderRule.swift; sourceTree = "<group>"; };
 		140428A3526817DBE6DDBF66 /* SwiftSweepAppInventory */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SwiftSweepAppInventory; path = Packages/SwiftSweepAppInventory; sourceTree = SOURCE_ROOT; };
 		193D7959249EC8B109E3DE8E /* TreemapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TreemapView.swift; sourceTree = "<group>"; };
 		1C1C2A17944BE9D79268865E /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
+		1EDC6F3B0B3E52E1D8B37E14 /* BrewJsonProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewJsonProvider.swift; sourceTree = "<group>"; };
 		1F625A4273667BD082394BE7 /* RecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationEngine.swift; sourceTree = "<group>"; };
 		2396C4875731341B8DDF05B6 /* UnusedAppsRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnusedAppsRule.swift; sourceTree = "<group>"; };
 		24095CAF50FD31E0F277F138 /* MainApplicationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainApplicationsView.swift; sourceTree = "<group>"; };
 		28BFA62383E7EAB529579A04 /* PackageScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageScanner.swift; sourceTree = "<group>"; };
+		3298AE85D27A6C3754A6C36D /* PathNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathNormalizer.swift; sourceTree = "<group>"; };
+		33DD48A77760EAE73BFEBE90 /* EcosystemRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcosystemRegistry.swift; sourceTree = "<group>"; };
 		3806F4C5F0D603942F5F1B40 /* SystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitor.swift; sourceTree = "<group>"; };
+		38316AF8DFA762607F92DB57 /* DependencyGraphService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyGraphService.swift; sourceTree = "<group>"; };
+		3B02230150D7C1F168F916FB /* GraphStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphStore.swift; sourceTree = "<group>"; };
+		45756DADD4A1526871D1EFF6 /* PackageIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageIdentity.swift; sourceTree = "<group>"; };
+		45C4A9505686DC86E4FCD917 /* NpmJsonProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NpmJsonProvider.swift; sourceTree = "<group>"; };
 		4D92F3811846DEC331C55600 /* RecommendationRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationRule.swift; sourceTree = "<group>"; };
 		4E78AD94E3B3CD6FC5935918 /* CleanupAllowlist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupAllowlist.swift; sourceTree = "<group>"; };
 		4F5BB76487B49303D580D852 /* UninstallCacheStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UninstallCacheStore.swift; sourceTree = "<group>"; };
@@ -172,6 +199,8 @@
 		CF230230B3E8C6A26A67ED90 /* StatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusView.swift; sourceTree = "<group>"; };
 		D69E82006A607E5210A3AA07 /* SMJobBlessClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMJobBlessClient.swift; sourceTree = "<group>"; };
 		D768177BC39540073011FEC3 /* PrivilegedDeleting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedDeleting.swift; sourceTree = "<group>"; };
+		D78A3ADC70BDF7CDD35FE498 /* PackageNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageNode.swift; sourceTree = "<group>"; };
+		DBE46F5514AF4A95D0CE85A0 /* PackageSizeCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageSizeCalculator.swift; sourceTree = "<group>"; };
 		DC6068C461B90B43A44F60CD /* CleanupEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupEngine.swift; sourceTree = "<group>"; };
 		DCDB24ECB3136D1C64FE216F /* SwiftSweep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftSweep.swift; sourceTree = "<group>"; };
 		E4A863606927533B6575D5C7 /* SwiftSweepApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftSweepApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -224,9 +253,18 @@
 		07348351351F2E9369B95B31 /* PackageScanner */ = {
 			isa = PBXGroup;
 			children = (
+				1EDC6F3B0B3E52E1D8B37E14 /* BrewJsonProvider.swift */,
+				38316AF8DFA762607F92DB57 /* DependencyGraphService.swift */,
+				33DD48A77760EAE73BFEBE90 /* EcosystemRegistry.swift */,
+				3B02230150D7C1F168F916FB /* GraphStore.swift */,
+				45C4A9505686DC86E4FCD917 /* NpmJsonProvider.swift */,
+				45756DADD4A1526871D1EFF6 /* PackageIdentity.swift */,
+				D78A3ADC70BDF7CDD35FE498 /* PackageNode.swift */,
 				C2DD34F3967CDC5AFADF093B /* PackageOperator.swift */,
 				8C41740C17ED53D8FF4E9E42 /* PackageProvider.swift */,
 				28BFA62383E7EAB529579A04 /* PackageScanner.swift */,
+				DBE46F5514AF4A95D0CE85A0 /* PackageSizeCalculator.swift */,
+				3298AE85D27A6C3754A6C36D /* PathNormalizer.swift */,
 				AA6ADB45695DFD3649CDCE33 /* ToolLocator.swift */,
 				B7B7575D1B9F65ADB3E83D43 /* Providers */,
 			);
@@ -415,6 +453,7 @@
 				ED0E1B4392753994B17E45A3 /* AnalyzeView.swift */,
 				F7F77DF64C705FD91CB39DD9 /* CleanView.swift */,
 				7E638A75A374AE294E286E4B /* FileTreeView.swift */,
+				0AEEB25BEB2922724F82EED6 /* GhostBusterView.swift */,
 				1C1C2A17944BE9D79268865E /* InsightsView.swift */,
 				69EE801D6F61B93790BE3CF8 /* Localization.swift */,
 				24095CAF50FD31E0F277F138 /* MainApplicationsView.swift */,
@@ -613,27 +652,36 @@
 				616F899B39119881F39ACC60 /* ActionExecutor.swift in Sources */,
 				1D21926B9F5A259B7BD50B0D /* ActionLogger.swift in Sources */,
 				9BDC448921E17DE99ACE2FF6 /* AnalyzerEngine.swift in Sources */,
+				95AA49B6018C01D4F7668231 /* BrewJsonProvider.swift in Sources */,
 				8B1EDCF1E8FA78FFCED17C7A /* BrowserCacheRule.swift in Sources */,
 				36966CA7E54FA13AC0C7C176 /* CleanupAllowlist.swift in Sources */,
 				7C4A439ABF884667ABE7169B /* CleanupEngine.swift in Sources */,
 				96C16A519C81BAA2ECCED03B /* DeletionPlan.swift in Sources */,
+				6721EF2FBDFFCE69BA967F76 /* DependencyGraphService.swift in Sources */,
 				821A831687A9D989FBA9EAD2 /* DeveloperCacheRule.swift in Sources */,
 				ADB6E7E7106A86857FC368E8 /* DirectorySizeCache.swift in Sources */,
+				ECCBDB18D714FAC924F3DD2E /* EcosystemRegistry.swift in Sources */,
 				98F63F3DC95CAE6D7F47871D /* GemProvider.swift in Sources */,
 				099DEBE1C4FFCCC7A4E4AAFB /* GitRepo.swift in Sources */,
 				9189ED29CFF7415AFC75CF0A /* GitRepoScanner.swift in Sources */,
+				B75A3080FB51C459F7BCA2AF /* GraphStore.swift in Sources */,
 				B3889EBB5B448B2EA59BBCFC /* HelperClient.swift in Sources */,
 				532F1296FB0F40CEFDCCFFC7 /* HelperErrorCodes.swift in Sources */,
 				932E76888546D37FAC12647A /* HomebrewProvider.swift in Sources */,
 				7DFE53451DCA6F317435EAC6 /* LargeCacheRule.swift in Sources */,
 				B8B13416400D5885E8C9B2C9 /* LowDiskSpaceRule.swift in Sources */,
 				7A5ED4253713F89DDCFCEE71 /* MailAttachmentsRule.swift in Sources */,
+				D5F229ED5C163523E817ECAE /* NpmJsonProvider.swift in Sources */,
 				9E324DADC4CF6AB952D86B3F /* NpmProvider.swift in Sources */,
 				3581613B5505F2E2CFA0EF6A /* OldDownloadsRule.swift in Sources */,
 				F66B63C36A4240015E6F516B /* OptimizationEngine.swift in Sources */,
+				AC6E00E70B2650182D20027E /* PackageIdentity.swift in Sources */,
+				F81EAD27E9D32CAB3140F11B /* PackageNode.swift in Sources */,
 				7E64ABA3B45253577021CB58 /* PackageOperator.swift in Sources */,
 				EB6A6A26AC6AA4DD24FF7870 /* PackageProvider.swift in Sources */,
 				5A5FEBA2EB5684C45F95E072 /* PackageScanner.swift in Sources */,
+				E0CF524845C77E03CEE089FB /* PackageSizeCalculator.swift in Sources */,
+				30E88DC5095BE6F14092F480 /* PathNormalizer.swift in Sources */,
 				7035C482965BCA83839F82A0 /* PipProvider.swift in Sources */,
 				A30354D9D76345F72DEF3F3F /* PrivilegedDeleting.swift in Sources */,
 				95BDB885D1F6154DD0F77544 /* ProcessRunner.swift in Sources */,
@@ -662,17 +710,22 @@
 				26622049666D2B97B379C4F4 /* ActionLogger.swift in Sources */,
 				007207C9DE593EB59A1640E0 /* AnalyzeView.swift in Sources */,
 				6A5CC6756F732784388896AF /* AnalyzerEngine.swift in Sources */,
+				080CEEBF3ECFD7C9124777B6 /* BrewJsonProvider.swift in Sources */,
 				A24594257E72552F88ECD6BF /* BrowserCacheRule.swift in Sources */,
 				22DB78584BD371BAD66B01BA /* CleanView.swift in Sources */,
 				7D17C0259ECBE188B1E5C391 /* CleanupAllowlist.swift in Sources */,
 				302C4D33136607A74E81519F /* CleanupEngine.swift in Sources */,
 				CB4052EBF1DDA6DC1BEA5DBD /* DeletionPlan.swift in Sources */,
+				98C8A7E09E726BE51E9C35C0 /* DependencyGraphService.swift in Sources */,
 				79BD97381D59C321218D20C5 /* DeveloperCacheRule.swift in Sources */,
 				753A4791BEC6215F22667EF0 /* DirectorySizeCache.swift in Sources */,
+				CA97D481D45124088D4C5EF4 /* EcosystemRegistry.swift in Sources */,
 				D58D90BD611E8E4838820B9D /* FileTreeView.swift in Sources */,
 				E117650714D03FEADBEEE3C7 /* GemProvider.swift in Sources */,
+				0D37B0DD6786C0618E5BD55D /* GhostBusterView.swift in Sources */,
 				63427A8727C534551E120847 /* GitRepo.swift in Sources */,
 				22C1393EA638BBAE219E45AD /* GitRepoScanner.swift in Sources */,
+				7BEADEC5CF11CC717EB37546 /* GraphStore.swift in Sources */,
 				13A8D389A43062D276269FCF /* HelperClient.swift in Sources */,
 				558E99EFDD1D1DBDCF5F5F47 /* HelperErrorCodes.swift in Sources */,
 				286DC075478A5E58FB81D307 /* HomebrewProvider.swift in Sources */,
@@ -682,14 +735,19 @@
 				25F18FA884C947A75DCA1864 /* LowDiskSpaceRule.swift in Sources */,
 				86CCD29B5A459F7098AED6B0 /* MailAttachmentsRule.swift in Sources */,
 				776CA40CF2BC2709247DA877 /* MainApplicationsView.swift in Sources */,
+				EBA872140561F9D906B1D16E /* NpmJsonProvider.swift in Sources */,
 				427D3A6872E392F5852D6E82 /* NpmProvider.swift in Sources */,
 				F16D1C2242079AA6D82D8BB7 /* OldDownloadsRule.swift in Sources */,
 				40D1DF36ACE2FAD64604B97D /* OptimizationEngine.swift in Sources */,
 				57827FCF4FBF1F0F9C346449 /* OptimizeView.swift in Sources */,
 				84CE8C0B91C8427DB19E74FC /* PackageFinderView.swift in Sources */,
+				6B0E5912B389DFBDE67D351D /* PackageIdentity.swift in Sources */,
+				08B5C2338A4191637C04FF7C /* PackageNode.swift in Sources */,
 				639199F51CA519F4A02F279C /* PackageOperator.swift in Sources */,
 				02424FF142D6463C125228D2 /* PackageProvider.swift in Sources */,
 				1B28BF7E52AB190137217BF0 /* PackageScanner.swift in Sources */,
+				6D7092A56D37497DBCA1A07D /* PackageSizeCalculator.swift in Sources */,
+				A18CED3BDB8A67BE998DCC67 /* PathNormalizer.swift in Sources */,
 				32AB2640821CD6974C1D0034 /* PipProvider.swift in Sources */,
 				7459619C93E0B418EFCF4DBC /* PrivilegedDeleting.swift in Sources */,
 				99A80C4B8B6CBD1CE5877953 /* ProcessRunner.swift in Sources */,

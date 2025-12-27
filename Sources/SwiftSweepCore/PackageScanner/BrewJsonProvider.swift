@@ -56,9 +56,36 @@ public actor BrewJsonProvider: PackageMetadataProvider {
 
   // MARK: - Private
 
+  private func findBrewPath() -> String {
+    // Check common brew locations
+    let paths = [
+      "/opt/homebrew/bin/brew",  // Apple Silicon
+      "/usr/local/bin/brew",  // Intel
+      brewPath,
+    ]
+
+    for path in paths {
+      if FileManager.default.fileExists(atPath: path) {
+        return path
+      }
+    }
+
+    return brewPath
+  }
+
   private func executeBrewCommand() async throws -> Data {
+    let actualBrewPath = findBrewPath()
+
+    guard FileManager.default.fileExists(atPath: actualBrewPath) else {
+      throw IngestionError(
+        phase: "execute",
+        message: "brew not found at \(actualBrewPath)",
+        recoverable: true
+      )
+    }
+
     let process = Process()
-    process.executableURL = URL(fileURLWithPath: brewPath)
+    process.executableURL = URL(fileURLWithPath: actualBrewPath)
     process.arguments = ["info", "--json=v2", "--installed"]
     process.environment = ToolLocator.packageFinderEnvironment
 
@@ -138,8 +165,9 @@ public actor BrewJsonProvider: PackageMetadataProvider {
   }
 
   private func getBrewPrefix() throws -> String {
+    let actualBrewPath = findBrewPath()
     let process = Process()
-    process.executableURL = URL(fileURLWithPath: brewPath)
+    process.executableURL = URL(fileURLWithPath: actualBrewPath)
     process.arguments = ["--prefix"]
 
     let pipe = Pipe()

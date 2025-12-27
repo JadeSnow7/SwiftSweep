@@ -83,7 +83,7 @@ struct ContentView: View {
             Label(L10n.Nav.packages.localized, systemImage: "shippingbox")
           }
           NavigationLink(value: NavigationItem.ghostBuster) {
-            Label("Ghost Buster", systemImage: "ghost")
+            Label("Ghost Buster", systemImage: "figure.wave")
           }
         }
 

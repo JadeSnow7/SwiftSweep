@@ -24,6 +24,8 @@ public struct GhostBusterView: View {
       // Content
       if viewModel.isScanning {
         scanningView
+      } else if let error = viewModel.error {
+        errorView(error)
       } else if viewModel.orphanNodes.isEmpty && viewModel.hasScanned {
         emptyStateView
       } else if !viewModel.hasScanned {
@@ -52,6 +54,25 @@ public struct GhostBusterView: View {
     }
   }
 
+  private func errorView(_ message: String) -> some View {
+    VStack(spacing: 16) {
+      Image(systemName: "exclamationmark.triangle.fill")
+        .font(.system(size: 64))
+        .foregroundColor(.orange)
+      Text("Scan Error")
+        .font(.title2)
+      Text(message)
+        .foregroundColor(.secondary)
+        .multilineTextAlignment(.center)
+        .padding(.horizontal)
+      Button("Retry") {
+        Task { await viewModel.scan() }
+      }
+      .buttonStyle(.borderedProminent)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+  }
+
   // MARK: - Header
 
   private var headerView: some View {
@@ -64,7 +85,7 @@ public struct GhostBusterView: View {
       )
 
       statBadge(
-        icon: "ghost",
+        icon: "figure.wave",
         value: "\(viewModel.orphanNodes.count)",
         label: "Orphans",
         color: .orange
@@ -124,7 +145,7 @@ public struct GhostBusterView: View {
 
   private var welcomeView: some View {
     VStack(spacing: 16) {
-      Image(systemName: "ghost")
+      Image(systemName: "figure.wave")
         .font(.system(size: 64))
         .foregroundColor(.orange.opacity(0.6))
       Text("Ghost Buster")
