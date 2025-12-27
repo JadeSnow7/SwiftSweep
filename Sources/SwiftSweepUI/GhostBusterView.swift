@@ -229,11 +229,11 @@ public struct GhostBusterView: View {
   private func ecosystemIcon(_ id: String) -> some View {
     let (icon, color): (String, Color) =
       switch id {
-      case "homebrew_formula": ("mug", .orange)
+      case "homebrew_formula": ("cup.and.saucer", .orange)
       case "homebrew_cask": ("macwindow", .orange)
       case "npm": ("shippingbox", .red)
       case "pip": ("cube", .blue)
-      case "gem": ("diamond", .pink)
+      case "gem": ("diamond.fill", .pink)
       default: ("shippingbox", .gray)
       }
 
