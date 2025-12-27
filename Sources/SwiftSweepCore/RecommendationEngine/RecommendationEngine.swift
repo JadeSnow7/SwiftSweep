@@ -132,32 +132,55 @@ public final class RecommendationEngine: @unchecked Sendable {
     case timeout(ruleId: String)
   }
 
-  /// Convenience method: builds context from system and evaluates.
-  public func evaluateWithSystemContext() async throws -> [Recommendation] {
-    let context = try await buildDefaultContext()
-    return try await evaluate(context: context)
+  /// Evaluation result with cache metadata
+  public struct EvaluationResult {
+    public let recommendations: [Recommendation]
+    public let isCacheHit: Bool
+    public let cacheAge: TimeInterval?
   }
 
-  // MARK: - Context Building
+  /// Convenience method: builds context from system and evaluates (original signature for compatibility).
+  public func evaluateWithSystemContext() async throws -> [Recommendation] {
+    let result = try await evaluateWithSystemContext(forceRefresh: false, installedApps: nil)
+    return result.recommendations
+  }
 
-  /// Builds a default context by querying system state.
-  public func buildDefaultContext() async throws -> RecommendationContext {
-    // Get system metrics
-    let monitor = SystemMonitor.shared
-    let metrics = try await monitor.getMetrics()
+  /// Evaluates with system context, cache support, and optional injected apps.
+  public func evaluateWithSystemContext(
+    forceRefresh: Bool,
+    installedApps: [AppInfo]? = nil,
+    onPhase: ((String) -> Void)? = nil
+  ) async throws -> EvaluationResult {
+    var isCacheHit = false
+    var cacheAge: TimeInterval? = nil
 
-    let systemMetrics = SystemMetrics(
-      cpuUsage: metrics.cpuUsage,
-      memoryUsage: metrics.memoryUsage,
-      memoryUsedBytes: metrics.memoryUsed,
-      memoryTotalBytes: metrics.memoryTotal,
-      diskUsage: metrics.diskUsage,
-      diskUsedBytes: metrics.diskUsed,
-      diskTotalBytes: metrics.diskTotal,
-      diskFreeBytes: metrics.diskTotal - metrics.diskUsed
-    )
+    // Try cache first
+    if !forceRefresh, let cached = await InsightsCacheStore.shared.getCached() {
+      isCacheHit = true
+      cacheAge = cached.cacheAge
 
-    // Get cleanup items
+      onPhase?("Loading from cache...")
+
+      // Build context from cache with fresh currentDate
+      let systemMetrics = try await getSystemMetrics()
+      let context = RecommendationContext(
+        systemMetrics: systemMetrics,
+        cleanupItems: cached.cleanupItems,
+        downloadsFiles: cached.downloadsFiles,
+        installedApps: cached.installedApps ?? installedApps,
+        currentDate: Date()  // Fresh time to avoid drift
+      )
+
+      let recommendations = try await evaluate(context: context)
+      return EvaluationResult(
+        recommendations: recommendations, isCacheHit: true, cacheAge: cacheAge)
+    }
+
+    // Full scan
+    onPhase?("Scanning system metrics...")
+    let systemMetrics = try await getSystemMetrics()
+
+    onPhase?("Scanning cleanup items...")
     let cleanupEngine = CleanupEngine.shared
     let items = try await cleanupEngine.scanForCleanableItems()
     let cleanupItems = items.map { item in
@@ -168,14 +191,75 @@ public final class RecommendationEngine: @unchecked Sendable {
       )
     }
 
-    // Scan Downloads directory
-    let downloadsFiles = scanDownloadsDirectory()
+    // Check cancellation before Downloads scan
+    if Task.isCancelled { throw CancellationError() }
+
+    onPhase?("Scanning Downloads...")
+    let downloadsFiles = await scanDownloadsDirectory()
+
+    // Check cancellation
+    if Task.isCancelled { throw CancellationError() }
+
+    // Cache the results (only if not cancelled)
+    await InsightsCacheStore.shared.cache(
+      downloadsFiles: downloadsFiles,
+      cleanupItems: cleanupItems,
+      installedApps: installedApps
+    )
+
+    let context = RecommendationContext(
+      systemMetrics: systemMetrics,
+      cleanupItems: cleanupItems,
+      downloadsFiles: downloadsFiles,
+      installedApps: installedApps,
+      currentDate: Date()
+    )
+
+    onPhase?("Evaluating rules...")
+    let recommendations = try await evaluate(context: context)
+    return EvaluationResult(recommendations: recommendations, isCacheHit: false, cacheAge: nil)
+  }
+
+  // MARK: - Context Building
+
+  /// Gets system metrics (always fresh, no cache).
+  private func getSystemMetrics() async throws -> SystemMetrics {
+    let monitor = SystemMonitor.shared
+    let metrics = try await monitor.getMetrics()
+
+    return SystemMetrics(
+      cpuUsage: metrics.cpuUsage,
+      memoryUsage: metrics.memoryUsage,
+      memoryUsedBytes: metrics.memoryUsed,
+      memoryTotalBytes: metrics.memoryTotal,
+      diskUsage: metrics.diskUsage,
+      diskUsedBytes: metrics.diskUsed,
+      diskTotalBytes: metrics.diskTotal,
+      diskFreeBytes: metrics.diskTotal - metrics.diskUsed
+    )
+  }
+
+  /// Builds a default context by querying system state (legacy, for backward compatibility).
+  public func buildDefaultContext() async throws -> RecommendationContext {
+    let systemMetrics = try await getSystemMetrics()
+
+    let cleanupEngine = CleanupEngine.shared
+    let items = try await cleanupEngine.scanForCleanableItems()
+    let cleanupItems = items.map { item in
+      CleanupItem(
+        path: item.path,
+        sizeBytes: item.size,
+        category: item.category.rawValue
+      )
+    }
+
+    let downloadsFiles = await scanDownloadsDirectory()
 
     return RecommendationContext(
       systemMetrics: systemMetrics,
       cleanupItems: cleanupItems,
       downloadsFiles: downloadsFiles,
-      installedApps: nil,  // TODO: Integrate with AppInventory
+      installedApps: nil,
       currentDate: Date()
     )
   }
@@ -195,41 +279,47 @@ public final class RecommendationEngine: @unchecked Sendable {
     register(rule: MailAttachmentsRule())
   }
 
-  private func scanDownloadsDirectory() -> [FileInfo] {
+  /// Async, cancellable Downloads directory scan using enumerator
+  private func scanDownloadsDirectory() async -> [FileInfo] {
     let fm = FileManager.default
     let downloadsPath = fm.homeDirectoryForCurrentUser.appendingPathComponent("Downloads")
 
-    guard fm.fileExists(atPath: downloadsPath.path) else { return [] }
+    guard fm.fileExists(atPath: downloadsPath.path),
+      let enumerator = fm.enumerator(
+        at: downloadsPath,
+        includingPropertiesForKeys: [
+          .fileSizeKey, .creationDateKey, .contentAccessDateKey,
+          .contentModificationDateKey, .isDirectoryKey,
+        ],
+        options: [.skipsHiddenFiles, .skipsSubdirectoryDescendants]
+      )
+    else {
+      return []
+    }
 
     var files: [FileInfo] = []
 
-    do {
-      let contents = try fm.contentsOfDirectory(
-        at: downloadsPath,
-        includingPropertiesForKeys: [
-          .fileSizeKey, .creationDateKey, .contentAccessDateKey, .contentModificationDateKey,
-          .isDirectoryKey,
-        ])
+    for case let url as URL in enumerator {
+      // Cancellation check
+      if Task.isCancelled { return [] }
 
-      for url in contents {
-        let resourceValues = try url.resourceValues(forKeys: [
-          .fileSizeKey, .creationDateKey, .contentAccessDateKey, .contentModificationDateKey,
-          .isDirectoryKey,
+      guard
+        let resourceValues = try? url.resourceValues(forKeys: [
+          .fileSizeKey, .creationDateKey, .contentAccessDateKey,
+          .contentModificationDateKey, .isDirectoryKey,
         ])
+      else { continue }
 
-        let fileInfo = FileInfo(
-          path: url.path,
-          name: url.lastPathComponent,
-          sizeBytes: Int64(resourceValues.fileSize ?? 0),
-          creationDate: resourceValues.creationDate,
-          lastAccessDate: resourceValues.contentAccessDate,
-          contentModificationDate: resourceValues.contentModificationDate,
-          isDirectory: resourceValues.isDirectory ?? false
-        )
-        files.append(fileInfo)
-      }
-    } catch {
-      logger.warning("Failed to scan Downloads: \(error.localizedDescription)")
+      let fileInfo = FileInfo(
+        path: url.path,
+        name: url.lastPathComponent,
+        sizeBytes: Int64(resourceValues.fileSize ?? 0),
+        creationDate: resourceValues.creationDate,
+        lastAccessDate: resourceValues.contentAccessDate,
+        contentModificationDate: resourceValues.contentModificationDate,
+        isDirectory: resourceValues.isDirectory ?? false
+      )
+      files.append(fileInfo)
     }
 
     return files

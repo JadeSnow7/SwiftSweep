@@ -1,6 +1,7 @@
 import SwiftUI
+
 #if canImport(SwiftSweepCore)
-import SwiftSweepCore
+  import SwiftSweepCore
 #endif
 
 // MARK: - InsightsView
@@ -15,6 +16,11 @@ struct InsightsView: View {
   @State private var actionInProgress = false
   @State private var actionResult: ActionResult?
   @State private var showBatchCleanup = false
+
+  // Cache & Progress state
+  @State private var isCacheHit = false
+  @State private var cacheAge: TimeInterval?
+  @State private var loadingPhase = ""
 
   var body: some View {
     VStack(spacing: 0) {
@@ -36,7 +42,7 @@ struct InsightsView: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .task {
-      await loadRecommendations()
+      await loadRecommendations(forceRefresh: false)
     }
     .sheet(isPresented: $showActionSheet) {
       if let rec = selectedRecommendation {
@@ -46,7 +52,7 @@ struct InsightsView: View {
           onComplete: { result in
             actionResult = result
             // Refresh after action
-            Task { await loadRecommendations() }
+            Task { await loadRecommendations(forceRefresh: true) }
           }
         )
       }
@@ -64,7 +70,7 @@ struct InsightsView: View {
         isPresented: $showBatchCleanup,
         onComplete: { result in
           actionResult = result
-          Task { await loadRecommendations() }
+          Task { await loadRecommendations(forceRefresh: true) }
         }
       )
     }
@@ -77,9 +83,18 @@ struct InsightsView: View {
       VStack(alignment: .leading, spacing: 4) {
         Text("Smart Insights")
           .font(.title.bold())
-        Text("Personalized recommendations for your Mac")
-          .font(.subheadline)
-          .foregroundColor(.secondary)
+        HStack(spacing: 4) {
+          Text("Personalized recommendations for your Mac")
+            .font(.subheadline)
+            .foregroundColor(.secondary)
+
+          // Cache indicator
+          if isCacheHit, let age = cacheAge {
+            Text("• cached \(Int(age / 60))m ago")
+              .font(.caption)
+              .foregroundColor(.orange)
+          }
+        }
       }
 
       Spacer()
@@ -106,10 +121,17 @@ struct InsightsView: View {
         .disabled(isLoading)
       }
 
-      Button(action: { Task { await loadRecommendations() } }) {
+      // Refresh buttons
+      Button(action: { Task { await loadRecommendations(forceRefresh: false) } }) {
         Label("Refresh", systemImage: "arrow.clockwise")
       }
       .disabled(isLoading)
+
+      Button(action: { Task { await loadRecommendations(forceRefresh: true) } }) {
+        Label("Force Refresh", systemImage: "arrow.clockwise.circle")
+      }
+      .disabled(isLoading)
+      .help("Bypass cache and rescan everything")
     }
     .padding()
   }
@@ -137,7 +159,7 @@ struct InsightsView: View {
     VStack(spacing: 16) {
       ProgressView()
         .scaleEffect(1.5)
-      Text("Analyzing your system...")
+      Text(loadingPhase.isEmpty ? "Analyzing your system..." : loadingPhase)
         .foregroundColor(.secondary)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -155,7 +177,7 @@ struct InsightsView: View {
       Text(message)
         .foregroundColor(.secondary)
       Button("Try Again") {
-        Task { await loadRecommendations() }
+        Task { await loadRecommendations(forceRefresh: true) }
       }
       .buttonStyle(.borderedProminent)
     }
@@ -199,14 +221,29 @@ struct InsightsView: View {
 
   // MARK: - Data Loading
 
-  private func loadRecommendations() async {
+  private func loadRecommendations(forceRefresh: Bool) async {
     isLoading = true
     error = nil
+    loadingPhase = ""
 
     do {
-      let results = try await RecommendationEngine.shared.evaluateWithSystemContext()
+      let result = try await RecommendationEngine.shared.evaluateWithSystemContext(
+        forceRefresh: forceRefresh,
+        installedApps: nil,
+        onPhase: { phase in
+          Task { @MainActor in
+            self.loadingPhase = phase
+          }
+        }
+      )
       await MainActor.run {
-        self.recommendations = results
+        self.recommendations = result.recommendations
+        self.isCacheHit = result.isCacheHit
+        self.cacheAge = result.cacheAge
+        self.isLoading = false
+      }
+    } catch is CancellationError {
+      await MainActor.run {
         self.isLoading = false
       }
     } catch {
