@@ -51,46 +51,50 @@ public actor NpmJsonProvider: PackageMetadataProvider {
   private func executeNpmCommand() async throws -> Data {
     let npmExecutable = findNpmPath()
 
-    let process = Process()
-    process.executableURL = URL(fileURLWithPath: npmExecutable)
-    process.arguments = ["ls", "-g", "--json", "--depth=0"]
-    process.environment = ToolLocator.packageFinderEnvironment
+    return try await Task.detached(priority: .userInitiated) {
+      let process = Process()
+      process.executableURL = URL(fileURLWithPath: npmExecutable)
+      process.arguments = ["ls", "-g", "--json", "--depth=0"]
+      process.environment = ToolLocator.packageFinderEnvironment
 
-    let pipe = Pipe()
-    process.standardOutput = pipe
-    process.standardError = FileHandle.nullDevice
+      let pipe = Pipe()
+      process.standardOutput = pipe
+      process.standardError = FileHandle.nullDevice
 
-    try process.run()
-    process.waitUntilExit()
+      try process.run()
+      process.waitUntilExit()
 
-    guard process.terminationStatus == 0 else {
-      throw IngestionError(
-        phase: "execute",
-        message: "npm command failed with code \(process.terminationStatus)",
-        recoverable: true
-      )
-    }
+      guard process.terminationStatus == 0 else {
+        throw IngestionError(
+          phase: "execute",
+          message: "npm command failed with code \(process.terminationStatus)",
+          recoverable: true
+        )
+      }
 
-    return pipe.fileHandleForReading.readDataToEndOfFile()
+      return pipe.fileHandleForReading.readDataToEndOfFile()
+    }.value
   }
 
   private func getNpmGlobalRoot() async throws -> String {
     let npmExecutable = findNpmPath()
 
-    let process = Process()
-    process.executableURL = URL(fileURLWithPath: npmExecutable)
-    process.arguments = ["root", "-g"]
-    process.environment = ToolLocator.packageFinderEnvironment
+    return try await Task.detached(priority: .userInitiated) {
+      let process = Process()
+      process.executableURL = URL(fileURLWithPath: npmExecutable)
+      process.arguments = ["root", "-g"]
+      process.environment = ToolLocator.packageFinderEnvironment
 
-    let pipe = Pipe()
-    process.standardOutput = pipe
+      let pipe = Pipe()
+      process.standardOutput = pipe
 
-    try process.run()
-    process.waitUntilExit()
+      try process.run()
+      process.waitUntilExit()
 
-    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-    return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-      ?? "/usr/local/lib/node_modules"
+      let data = pipe.fileHandleForReading.readDataToEndOfFile()
+      return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        ?? "/usr/local/lib/node_modules"
+    }.value
   }
 
   private func findNpmPath() -> String {

@@ -84,27 +84,30 @@ public actor BrewJsonProvider: PackageMetadataProvider {
       )
     }
 
-    let process = Process()
-    process.executableURL = URL(fileURLWithPath: actualBrewPath)
-    process.arguments = ["info", "--json=v2", "--installed"]
-    process.environment = ToolLocator.packageFinderEnvironment
+    // Execute in detached task to avoid blocking actor
+    return try await Task.detached(priority: .userInitiated) {
+      let process = Process()
+      process.executableURL = URL(fileURLWithPath: actualBrewPath)
+      process.arguments = ["info", "--json=v2", "--installed"]
+      process.environment = ToolLocator.packageFinderEnvironment
 
-    let pipe = Pipe()
-    process.standardOutput = pipe
-    process.standardError = FileHandle.nullDevice
+      let pipe = Pipe()
+      process.standardOutput = pipe
+      process.standardError = FileHandle.nullDevice
 
-    try process.run()
-    process.waitUntilExit()
+      try process.run()
+      process.waitUntilExit()
 
-    guard process.terminationStatus == 0 else {
-      throw IngestionError(
-        phase: "execute",
-        message: "brew command failed with code \(process.terminationStatus)",
-        recoverable: true
-      )
-    }
+      guard process.terminationStatus == 0 else {
+        throw IngestionError(
+          phase: "execute",
+          message: "brew command failed with code \(process.terminationStatus)",
+          recoverable: true
+        )
+      }
 
-    return pipe.fileHandleForReading.readDataToEndOfFile()
+      return pipe.fileHandleForReading.readDataToEndOfFile()
+    }.value
   }
 
   private func parseBrewJson(_ data: Data) throws -> [RawPackageRecord] {
@@ -117,17 +120,15 @@ public actor BrewJsonProvider: PackageMetadataProvider {
       guard let installed = formula.installed.first else { continue }
 
       // 计算 installPath
-      let brewPrefix = try? getBrewPrefix()
-      let cellarPath = brewPrefix.map { "\($0)/Cellar/\(formula.name)/\(installed.version)" }
+      let brewPrefix = getBrewPrefix()
+      let cellarPath = "\(brewPrefix)/Cellar/\(formula.name)/\(installed.version)"
 
       // 计算 fingerprint
-      let fingerprint: String? = cellarPath.flatMap { path in
-        let portable = PortablePath(path, normalizer: normalizer)
-        return PackageIdentity.computeFingerprint(
-          normalizedPath: portable.normalized,
-          arch: SystemInfo.machineArch
-        )
-      }
+      let portable = PortablePath(cellarPath, normalizer: normalizer)
+      let fingerprint = PackageIdentity.computeFingerprint(
+        normalizedPath: portable.normalized,
+        arch: SystemInfo.machineArch
+      )
 
       let identity = PackageIdentity(
         ecosystemId: ecosystemId,
@@ -164,21 +165,14 @@ public actor BrewJsonProvider: PackageMetadataProvider {
     return records
   }
 
-  private func getBrewPrefix() throws -> String {
-    let actualBrewPath = findBrewPath()
-    let process = Process()
-    process.executableURL = URL(fileURLWithPath: actualBrewPath)
-    process.arguments = ["--prefix"]
-
-    let pipe = Pipe()
-    process.standardOutput = pipe
-
-    try process.run()
-    process.waitUntilExit()
-
-    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-    return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-      ?? "/opt/homebrew"
+  private func getBrewPrefix() -> String {
+    // Determine prefix based on which brew path exists
+    if FileManager.default.fileExists(atPath: "/opt/homebrew/bin/brew") {
+      return "/opt/homebrew"
+    } else if FileManager.default.fileExists(atPath: "/usr/local/bin/brew") {
+      return "/usr/local"
+    }
+    return "/opt/homebrew"
   }
 }
 
