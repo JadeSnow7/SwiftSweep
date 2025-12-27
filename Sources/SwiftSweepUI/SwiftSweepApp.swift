@@ -46,6 +46,7 @@ struct ContentView: View {
     case packages
     case ghostBuster
     case galaxy
+    case snapshot
     case settings
   }
 
@@ -88,6 +89,9 @@ struct ContentView: View {
           }
           NavigationLink(value: NavigationItem.galaxy) {
             Label("Galaxy", systemImage: "circle.hexagongrid")
+          }
+          NavigationLink(value: NavigationItem.snapshot) {
+            Label("Time Machine", systemImage: "camera.on.rectangle")
           }
         }
 
@@ -136,6 +140,12 @@ struct ContentView: View {
             GalaxyView()
           } else {
             Text("Galaxy requires macOS 13.0 or later")
+          }
+        case .snapshot:
+          if #available(macOS 13.0, *) {
+            SnapshotView()
+          } else {
+            Text("Time Machine requires macOS 13.0 or later")
           }
         case .settings:
           SettingsView()

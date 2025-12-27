@@ -37,6 +37,7 @@ let package = Package(
         "GitRepoScanner",
         "RecommendationEngine",
         "RecommendationEngine/Rules",
+        "Snapshot",
       ]
     ),
 

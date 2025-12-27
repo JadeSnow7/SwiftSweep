@@ -254,12 +254,34 @@ public struct GhostBusterView: View {
   }
 
   private func impactMessage(_ impact: RemovalImpact) -> String {
+    var message = ""
+
+    // Safety status
     if impact.isSafeToRemove {
-      return "This package can be safely removed. No other packages depend on it."
+      message += "✅ This package appears safe to remove based on dependency graph.\n"
     } else {
-      return
-        "Warning: \(impact.totalAffected) package(s) may be affected by removing this package.\n\nDirect dependents: \(impact.directDependents.map { $0.name }.joined(separator: ", "))"
+      message +=
+        "⚠️ Warning: \(impact.totalAffected) package(s) may be affected by removing this package.\n"
     }
+
+    // Warnings
+    if !impact.warnings.isEmpty {
+      message += "\nPossible Issues:\n"
+      for warning in impact.warnings {
+        message += "• \(warning)\n"
+      }
+    }
+
+    // Direct dependents
+    if !impact.directDependents.isEmpty {
+      message += "\nDirect dependents:\n"
+      let names = impact.directDependents.map { $0.name }.joined(separator: ", ")
+      message += names
+    } else if !impact.isSafeToRemove {
+      message += "\n(Only indirect dependents affected)"
+    }
+
+    return message
   }
 
   // MARK: - Helpers
@@ -323,6 +345,6 @@ class GhostBusterViewModel: ObservableObject {
   }
 
   func analyzeImpact(of node: PackageNode) async throws -> RemovalImpact {
-    try await service.simulateRemoval(of: node)
+    try await ImpactAnalyzer.shared.analyzeRemoval(packageId: node.identity.canonicalKey)
   }
 }

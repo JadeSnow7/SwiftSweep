@@ -192,7 +192,8 @@ public actor DependencyGraphService {
     return RemovalImpact(
       directDependents: dependents,
       totalAffected: affected.count,
-      isSafeToRemove: affected.isEmpty
+      isSafeToRemove: affected.isEmpty,
+      warnings: []
     )
   }
 
@@ -259,6 +260,7 @@ public struct RemovalImpact: Sendable {
   public let directDependents: [PackageRef]
   public let totalAffected: Int
   public let isSafeToRemove: Bool
+  public let warnings: [String]  // Cross-ecosystem or system-level warnings
 }
 
 /// 图统计
