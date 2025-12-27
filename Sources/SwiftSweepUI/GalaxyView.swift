@@ -89,6 +89,9 @@ public struct GalaxyView: View {
       ZStack {
         // Edges layer
         Canvas { context, size in
+          // Edge opacity decreases when zoomed out, increases when zoomed in
+          let baseOpacity = min(0.6, 0.2 + viewModel.zoomScale * 0.2)
+
           for edge in viewModel.visibleEdges {
             let sourcePos = transformPoint(edge.sourcePosition, center: center)
             let targetPos = transformPoint(edge.targetPosition, center: center)
@@ -97,7 +100,13 @@ public struct GalaxyView: View {
               p.move(to: sourcePos)
               p.addLine(to: targetPos)
             }
-            context.stroke(path, with: .color(.gray.opacity(0.3)), lineWidth: 0.5)
+
+            // Use edge color with zoom-dependent opacity
+            context.stroke(
+              path,
+              with: .color(edge.color.opacity(baseOpacity)),
+              lineWidth: max(0.5, 1.0 * viewModel.zoomScale)
+            )
           }
         }
 
@@ -151,8 +160,48 @@ public struct GalaxyView: View {
           .stroke(node.isSelected ? Color.white : Color.clear, lineWidth: 2)
       )
       .shadow(color: node.isSelected ? node.color : .clear, radius: 5)
+      .scaleEffect(viewModel.hoveredNodeId == node.id ? 1.2 : 1.0)
+      .animation(.easeInOut(duration: 0.15), value: viewModel.hoveredNodeId)
+      .onHover { isHovered in
+        viewModel.hoveredNodeId = isHovered ? node.id : nil
+      }
+      .onTapGesture(count: 2) {
+        // Double-click: focus on node
+        viewModel.focusOnNode(node.id)
+      }
       .onTapGesture {
         viewModel.selectNode(node.id)
+      }
+      .contextMenu {
+        Button {
+          viewModel.selectNode(node.id)
+        } label: {
+          Label("Select", systemImage: "hand.tap")
+        }
+
+        Button {
+          viewModel.focusOnNode(node.id)
+        } label: {
+          Label("Focus", systemImage: "scope")
+        }
+
+        Divider()
+
+        Button {
+          NSPasteboard.general.clearContents()
+          NSPasteboard.general.setString(node.displayName, forType: .string)
+        } label: {
+          Label("Copy Name", systemImage: "doc.on.doc")
+        }
+
+        if let path = node.identity.scope.map({ "\($0)/\(node.name)" }) ?? node.name as String? {
+          Button {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(path, forType: .string)
+          } label: {
+            Label("Copy Full Path", systemImage: "rectangle.on.rectangle")
+          }
+        }
       }
       .help(node.displayName)
   }
@@ -324,6 +373,7 @@ class GalaxyViewModel: ObservableObject {
   @Published var zoomScale: CGFloat = 1.0
   @Published var offset: CGSize = .zero
   @Published var selectedNodeId: String?
+  @Published var hoveredNodeId: String?
   @Published var useForceLayout = false {
     didSet {
       if useForceLayout {
@@ -504,6 +554,31 @@ class GalaxyViewModel: ObservableObject {
 
     for i in nodes.indices {
       nodes[i].isSelected = nodes[i].id == selectedNodeId
+    }
+  }
+
+  func focusOnNode(_ id: String) {
+    guard let node = nodes.first(where: { $0.id == id }) else { return }
+
+    // Center the view on this node
+    withAnimation(.easeInOut(duration: 0.3)) {
+      // Calculate offset to center node in canvas
+      let targetOffset = CGSize(
+        width: canvasSize.width / 2 - node.position.x,
+        height: canvasSize.height / 2 - node.position.y
+      )
+      offset = targetOffset
+      baseOffset = targetOffset
+
+      // Zoom in to 150%
+      zoomScale = 1.5
+      baseZoom = 1.5
+
+      // Select the node
+      selectedNodeId = id
+      for i in nodes.indices {
+        nodes[i].isSelected = nodes[i].id == id
+      }
     }
   }
 }

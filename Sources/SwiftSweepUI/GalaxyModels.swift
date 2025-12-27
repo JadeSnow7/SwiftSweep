@@ -67,6 +67,7 @@ public struct VisualEdge: Identifiable, Sendable {
   public let id: String
   public let sourceId: String
   public let targetId: String
+  public let sourceEcosystem: String
   public var sourcePosition: CGPoint
   public var targetPosition: CGPoint
 
@@ -74,8 +75,21 @@ public struct VisualEdge: Identifiable, Sendable {
     self.id = "\(edge.source.canonicalKey)->\(edge.target.key)"
     self.sourceId = edge.source.canonicalKey
     self.targetId = edge.target.key
+    self.sourceEcosystem = edge.source.ecosystemId
     self.sourcePosition = sourcePos
     self.targetPosition = targetPos
+  }
+
+  /// Edge color based on source ecosystem
+  public var color: Color {
+    switch sourceEcosystem {
+    case "homebrew_formula": return .orange
+    case "homebrew_cask": return .purple
+    case "npm": return .green
+    case "pip": return .blue
+    case "gem": return .red
+    default: return .gray
+    }
   }
 }
 
