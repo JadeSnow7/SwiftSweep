@@ -76,6 +76,11 @@ struct SettingsView: View {
           }
         }
 
+        // Insights Rules
+        SettingsSection(title: "Insights Rules", icon: "lightbulb") {
+          InsightsRulesConfigView()
+        }
+
         // About
         SettingsSection(title: "About", icon: "info.circle") {
           HStack {
@@ -262,6 +267,104 @@ struct SettingsSection<Content: View>: View {
       .background(Color(nsColor: .controlBackgroundColor))
       .cornerRadius(10)
       .padding(.horizontal)
+    }
+  }
+}
+
+// MARK: - Insights Rules Configuration View
+
+struct InsightsRulesConfigView: View {
+  @State private var enabledRules: Set<String> = RuleSettings.shared.enabledRuleIDs
+  @State private var oldDownloadsDays: Double = Double(
+    RuleSettings.shared.threshold(forRule: "old_downloads", key: "days"))
+  @State private var unusedAppsDays: Double = Double(
+    RuleSettings.shared.threshold(forRule: "unused_apps", key: "days"))
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      // Rule toggles by category
+      ForEach(RuleCategory.allCases, id: \.self) { category in
+        VStack(alignment: .leading, spacing: 8) {
+          Label(category.rawValue, systemImage: category.icon)
+            .font(.subheadline.bold())
+            .foregroundColor(.secondary)
+
+          ForEach(RuleSettings.rules(in: category), id: \.self) { ruleID in
+            ruleToggle(for: ruleID)
+          }
+        }
+      }
+
+      Divider()
+
+      // Threshold sliders
+      VStack(alignment: .leading, spacing: 12) {
+        Text("Thresholds")
+          .font(.subheadline.bold())
+          .foregroundColor(.secondary)
+
+        // Old Downloads threshold
+        VStack(alignment: .leading, spacing: 4) {
+          HStack {
+            Text("Old Downloads Age")
+            Spacer()
+            Text("\(Int(oldDownloadsDays)) days")
+              .foregroundColor(.secondary)
+          }
+          Slider(value: $oldDownloadsDays, in: 7...90, step: 1)
+            .onChange(of: oldDownloadsDays) { newValue in
+              RuleSettings.shared.setThreshold(
+                forRule: "old_downloads", key: "days", value: Int(newValue))
+            }
+        }
+
+        // Unused Apps threshold
+        VStack(alignment: .leading, spacing: 4) {
+          HStack {
+            Text("Unused Apps Age")
+            Spacer()
+            Text("\(Int(unusedAppsDays)) days")
+              .foregroundColor(.secondary)
+          }
+          Slider(value: $unusedAppsDays, in: 30...365, step: 1)
+            .onChange(of: unusedAppsDays) { newValue in
+              RuleSettings.shared.setThreshold(
+                forRule: "unused_apps", key: "days", value: Int(newValue))
+            }
+        }
+      }
+
+      // Reset button
+      Button("Reset to Defaults") {
+        RuleSettings.shared.resetToDefaults()
+        enabledRules = RuleSettings.shared.enabledRuleIDs
+        oldDownloadsDays = 30
+        unusedAppsDays = 90
+      }
+      .foregroundColor(.red)
+    }
+  }
+
+  private func ruleToggle(for ruleID: String) -> some View {
+    Toggle(
+      isOn: Binding(
+        get: { enabledRules.contains(ruleID) },
+        set: { enabled in
+          if enabled {
+            enabledRules.insert(ruleID)
+          } else {
+            enabledRules.remove(ruleID)
+          }
+          RuleSettings.shared.setRuleEnabled(ruleID, enabled: enabled)
+        }
+      )
+    ) {
+      VStack(alignment: .leading, spacing: 2) {
+        Text(RuleSettings.displayName(for: ruleID))
+        Text(RuleSettings.description(for: ruleID))
+          .font(.caption)
+          .foregroundColor(.secondary)
+      }
     }
   }
 }

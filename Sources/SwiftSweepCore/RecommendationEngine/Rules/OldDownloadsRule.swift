@@ -8,8 +8,10 @@ public struct OldDownloadsRule: RecommendationRule {
   public let displayName = "Old Downloads Cleanup"
   public let capabilities: [RuleCapability] = [.downloadsAccess]
 
-  /// Files older than this many days are considered "old"
-  private let ageDaysThreshold: Int = 30
+  /// Files older than this many days are considered "old" - reads from RuleSettings
+  private var ageDaysThreshold: Int {
+    RuleSettings.shared.threshold(forRule: id, key: "days")
+  }
   /// Minimum total size to generate a recommendation (bytes)
   private let minTotalSizeBytes: Int64 = 50_000_000  // 50 MB
   /// Files larger than this are highlighted individually

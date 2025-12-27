@@ -8,8 +8,10 @@ public struct UnusedAppsRule: RecommendationRule {
   public let displayName = "Unused Applications"
   public let capabilities: [RuleCapability] = [.installedApps]
 
-  /// Days since last use to consider app as "unused"
-  private let unusedDaysThreshold: Int = 90
+  /// Days since last use to consider app as "unused" - reads from RuleSettings
+  private var unusedDaysThreshold: Int {
+    RuleSettings.shared.threshold(forRule: id, key: "days")
+  }
   /// Minimum app size to include (bytes)
   private let minAppSize: Int64 = 50_000_000  // 50 MB
   /// Minimum total unused size to generate recommendation

@@ -22,6 +22,9 @@ struct InsightsView: View {
   @State private var cacheAge: TimeInterval?
   @State private var loadingPhase = ""
 
+  // Category filter state
+  @State private var selectedCategory: RuleCategory? = nil
+
   var body: some View {
     VStack(spacing: 0) {
       // Header
@@ -34,7 +37,7 @@ struct InsightsView: View {
         loadingView
       } else if let error = error {
         errorView(error)
-      } else if recommendations.isEmpty {
+      } else if filteredRecommendations.isEmpty {
         emptyStateView
       } else {
         recommendationsList
@@ -76,6 +79,17 @@ struct InsightsView: View {
     }
   }
 
+  // MARK: - Filtered Recommendations
+
+  private var filteredRecommendations: [Recommendation] {
+    guard let category = selectedCategory else {
+      return recommendations
+    }
+    return recommendations.filter { rec in
+      RuleSettings.category(for: rec.id) == category
+    }
+  }
+
   // MARK: - Header
 
   private var headerView: some View {
@@ -98,6 +112,17 @@ struct InsightsView: View {
       }
 
       Spacer()
+
+      // Category filter
+      Picker("Category", selection: $selectedCategory) {
+        Text("All").tag(nil as RuleCategory?)
+        ForEach(RuleCategory.allCases, id: \.self) { category in
+          Label(category.rawValue, systemImage: category.icon)
+            .tag(category as RuleCategory?)
+        }
+      }
+      .pickerStyle(.menu)
+      .frame(width: 140)
 
       if let total = totalPotentialSavings {
         VStack(alignment: .trailing) {
@@ -205,7 +230,7 @@ struct InsightsView: View {
   private var recommendationsList: some View {
     ScrollView {
       LazyVStack(spacing: 12) {
-        ForEach(recommendations) { recommendation in
+        ForEach(filteredRecommendations) { recommendation in
           RecommendationCard(
             recommendation: recommendation,
             onAction: {

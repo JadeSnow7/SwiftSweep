@@ -1,5 +1,24 @@
 import Foundation
 
+// MARK: - RuleCategory
+
+/// Categories for grouping recommendation rules
+public enum RuleCategory: String, CaseIterable, Codable {
+  case storage = "Storage"
+  case privacy = "Privacy"
+  case performance = "Performance"
+  case security = "Security"
+
+  public var icon: String {
+    switch self {
+    case .storage: return "internaldrive"
+    case .privacy: return "hand.raised"
+    case .performance: return "speedometer"
+    case .security: return "lock.shield"
+    }
+  }
+}
+
 // MARK: - RuleSettings
 
 /// Persistent settings for recommendation rules.
@@ -21,6 +40,28 @@ public final class RuleSettings: @unchecked Sendable {
     "browser_cache",
     "trash_reminder",
     "mail_attachments",
+  ]
+
+  /// Rule category mappings
+  public static let ruleCategories: [String: RuleCategory] = [
+    "low_disk_space": .storage,
+    "old_downloads": .storage,
+    "developer_caches": .storage,
+    "large_caches": .storage,
+    "unused_apps": .performance,
+    "screenshot_cleanup": .storage,
+    "browser_cache": .privacy,
+    "trash_reminder": .storage,
+    "mail_attachments": .privacy,
+  ]
+
+  /// Default thresholds for rules
+  public static let defaultThresholds: [String: [String: Int]] = [
+    "old_downloads": ["days": 30],
+    "unused_apps": ["days": 90],
+    "large_caches": ["sizeMB": 200],
+    "trash_reminder": ["sizeMB": 1000],
+    "low_disk_space": ["usagePercent": 80],
   ]
 
   private init() {}
@@ -64,14 +105,17 @@ public final class RuleSettings: @unchecked Sendable {
 
   // MARK: - Thresholds
 
-  /// Get custom threshold for a rule
-  public func threshold(forRule ruleID: String, key: String) -> Int? {
+  /// Get custom threshold for a rule, falling back to default
+  public func threshold(forRule ruleID: String, key: String) -> Int {
+    // Check custom first
     if let thresholds = userDefaults.dictionary(forKey: thresholdsKey) as? [String: [String: Int]],
-      let ruleThresholds = thresholds[ruleID]
+      let ruleThresholds = thresholds[ruleID],
+      let value = ruleThresholds[key]
     {
-      return ruleThresholds[key]
+      return value
     }
-    return nil
+    // Fall back to default
+    return RuleSettings.defaultThresholds[ruleID]?[key] ?? 0
   }
 
   /// Set custom threshold for a rule
@@ -82,6 +126,18 @@ public final class RuleSettings: @unchecked Sendable {
     ruleThresholds[key] = value
     thresholds[ruleID] = ruleThresholds
     userDefaults.set(thresholds, forKey: thresholdsKey)
+  }
+
+  // MARK: - Category Helpers
+
+  /// Get category for a rule
+  public static func category(for ruleID: String) -> RuleCategory {
+    ruleCategories[ruleID] ?? .storage
+  }
+
+  /// Get all rules in a category
+  public static func rules(in category: RuleCategory) -> [String] {
+    allRuleIDs.filter { ruleCategories[$0] == category }
   }
 }
 
@@ -107,14 +163,14 @@ extension RuleSettings {
   /// Rule descriptions
   public static func description(for ruleID: String) -> String {
     switch ruleID {
-    case "low_disk_space": return "磁盘使用率超过80%时告警"
-    case "old_downloads": return "检测下载文件夹中超过30天的旧文件"
+    case "low_disk_space": return "磁盘使用率超过阈值时告警"
+    case "old_downloads": return "检测下载文件夹中的旧文件"
     case "developer_caches": return "检测Xcode、CocoaPods等开发工具缓存"
-    case "large_caches": return "检测超过200MB的应用缓存"
-    case "unused_apps": return "检测90天以上未使用的应用"
+    case "large_caches": return "检测超过阈值的应用缓存"
+    case "unused_apps": return "检测长时间未使用的应用"
     case "screenshot_cleanup": return "检测桌面上的旧截图和临时文件"
     case "browser_cache": return "检测Safari、Chrome等浏览器缓存"
-    case "trash_reminder": return "废纸篓超过1GB时提醒清空"
+    case "trash_reminder": return "废纸篓超过阈值时提醒清空"
     case "mail_attachments": return "检测并清理邮件附件缓存"
     default: return ""
     }
