@@ -64,26 +64,41 @@ public actor DependencyGraphService {
       // 转换 records 为 nodes
       for record in result.records {
         let metadata: PackageMetadata
-        do {
-          metadata = try record.parseMetadata()
-        } catch {
+        var dependencies: [String] = []
+
+        // 尝试解析为 Brew 特定元数据以获取 size 和 dependencies
+        if let brewMeta = try? JSONDecoder().decode(BrewPackageMetadata.self, from: record.rawJSON)
+        {
+          metadata = PackageMetadata(
+            installPath: brewMeta.installPath,
+            size: brewMeta.size,
+            description: brewMeta.description,
+            homepage: brewMeta.homepage,
+            license: brewMeta.license
+          )
+          dependencies = brewMeta.dependencies
+        } else if let npmMeta = try? JSONDecoder().decode(
+          NpmPackageMetadata.self, from: record.rawJSON)
+        {
+          metadata = PackageMetadata(
+            installPath: npmMeta.installPath,
+            size: npmMeta.size
+          )
+        } else {
           metadata = PackageMetadata()
         }
 
         let node = PackageNode(identity: record.identity, metadata: metadata)
         allNodes.append(node)
 
-        // 提取依赖边 (仅 Brew 有依赖信息)
-        if let brewMeta = try? JSONDecoder().decode(BrewPackageMetadata.self, from: record.rawJSON)
-        {
-          for dep in brewMeta.dependencies {
-            let edge = DependencyEdge(
-              source: record.identity,
-              target: PackageRef(ecosystemId: result.ecosystemId, scope: nil, name: dep),
-              constraint: .any
-            )
-            allEdges.append(edge)
-          }
+        // 提取依赖边
+        for dep in dependencies {
+          let edge = DependencyEdge(
+            source: record.identity,
+            target: PackageRef(ecosystemId: result.ecosystemId, scope: nil, name: dep),
+            constraint: .any
+          )
+          allEdges.append(edge)
         }
       }
     }

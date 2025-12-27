@@ -145,9 +145,13 @@ public actor BrewJsonProvider: PackageMetadataProvider {
         instanceFingerprint: fingerprint
       )
 
+      // 计算安装目录大小
+      let size = Self.calculateDirectorySize(at: cellarPath)
+
       // 构建元数据 JSON
       let metadata = BrewPackageMetadata(
         installPath: cellarPath,
+        size: size,
         description: formula.description,
         homepage: formula.homepage,
         license: formula.license,
@@ -180,6 +184,26 @@ public actor BrewJsonProvider: PackageMetadataProvider {
       return "/usr/local"
     }
     return "/opt/homebrew"
+  }
+
+  /// 计算目录大小
+  private static func calculateDirectorySize(at path: String) -> Int64? {
+    let fm = FileManager.default
+    guard fm.fileExists(atPath: path) else { return nil }
+
+    var totalSize: Int64 = 0
+    guard let enumerator = fm.enumerator(atPath: path) else { return nil }
+
+    while let file = enumerator.nextObject() as? String {
+      let fullPath = (path as NSString).appendingPathComponent(file)
+      if let attrs = try? fm.attributesOfItem(atPath: fullPath),
+        let fileSize = attrs[.size] as? Int64
+      {
+        totalSize += fileSize
+      }
+    }
+
+    return totalSize > 0 ? totalSize : nil
   }
 }
 
@@ -268,6 +292,7 @@ private struct BrewCask: Decodable {
 /// Homebrew 特定的元数据
 public struct BrewPackageMetadata: Codable, Sendable {
   public let installPath: String?
+  public let size: Int64?
   public let description: String?
   public let homepage: String?
   public let license: String?

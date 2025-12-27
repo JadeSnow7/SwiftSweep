@@ -170,9 +170,13 @@ public actor NpmJsonProvider: PackageMetadataProvider {
         instanceFingerprint: fingerprint
       )
 
+      // 计算目录大小
+      let size = Self.calculateDirectorySize(at: installPath)
+
       // 构建元数据
       let metadata = NpmPackageMetadata(
         installPath: installPath,
+        size: size,
         overridden: info.overridden ?? false
       )
 
@@ -197,6 +201,26 @@ public actor NpmJsonProvider: PackageMetadataProvider {
     }
     return (nil, fullName)
   }
+
+  /// 计算目录大小
+  private static func calculateDirectorySize(at path: String) -> Int64? {
+    let fm = FileManager.default
+    guard fm.fileExists(atPath: path) else { return nil }
+
+    var totalSize: Int64 = 0
+    guard let enumerator = fm.enumerator(atPath: path) else { return nil }
+
+    while let file = enumerator.nextObject() as? String {
+      let fullPath = (path as NSString).appendingPathComponent(file)
+      if let attrs = try? fm.attributesOfItem(atPath: fullPath),
+        let fileSize = attrs[.size] as? Int64
+      {
+        totalSize += fileSize
+      }
+    }
+
+    return totalSize > 0 ? totalSize : nil
+  }
 }
 
 // MARK: - npm JSON Models
@@ -216,5 +240,6 @@ private struct NpmDependencyInfo: Decodable {
 /// npm 特定的元数据
 public struct NpmPackageMetadata: Codable, Sendable {
   public let installPath: String?
+  public let size: Int64?
   public let overridden: Bool
 }
