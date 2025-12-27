@@ -70,32 +70,13 @@ public actor NpmJsonProvider: PackageMetadataProvider {
       process.standardOutput = stdoutPipe
       process.standardError = stderrPipe
 
-      // Read data BEFORE wait to prevent pipe buffer deadlock
-      var outputData = Data()
-      stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
-        outputData.append(handle.availableData)
-      }
-
       try process.run()
 
-      // Timeout of 30 seconds for npm
-      let deadline = Date().addingTimeInterval(30)
-      while process.isRunning && Date() < deadline {
-        Thread.sleep(forTimeInterval: 0.1)
-      }
+      // Read all data first (prevents pipe buffer deadlock)
+      let outputData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
 
-      if process.isRunning {
-        process.terminate()
-        throw IngestionError(
-          phase: "execute",
-          message: "npm command timed out after 30s",
-          recoverable: true
-        )
-      }
-
-      // Read remaining data
-      stdoutPipe.fileHandleForReading.readabilityHandler = nil
-      outputData.append(stdoutPipe.fileHandleForReading.readDataToEndOfFile())
+      // Now wait for process to finish
+      process.waitUntilExit()
 
       // npm ls often returns exit code 1 for unmet peer deps, but output is still valid JSON
       // Only fail if no output at all
@@ -127,20 +108,11 @@ public actor NpmJsonProvider: PackageMetadataProvider {
       let pipe = Pipe()
       process.standardOutput = pipe
 
-      var outputData = Data()
-      pipe.fileHandleForReading.readabilityHandler = { handle in
-        outputData.append(handle.availableData)
-      }
-
       try process.run()
 
-      let deadline = Date().addingTimeInterval(10)
-      while process.isRunning && Date() < deadline {
-        Thread.sleep(forTimeInterval: 0.1)
-      }
-
-      pipe.fileHandleForReading.readabilityHandler = nil
-      outputData.append(pipe.fileHandleForReading.readDataToEndOfFile())
+      // Read first, then wait
+      let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
+      process.waitUntilExit()
 
       return String(data: outputData, encoding: .utf8)?.trimmingCharacters(
         in: .whitespacesAndNewlines)

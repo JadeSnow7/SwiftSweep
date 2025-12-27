@@ -96,32 +96,13 @@ public actor BrewJsonProvider: PackageMetadataProvider {
       process.standardOutput = stdoutPipe
       process.standardError = stderrPipe
 
-      // Read data BEFORE waitUntilExit to prevent pipe buffer deadlock
-      var outputData = Data()
-      stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
-        outputData.append(handle.availableData)
-      }
-
       try process.run()
 
-      // Set timeout of 60 seconds
-      let deadline = Date().addingTimeInterval(60)
-      while process.isRunning && Date() < deadline {
-        Thread.sleep(forTimeInterval: 0.1)
-      }
+      // Read all data first (prevents pipe buffer deadlock)
+      let outputData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
 
-      if process.isRunning {
-        process.terminate()
-        throw IngestionError(
-          phase: "execute",
-          message: "brew command timed out after 60s",
-          recoverable: true
-        )
-      }
-
-      // Read any remaining data
-      stdoutPipe.fileHandleForReading.readabilityHandler = nil
-      outputData.append(stdoutPipe.fileHandleForReading.readDataToEndOfFile())
+      // Now wait for process to finish
+      process.waitUntilExit()
 
       // Allow non-zero exit if we have output (brew might return warnings)
       if outputData.isEmpty && process.terminationStatus != 0 {
