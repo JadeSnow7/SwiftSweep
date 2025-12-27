@@ -13,7 +13,6 @@ struct InsightsView: View {
   @State private var isLoading = false
   @State private var error: String?
   @State private var selectedRecommendation: Recommendation?
-  @State private var showActionSheet = false
   @State private var actionInProgress = false
   @State private var actionResult: ActionResult?
   @State private var showBatchCleanup = false
@@ -48,18 +47,15 @@ struct InsightsView: View {
     .task {
       await loadRecommendations(forceRefresh: false)
     }
-    .sheet(isPresented: $showActionSheet) {
-      if let rec = selectedRecommendation {
-        ActionConfirmationSheet(
-          recommendation: rec,
-          isPresented: $showActionSheet,
-          onComplete: { result in
-            actionResult = result
-            // Refresh after action
-            Task { await loadRecommendations(forceRefresh: true) }
-          }
-        )
-      }
+    .sheet(item: $selectedRecommendation) { rec in
+      ActionConfirmationSheet(
+        recommendation: rec,
+        onComplete: { result in
+          actionResult = result
+          // Refresh after action
+          Task { await loadRecommendations(forceRefresh: true) }
+        }
+      )
     }
     .alert(item: $actionResult) { result in
       Alert(
@@ -236,7 +232,6 @@ struct InsightsView: View {
             recommendation: recommendation,
             onAction: {
               selectedRecommendation = recommendation
-              showActionSheet = true
             }
           )
         }
@@ -319,9 +314,9 @@ struct ActionResult: Identifiable {
 
 struct ActionConfirmationSheet: View {
   let recommendation: Recommendation
-  @Binding var isPresented: Bool
   let onComplete: (ActionResult) -> Void
 
+  @Environment(\.dismiss) private var dismiss
   @State private var dryRun = true
   @State private var isExecuting = false
   @State private var previewPaths: [String] = []
@@ -340,7 +335,7 @@ struct ActionConfirmationSheet: View {
           }
         }
         Spacer()
-        Button(action: { isPresented = false }) {
+        Button(action: { dismiss() }) {
           Image(systemName: "xmark.circle.fill")
             .foregroundColor(.secondary)
             .font(.title2)
@@ -397,7 +392,7 @@ struct ActionConfirmationSheet: View {
         Spacer()
 
         Button("Cancel") {
-          isPresented = false
+          dismiss()
         }
         .keyboardShortcut(.escape)
 
@@ -487,7 +482,7 @@ struct ActionConfirmationSheet: View {
                 success: true,
                 message: "Dry run complete. \(pathsToClean.count) items would be moved to Trash."
               ))
-            isPresented = false
+            dismiss()
           }
         } else {
           // Actually move to trash
@@ -526,7 +521,7 @@ struct ActionConfirmationSheet: View {
                 message:
                   "Moved \(finalMovedCount) items to Trash (est. \(formatBytes(finalTotalSize))). Empty Trash to free space."
               ))
-            isPresented = false
+            dismiss()
           }
         }
       } catch {
@@ -537,7 +532,7 @@ struct ActionConfirmationSheet: View {
               success: false,
               message: "Error: \(error.localizedDescription)"
             ))
-          isPresented = false  // Close sheet on error
+          dismiss()
         }
       }
     }
