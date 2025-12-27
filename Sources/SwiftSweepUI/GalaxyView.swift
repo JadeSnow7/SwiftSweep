@@ -25,9 +25,35 @@ public struct GalaxyView: View {
       } else {
         galaxyCanvas
       }
+
+      // Node detail panel (when node selected)
+      if let selectedNode = viewModel.selectedNode {
+        nodeDetailPanel(for: selectedNode)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+          .padding()
+      }
     }
     .toolbar {
-      ToolbarItem(placement: .primaryAction) {
+      ToolbarItemGroup(placement: .primaryAction) {
+        // Zoom slider
+        HStack(spacing: 4) {
+          Image(systemName: "minus.magnifyingglass")
+            .foregroundColor(.secondary)
+          Slider(value: $viewModel.zoomScale, in: 0.1...3.0)
+            .frame(width: 100)
+          Image(systemName: "plus.magnifyingglass")
+            .foregroundColor(.secondary)
+          Text("\(Int(viewModel.zoomScale * 100))%")
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .frame(width: 40)
+        }
+
+        Button(action: { viewModel.resetView() }) {
+          Image(systemName: "arrow.counterclockwise")
+        }
+        .help("Reset View")
+
         Button(action: { Task { await viewModel.refresh() } }) {
           Image(systemName: "arrow.clockwise")
         }
@@ -46,30 +72,46 @@ public struct GalaxyView: View {
       ZStack {
         // Edges layer
         Canvas { context, size in
+          let transform = CGAffineTransform(
+            translationX: viewModel.offset.width, y: viewModel.offset.height
+          )
+          .scaledBy(x: viewModel.zoomScale, y: viewModel.zoomScale)
+
           for edge in viewModel.visibleEdges {
+            let sourcePos = edge.sourcePosition.applying(transform)
+            let targetPos = edge.targetPosition.applying(transform)
+
             let path = Path { p in
-              p.move(to: edge.sourcePosition)
-              p.addLine(to: edge.targetPosition)
+              p.move(to: sourcePos)
+              p.addLine(to: targetPos)
             }
             context.stroke(path, with: .color(.gray.opacity(0.3)), lineWidth: 0.5)
           }
         }
 
-        // Nodes layer
+        // Nodes layer with transform
         ForEach(viewModel.visibleNodes) { node in
           nodeView(for: node)
+            .scaleEffect(viewModel.zoomScale)
+            .offset(x: viewModel.offset.width, y: viewModel.offset.height)
         }
 
         // Clusters layer (when in cluster LOD)
-        ForEach(viewModel.clusters) { cluster in
-          if viewModel.lodLevel == .cluster {
+        if viewModel.lodLevel == .cluster {
+          ForEach(viewModel.clusters) { cluster in
             clusterView(for: cluster)
+              .scaleEffect(viewModel.zoomScale)
+              .offset(x: viewModel.offset.width, y: viewModel.offset.height)
           }
         }
 
         // Legend
         legendView
           .position(x: geometry.size.width - 80, y: 60)
+
+        // Stats overlay
+        statsOverlay
+          .position(x: 80, y: 30)
       }
       .frame(width: geometry.size.width, height: geometry.size.height)
       .gesture(magnificationGesture)
@@ -94,6 +136,7 @@ public struct GalaxyView: View {
         Circle()
           .stroke(node.isSelected ? Color.white : Color.clear, lineWidth: 2)
       )
+      .shadow(color: node.isSelected ? node.color : .clear, radius: 5)
       .position(node.position)
       .onTapGesture {
         viewModel.selectNode(node.id)
@@ -119,6 +162,38 @@ public struct GalaxyView: View {
       }
     }
     .position(cluster.position)
+  }
+
+  // MARK: - Node Detail Panel
+
+  private func nodeDetailPanel(for node: VisualNode) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack {
+        Circle()
+          .fill(node.color)
+          .frame(width: 12, height: 12)
+        Text(node.displayName)
+          .font(.headline)
+        Spacer()
+        Button(action: { viewModel.selectedNodeId = nil }) {
+          Image(systemName: "xmark.circle.fill")
+            .foregroundColor(.secondary)
+        }
+        .buttonStyle(.plain)
+      }
+
+      Divider()
+
+      LabeledContent("Ecosystem", value: node.ecosystemId)
+      if let size = node.size {
+        LabeledContent(
+          "Size", value: ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
+      }
+      LabeledContent("Version", value: node.identity.version.normalized)
+    }
+    .padding()
+    .frame(width: 250)
+    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
   }
 
   // MARK: - Legend
@@ -147,19 +222,42 @@ public struct GalaxyView: View {
     }
   }
 
+  // MARK: - Stats Overlay
+
+  private var statsOverlay: some View {
+    HStack(spacing: 12) {
+      Label("\(viewModel.nodes.count)", systemImage: "circle.fill")
+      Label("\(viewModel.edges.count)", systemImage: "line.diagonal")
+    }
+    .font(.caption)
+    .foregroundColor(.secondary)
+    .padding(.horizontal, 8)
+    .padding(.vertical, 4)
+    .background(.ultraThinMaterial, in: Capsule())
+  }
+
   // MARK: - Gestures
 
   private var magnificationGesture: some Gesture {
     MagnificationGesture()
       .onChanged { scale in
-        viewModel.zoomScale = scale
+        viewModel.zoomScale = viewModel.baseZoom * scale
+      }
+      .onEnded { scale in
+        viewModel.baseZoom = viewModel.zoomScale
       }
   }
 
   private var dragGesture: some Gesture {
     DragGesture()
       .onChanged { value in
-        viewModel.panOffset = value.translation
+        viewModel.offset = CGSize(
+          width: viewModel.baseOffset.width + value.translation.width,
+          height: viewModel.baseOffset.height + value.translation.height
+        )
+      }
+      .onEnded { value in
+        viewModel.baseOffset = viewModel.offset
       }
   }
 
@@ -196,8 +294,12 @@ class GalaxyViewModel: ObservableObject {
   @Published var clusters: [ClusterInfo] = []
   @Published var isLoading = false
   @Published var zoomScale: CGFloat = 1.0
-  @Published var panOffset: CGSize = .zero
+  @Published var offset: CGSize = .zero
   @Published var selectedNodeId: String?
+
+  // Base values for cumulative gestures
+  var baseZoom: CGFloat = 1.0
+  var baseOffset: CGSize = .zero
 
   var canvasSize: CGSize = CGSize(width: 800, height: 600)
 
@@ -206,6 +308,11 @@ class GalaxyViewModel: ObservableObject {
 
   var lodLevel: LODLevel {
     LODLevel(zoomScale: zoomScale)
+  }
+
+  var selectedNode: VisualNode? {
+    guard let id = selectedNodeId else { return nil }
+    return nodes.first { $0.id == id }
   }
 
   var visibleNodes: [VisualNode] {
@@ -222,6 +329,13 @@ class GalaxyViewModel: ObservableObject {
   var visibleEdges: [VisualEdge] {
     let visibleIds = Set(visibleNodes.map { $0.id })
     return edges.filter { visibleIds.contains($0.sourceId) || visibleIds.contains($0.targetId) }
+  }
+
+  func resetView() {
+    zoomScale = 1.0
+    baseZoom = 1.0
+    offset = .zero
+    baseOffset = .zero
   }
 
   func loadGraph() async {
