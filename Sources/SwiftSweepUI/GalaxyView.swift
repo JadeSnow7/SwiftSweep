@@ -405,20 +405,63 @@ class GalaxyViewModel: ObservableObject {
     return nodes.first { $0.id == id }
   }
 
+  /// Viewport rectangle for culling
+  var viewportRect: CGRect {
+    // Calculate visible area based on zoom and offset
+    let visibleWidth = canvasSize.width / zoomScale
+    let visibleHeight = canvasSize.height / zoomScale
+    let centerX = canvasSize.width / 2 - offset.width / zoomScale
+    let centerY = canvasSize.height / 2 - offset.height / zoomScale
+
+    return CGRect(
+      x: centerX - visibleWidth / 2,
+      y: centerY - visibleHeight / 2,
+      width: visibleWidth,
+      height: visibleHeight
+    ).insetBy(dx: -50, dy: -50)  // Add margin for nodes near edge
+  }
+
   var visibleNodes: [VisualNode] {
+    // Sort by size for LOD
+    let sortedNodes = nodes.sorted { ($0.size ?? 0) > ($1.size ?? 0) }
+
     switch lodLevel {
     case .cluster:
       return []
     case .overview:
-      return Array(nodes.sorted { ($0.size ?? 0) > ($1.size ?? 0) }.prefix(50))
+      // Top 50 largest nodes
+      return Array(sortedNodes.prefix(50))
     case .detail:
-      return nodes
+      // Apply viewport culling for large graphs
+      if nodes.count > 200 {
+        // For very large graphs, limit to top 100 + viewport culling
+        let topNodes = Set(sortedNodes.prefix(100).map { $0.id })
+        return nodes.filter { node in
+          topNodes.contains(node.id) || viewportRect.contains(node.position)
+        }
+      } else {
+        return nodes
+      }
     }
   }
 
   var visibleEdges: [VisualEdge] {
     let visibleIds = Set(visibleNodes.map { $0.id })
-    return edges.filter { visibleIds.contains($0.sourceId) || visibleIds.contains($0.targetId) }
+
+    // For large edge counts, limit to those connecting visible nodes
+    let filtered = edges.filter { edge in
+      visibleIds.contains(edge.sourceId)
+        && (visibleIds.contains(edge.targetId)
+          || nodes.contains { n in
+            "\(n.ecosystemId)::\(n.name)" == edge.targetId && visibleIds.contains(n.id)
+          })
+    }
+
+    // Further limit if still too many
+    if filtered.count > 500 {
+      return Array(filtered.prefix(500))
+    }
+    return filtered
   }
 
   func resetView() {
