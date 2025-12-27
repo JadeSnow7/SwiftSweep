@@ -35,6 +35,21 @@ public struct GalaxyView: View {
     }
     .toolbar {
       ToolbarItemGroup(placement: .primaryAction) {
+        // Force layout toggle
+        Toggle(isOn: $viewModel.useForceLayout) {
+          Label("Force Layout", systemImage: "atom")
+        }
+        .toggleStyle(.button)
+        .help(viewModel.useForceLayout ? "Using force-directed layout" : "Using static layout")
+
+        // Simulation progress
+        if viewModel.isSimulating {
+          ProgressView(value: viewModel.simulationProgress)
+            .frame(width: 60)
+        }
+
+        Divider()
+
         // Zoom slider
         HStack(spacing: 4) {
           Image(systemName: "minus.magnifyingglass")
@@ -296,10 +311,22 @@ class GalaxyViewModel: ObservableObject {
   @Published var zoomScale: CGFloat = 1.0
   @Published var offset: CGSize = .zero
   @Published var selectedNodeId: String?
+  @Published var useForceLayout = false {
+    didSet {
+      if useForceLayout {
+        Task { await runForceLayout() }
+      }
+    }
+  }
+  @Published var isSimulating = false
+  @Published var simulationProgress: Double = 0
 
   // Base values for cumulative gestures
   var baseZoom: CGFloat = 1.0
   var baseOffset: CGSize = .zero
+
+  // Simulation task
+  private var simulationTask: Task<Void, Never>?
 
   var canvasSize: CGSize = CGSize(width: 800, height: 600)
 
@@ -336,6 +363,8 @@ class GalaxyViewModel: ObservableObject {
     baseZoom = 1.0
     offset = .zero
     baseOffset = .zero
+    simulationTask?.cancel()
+    isSimulating = false
   }
 
   func loadGraph() async {
@@ -404,6 +433,52 @@ class GalaxyViewModel: ObservableObject {
       if let pos = result.clusterPositions[clusters[i].id] {
         clusters[i].position = pos
       }
+    }
+  }
+
+  func runForceLayout() async {
+    // Cancel any existing simulation
+    simulationTask?.cancel()
+
+    isSimulating = true
+    simulationProgress = 0
+
+    let stream = await layoutEngine.computeForceLayout(
+      nodes: nodes,
+      edges: edges,
+      canvasSize: canvasSize
+    )
+
+    simulationTask = Task {
+      for await update in stream {
+        // Apply positions with animation
+        withAnimation(.easeInOut(duration: 0.05)) {
+          for i in nodes.indices {
+            if let pos = update.positions[nodes[i].id] {
+              nodes[i].position = pos
+            }
+          }
+
+          // Update edge positions
+          for i in edges.indices {
+            edges[i].sourcePosition = nodes.first { $0.id == edges[i].sourceId }?.position ?? .zero
+            let targetPos =
+              nodes.first { n in
+                "\(n.ecosystemId)::\(n.name)" == edges[i].targetId || n.id == edges[i].targetId
+              }?.position ?? .zero
+            edges[i].targetPosition = targetPos
+          }
+        }
+
+        simulationProgress = update.progress
+
+        if update.isComplete {
+          isSimulating = false
+          break
+        }
+      }
+
+      isSimulating = false
     }
   }
 
