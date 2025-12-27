@@ -279,27 +279,31 @@ public final class RecommendationEngine: @unchecked Sendable {
     register(rule: MailAttachmentsRule())
   }
 
-  /// Async, cancellable Downloads directory scan using enumerator
+  /// Async, cancellable Downloads directory scan
   private func scanDownloadsDirectory() async -> [FileInfo] {
     let fm = FileManager.default
     let downloadsPath = fm.homeDirectoryForCurrentUser.appendingPathComponent("Downloads")
 
-    guard fm.fileExists(atPath: downloadsPath.path),
-      let enumerator = fm.enumerator(
+    guard fm.fileExists(atPath: downloadsPath.path) else { return [] }
+
+    // Collect URLs synchronously first (Swift 6 enumerator limitation)
+    let urls: [URL]
+    do {
+      urls = try fm.contentsOfDirectory(
         at: downloadsPath,
         includingPropertiesForKeys: [
           .fileSizeKey, .creationDateKey, .contentAccessDateKey,
           .contentModificationDateKey, .isDirectoryKey,
         ],
-        options: [.skipsHiddenFiles, .skipsSubdirectoryDescendants]
+        options: [.skipsHiddenFiles]
       )
-    else {
+    } catch {
       return []
     }
 
     var files: [FileInfo] = []
 
-    for case let url as URL in enumerator {
+    for url in urls {
       // Cancellation check
       if Task.isCancelled { return [] }
 
