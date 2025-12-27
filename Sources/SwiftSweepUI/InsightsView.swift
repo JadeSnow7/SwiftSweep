@@ -1,3 +1,4 @@
+import AppInventoryLogic
 import SwiftUI
 
 #if canImport(SwiftSweepCore)
@@ -252,9 +253,26 @@ struct InsightsView: View {
     loadingPhase = ""
 
     do {
+      // Fetch installed apps from AppInventory (UI layer injection)
+      loadingPhase = "Loading installed apps..."
+      let provider = InventoryProvider()
+      let appItems = await provider.fetchApps()
+
+      // Map AppItem to AppInfo, filtering out apps without lastUsedDate
+      let installedApps: [AppInfo] = appItems.compactMap { item in
+        guard item.lastUsedDate != nil else { return nil }
+        return AppInfo(
+          bundleID: item.id,
+          name: item.displayName,
+          path: item.url.path,
+          sizeBytes: item.estimatedSizeBytes,
+          lastUsedDate: item.lastUsedDate
+        )
+      }
+
       let result = try await RecommendationEngine.shared.evaluateWithSystemContext(
         forceRefresh: forceRefresh,
-        installedApps: nil,
+        installedApps: installedApps.isEmpty ? nil : installedApps,
         onPhase: { phase in
           Task { @MainActor in
             self.loadingPhase = phase
