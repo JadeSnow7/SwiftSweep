@@ -196,6 +196,13 @@ public actor DependencyGraphService {
     )
   }
 
+  // MARK: - Graph Snapshot
+
+  /// Get full graph snapshot for visualization
+  public func getGraphSnapshot() async throws -> GraphSnapshot {
+    try await store.getGraphSnapshot()
+  }
+
   // MARK: - Statistics
 
   /// 获取图统计

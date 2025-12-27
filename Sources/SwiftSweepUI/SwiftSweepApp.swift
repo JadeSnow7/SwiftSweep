@@ -45,6 +45,7 @@ struct ContentView: View {
     case applications
     case packages
     case ghostBuster
+    case galaxy
     case settings
   }
 
@@ -84,6 +85,9 @@ struct ContentView: View {
           }
           NavigationLink(value: NavigationItem.ghostBuster) {
             Label("Ghost Buster", systemImage: "figure.wave")
+          }
+          NavigationLink(value: NavigationItem.galaxy) {
+            Label("Galaxy", systemImage: "circle.hexagongrid")
           }
         }
 
@@ -126,6 +130,12 @@ struct ContentView: View {
             GhostBusterView()
           } else {
             Text("Ghost Buster requires macOS 13.0 or later")
+          }
+        case .galaxy:
+          if #available(macOS 13.0, *) {
+            GalaxyView()
+          } else {
+            Text("Galaxy requires macOS 13.0 or later")
           }
         case .settings:
           SettingsView()
