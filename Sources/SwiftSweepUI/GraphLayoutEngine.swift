@@ -1,6 +1,9 @@
 import Foundation
-import SwiftSweepCore
 import SwiftUI
+
+#if canImport(SwiftSweepCore)
+  import SwiftSweepCore
+#endif
 
 // MARK: - GraphLayoutEngine
 

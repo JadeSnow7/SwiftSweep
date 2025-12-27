@@ -13,6 +13,7 @@
 		08B5C2338A4191637C04FF7C /* PackageNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78A3ADC70BDF7CDD35FE498 /* PackageNode.swift */; };
 		099DEBE1C4FFCCC7A4E4AAFB /* GitRepo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5523065B491745A41D29236 /* GitRepo.swift */; };
 		0D37B0DD6786C0618E5BD55D /* GhostBusterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEEB25BEB2922724F82EED6 /* GhostBusterView.swift */; };
+		1178B19CD2AE407887B24AFC /* GalaxyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F361D01E829B74E6FB57DD /* GalaxyView.swift */; };
 		12655A389CFB667A2435A3E7 /* ScreenshotCleanupRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8611145D32CDE04879E237D0 /* ScreenshotCleanupRule.swift */; };
 		12B9F6AB2F3EABC602298D7F /* TreemapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193D7959249EC8B109E3DE8E /* TreemapView.swift */; };
 		13A8D389A43062D276269FCF /* HelperClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53AD6D1C11B4F08FC5E58B5E /* HelperClient.swift */; };
@@ -25,6 +26,8 @@
 		26622049666D2B97B379C4F4 /* ActionLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06AE729A52B7F14140C24366 /* ActionLogger.swift */; };
 		286DC075478A5E58FB81D307 /* HomebrewProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1AFA72F5AE1CBCB003AC30 /* HomebrewProvider.swift */; };
 		2A451A7E7F2CE28B1C356E6C /* UnusedAppsRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2396C4875731341B8DDF05B6 /* UnusedAppsRule.swift */; };
+		2AB1E6DB20812586C76B6906 /* GalaxyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BD5F65C33A7B9A6E4C558E5 /* GalaxyModels.swift */; };
+		2CA055B63E457740B2DA132F /* GraphLayoutEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761F86E17589D6046FF1C68E /* GraphLayoutEngine.swift */; };
 		2D9E5335BD3090DFBC8109E5 /* SMJobBlessClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E82006A607E5210A3AA07 /* SMJobBlessClient.swift */; };
 		302C4D33136607A74E81519F /* CleanupEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6068C461B90B43A44F60CD /* CleanupEngine.swift */; };
 		30E88DC5095BE6F14092F480 /* PathNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3298AE85D27A6C3754A6C36D /* PathNormalizer.swift */; };
@@ -153,6 +156,7 @@
 		126F1612875FF543B8D5D3A3 /* TrashReminderRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrashReminderRule.swift; sourceTree = "<group>"; };
 		140428A3526817DBE6DDBF66 /* SwiftSweepAppInventory */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SwiftSweepAppInventory; path = Packages/SwiftSweepAppInventory; sourceTree = SOURCE_ROOT; };
 		193D7959249EC8B109E3DE8E /* TreemapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TreemapView.swift; sourceTree = "<group>"; };
+		1BD5F65C33A7B9A6E4C558E5 /* GalaxyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalaxyModels.swift; sourceTree = "<group>"; };
 		1C1C2A17944BE9D79268865E /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
 		1EDC6F3B0B3E52E1D8B37E14 /* BrewJsonProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewJsonProvider.swift; sourceTree = "<group>"; };
 		1F625A4273667BD082394BE7 /* RecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationEngine.swift; sourceTree = "<group>"; };
@@ -176,6 +180,7 @@
 		595B8CFC4E24FAB8F309060F /* PipProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipProvider.swift; sourceTree = "<group>"; };
 		61D19FF450DE2C15D5E26F29 /* DeletionPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeletionPlan.swift; sourceTree = "<group>"; };
 		69EE801D6F61B93790BE3CF8 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
+		761F86E17589D6046FF1C68E /* GraphLayoutEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphLayoutEngine.swift; sourceTree = "<group>"; };
 		7DF77FF306DD193669624B7A /* CleanupAllowlist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupAllowlist.swift; sourceTree = "<group>"; };
 		7E1AFA72F5AE1CBCB003AC30 /* HomebrewProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomebrewProvider.swift; sourceTree = "<group>"; };
 		7E638A75A374AE294E286E4B /* FileTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTreeView.swift; sourceTree = "<group>"; };
@@ -199,6 +204,7 @@
 		C5777D7FD244DCCF55A0A022 /* UninstallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UninstallView.swift; sourceTree = "<group>"; };
 		C83614B56481CF8F4FC78E00 /* LowDiskSpaceRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LowDiskSpaceRule.swift; sourceTree = "<group>"; };
 		CF230230B3E8C6A26A67ED90 /* StatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusView.swift; sourceTree = "<group>"; };
+		D1F361D01E829B74E6FB57DD /* GalaxyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalaxyView.swift; sourceTree = "<group>"; };
 		D69E82006A607E5210A3AA07 /* SMJobBlessClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMJobBlessClient.swift; sourceTree = "<group>"; };
 		D768177BC39540073011FEC3 /* PrivilegedDeleting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedDeleting.swift; sourceTree = "<group>"; };
 		D78A3ADC70BDF7CDD35FE498 /* PackageNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageNode.swift; sourceTree = "<group>"; };
@@ -457,7 +463,10 @@
 				ED0E1B4392753994B17E45A3 /* AnalyzeView.swift */,
 				F7F77DF64C705FD91CB39DD9 /* CleanView.swift */,
 				7E638A75A374AE294E286E4B /* FileTreeView.swift */,
+				1BD5F65C33A7B9A6E4C558E5 /* GalaxyModels.swift */,
+				D1F361D01E829B74E6FB57DD /* GalaxyView.swift */,
 				0AEEB25BEB2922724F82EED6 /* GhostBusterView.swift */,
+				761F86E17589D6046FF1C68E /* GraphLayoutEngine.swift */,
 				1C1C2A17944BE9D79268865E /* InsightsView.swift */,
 				69EE801D6F61B93790BE3CF8 /* Localization.swift */,
 				24095CAF50FD31E0F277F138 /* MainApplicationsView.swift */,
@@ -726,10 +735,13 @@
 				753A4791BEC6215F22667EF0 /* DirectorySizeCache.swift in Sources */,
 				CA97D481D45124088D4C5EF4 /* EcosystemRegistry.swift in Sources */,
 				D58D90BD611E8E4838820B9D /* FileTreeView.swift in Sources */,
+				2AB1E6DB20812586C76B6906 /* GalaxyModels.swift in Sources */,
+				1178B19CD2AE407887B24AFC /* GalaxyView.swift in Sources */,
 				E117650714D03FEADBEEE3C7 /* GemProvider.swift in Sources */,
 				0D37B0DD6786C0618E5BD55D /* GhostBusterView.swift in Sources */,
 				63427A8727C534551E120847 /* GitRepo.swift in Sources */,
 				22C1393EA638BBAE219E45AD /* GitRepoScanner.swift in Sources */,
+				2CA055B63E457740B2DA132F /* GraphLayoutEngine.swift in Sources */,
 				7BEADEC5CF11CC717EB37546 /* GraphStore.swift in Sources */,
 				13A8D389A43062D276269FCF /* HelperClient.swift in Sources */,
 				558E99EFDD1D1DBDCF5F5F47 /* HelperErrorCodes.swift in Sources */,

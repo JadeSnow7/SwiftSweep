@@ -67,7 +67,7 @@ public actor PipMetadataProvider: PackageMetadataProvider {
         guard let parsed = parseMetadata(metadataContent) else { continue }
 
         // Calculate package path (without .dist-info)
-        let packageName = String(item.dropLast(".dist-info".count))
+        let _ = String(item.dropLast(".dist-info".count))
         let packagePath = sitePackages
 
         // Calculate size

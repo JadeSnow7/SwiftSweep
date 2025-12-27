@@ -1,5 +1,8 @@
-import SwiftSweepCore
 import SwiftUI
+
+#if canImport(SwiftSweepCore)
+  import SwiftSweepCore
+#endif
 
 // MARK: - Visual Models for Galaxy View
 
