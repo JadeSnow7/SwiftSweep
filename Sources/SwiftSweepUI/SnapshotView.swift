@@ -9,6 +9,8 @@ struct SnapshotView: View {
   @StateObject private var viewModel = SnapshotViewModel()
   @State private var showingExportSheet = false
   @State private var showingImportSheet = false
+  @State private var showingErrorAlert = false
+  @State private var errorMessage = ""
 
   var body: some View {
     VStack(spacing: 0) {
@@ -20,9 +22,16 @@ struct SnapshotView: View {
 
         Spacer()
 
+        if viewModel.isLoading {
+          ProgressView()
+            .scaleEffect(0.8)
+            .padding(.trailing, 8)
+        }
+
         Button(action: { Task { await viewModel.captureCurrent() } }) {
           Label("Capture Current", systemImage: "camera")
         }
+        .disabled(viewModel.isLoading)
 
         Button(action: { showingExportSheet = true }) {
           Label("Export...", systemImage: "square.and.arrow.up")
@@ -32,6 +41,7 @@ struct SnapshotView: View {
         Button(action: { showingImportSheet = true }) {
           Label("Import Baseline...", systemImage: "square.and.arrow.down")
         }
+        .disabled(viewModel.isLoading)
       }
       .padding()
       .background(Color(NSColor.controlBackgroundColor))
@@ -48,10 +58,20 @@ struct SnapshotView: View {
 
           if let snapshot = viewModel.currentSnapshot {
             SnapshotSummaryView(snapshot: snapshot)
+          } else if viewModel.isLoading {
+            VStack(spacing: 16) {
+              ProgressView()
+                .scaleEffect(1.5)
+              Text("Capturing snapshot...")
+                .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
           } else {
-            ContentUnavailableView(
-              "No Snapshot", systemImage: "camera",
-              description: Text("Capture current state to begin"))
+            SnapshotUnavailableView(
+              title: "No Snapshot",
+              systemImage: "camera",
+              description: "Capture current state to begin"
+            )
           }
         }
         .frame(maxWidth: .infinity)
@@ -77,12 +97,24 @@ struct SnapshotView: View {
               .font(.headline)
               .padding(.top)
 
-            ContentUnavailableView(
-              "No Baseline", systemImage: "doc.badge.clock",
-              description: Text("Import a snapshot to compare"))
+            SnapshotUnavailableView(
+              title: "No Baseline",
+              systemImage: "doc.badge.clock",
+              description: "Import a snapshot to compare"
+            )
           }
         }
         .frame(maxWidth: .infinity)
+      }
+    }
+    .alert("Error", isPresented: $showingErrorAlert) {
+      Button("OK") {}
+    } message: {
+      Text(viewModel.errorMessage)
+    }
+    .onChange(of: viewModel.errorMessage) { newValue in
+      if !newValue.isEmpty {
+        showingErrorAlert = true
       }
     }
     .fileExporter(
@@ -109,6 +141,31 @@ struct SnapshotView: View {
 }
 
 // MARK: - Subviews
+
+struct SnapshotUnavailableView: View {
+  let title: String
+  let systemImage: String
+  let description: String
+
+  var body: some View {
+    if #available(macOS 14.0, *) {
+      ContentUnavailableView(title, systemImage: systemImage, description: Text(description))
+    } else {
+      VStack(spacing: 8) {
+        Image(systemName: systemImage)
+          .font(.system(size: 32))
+          .foregroundStyle(.secondary)
+        Text(title)
+          .font(.headline)
+        Text(description)
+          .foregroundStyle(.secondary)
+          .multilineTextAlignment(.center)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .padding()
+    }
+  }
+}
 
 struct SnapshotSummaryView: View {
   let snapshot: PackageSnapshot
@@ -195,30 +252,66 @@ struct DiffView: View {
 class SnapshotViewModel: ObservableObject {
   @Published var currentSnapshot: PackageSnapshot?
   @Published var baselineSnapshot: PackageSnapshot?
-
-  var diff: SnapshotDiff? {
-    guard let current = currentSnapshot, let baseline = baselineSnapshot else { return nil }
-    return SnapshotService.shared.compareSnapshot(current: current, baseline: baseline)
-  }
+  @Published var diff: SnapshotDiff?
+  @Published var isLoading = false
+  @Published var errorMessage = ""
 
   func captureCurrent() async {
+    isLoading = true
+    errorMessage = ""
+
     do {
+      // Ensure DependencyGraphService is initialized
+      try await DependencyGraphService.shared.initialize()
+
+      // Check if we have any nodes
+      let nodes = try await DependencyGraphService.shared.getAllNodes()
+      if nodes.isEmpty {
+        errorMessage =
+          "No packages found. Please run Ghost Buster scan first to build the dependency graph."
+        isLoading = false
+        return
+      }
+
       self.currentSnapshot = try await SnapshotService.shared.exportSnapshot()
+      await refreshDiff()
     } catch {
-      print("Failed to capture snapshot: \(error)")
+      errorMessage = "Failed to capture snapshot: \(error.localizedDescription)"
+      print("Capture error: \(error)")
     }
+
+    isLoading = false
   }
 
   func importBaseline(from url: URL) async {
+    isLoading = true
+    errorMessage = ""
+
     do {
       // Security scoped resource access
-      guard url.startAccessingSecurityScopedResource() else { return }
+      guard url.startAccessingSecurityScopedResource() else {
+        errorMessage = "Failed to access file. Please try again."
+        isLoading = false
+        return
+      }
       defer { url.stopAccessingSecurityScopedResource() }
 
-      self.baselineSnapshot = try SnapshotService.shared.importFromFile(url: url)
+      self.baselineSnapshot = try await SnapshotService.shared.importFromFile(url: url)
+      await refreshDiff()
     } catch {
-      print("Failed to import snapshot: \(error)")
+      errorMessage = "Failed to import snapshot: \(error.localizedDescription)"
+      print("Import error: \(error)")
     }
+
+    isLoading = false
+  }
+
+  private func refreshDiff() async {
+    guard let current = currentSnapshot, let baseline = baselineSnapshot else {
+      diff = nil
+      return
+    }
+    diff = await SnapshotService.shared.compareSnapshot(current: current, baseline: baseline)
   }
 }
 
@@ -234,7 +327,7 @@ struct SnapshotDocument: FileDocument {
   }
 
   init(configuration: ReadConfiguration) throws {
-    let data = try configuration.file.regularFileContents
+    let data = configuration.file.regularFileContents
     if let data = data {
       self.snapshot = try JSONDecoder().decode(PackageSnapshot.self, from: data)
     }
