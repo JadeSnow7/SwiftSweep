@@ -536,6 +536,7 @@ struct ActionConfirmationSheet: View {
               success: false,
               message: "Error: \(error.localizedDescription)"
             ))
+          isPresented = false  // Close sheet on error
         }
       }
     }
