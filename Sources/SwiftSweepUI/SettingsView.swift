@@ -9,7 +9,7 @@ struct SettingsView: View {
   @AppStorage("showHiddenFiles") private var showHiddenFiles = false
   @AppStorage("defaultCleanCategory") private var defaultCleanCategory = "all"
   @AppStorage("allowAppleAppUninstall") private var allowAppleAppUninstall = false
-  @AppStorage("appLanguage") private var appLanguage = "en"
+  @ObservedObject private var languageManager = LanguageManager.shared
   @StateObject private var helperViewModel = HelperStatusViewModel()
 
   var body: some View {
@@ -27,14 +27,15 @@ struct SettingsView: View {
 
         // General Settings
         SettingsSection(title: "General", icon: "gear") {
-          Picker("Language", selection: $appLanguage) {
+          Picker("Language", selection: $languageManager.currentLanguage) {
             Text("English").tag("en")
             Text("中文").tag("zh-Hans")
           }
           .pickerStyle(.menu)
-          .onChange(of: appLanguage) { newValue in
-            UserDefaults.standard.set([newValue], forKey: "AppleLanguages")
-          }
+
+          Text("Language changes require restart to fully apply")
+            .font(.caption)
+            .foregroundColor(.secondary)
 
           Toggle("Auto-scan on launch", isOn: $autoCleanOnLaunch)
           Toggle("Show hidden files in analyzer", isOn: $showHiddenFiles)

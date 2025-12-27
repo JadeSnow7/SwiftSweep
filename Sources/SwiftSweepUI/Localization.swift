@@ -1,16 +1,51 @@
 import Foundation
 import SwiftUI
 
+/// Language manager for dynamic language switching
+class LanguageManager: ObservableObject {
+  static let shared = LanguageManager()
+
+  @Published var currentLanguage: String {
+    didSet {
+      UserDefaults.standard.set(currentLanguage, forKey: "appLanguage")
+      updateBundle()
+    }
+  }
+
+  private(set) var bundle: Bundle = .main
+
+  private init() {
+    currentLanguage = UserDefaults.standard.string(forKey: "appLanguage") ?? "en"
+    updateBundle()
+  }
+
+  private func updateBundle() {
+    #if SWIFT_PACKAGE
+      let baseBundle = Bundle.module
+    #else
+      let baseBundle = Bundle.main
+    #endif
+
+    if let path = baseBundle.path(forResource: currentLanguage, ofType: "lproj"),
+      let langBundle = Bundle(path: path)
+    {
+      bundle = langBundle
+    } else if let path = baseBundle.path(forResource: "en", ofType: "lproj"),
+      let englishBundle = Bundle(path: path)
+    {
+      bundle = englishBundle
+    } else {
+      bundle = baseBundle
+    }
+  }
+}
+
 /// Localization helper for SwiftSweep
 extension String {
   /// Returns a localized string using the key as the lookup
   var localized: String {
-    #if SWIFT_PACKAGE
-    let bundle = Bundle.module
-    #else
-    let bundle = Bundle.main
-    #endif
-    return NSLocalizedString(self, tableName: nil, bundle: bundle, value: self, comment: "")
+    NSLocalizedString(
+      self, tableName: nil, bundle: LanguageManager.shared.bundle, value: self, comment: "")
   }
 
   /// Returns a localized string with format arguments
