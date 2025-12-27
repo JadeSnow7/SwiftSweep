@@ -24,7 +24,7 @@ public actor DependencyGraphService {
     try await store.open()
 
     // 注册默认 providers
-    let normalizer = await createNormalizer()
+    let normalizer = createNormalizer()
     providers = [
       BrewJsonProvider(normalizer: normalizer),
       NpmJsonProvider(normalizer: normalizer),
@@ -33,24 +33,15 @@ public actor DependencyGraphService {
     isInitialized = true
   }
 
-  private func createNormalizer() async -> PathNormalizer {
-    // 获取 brew prefix
-    var brewPrefix: String? = nil
-    let brewPath = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"].first {
-      FileManager.default.fileExists(atPath: $0)
-    }
-
-    if let path = brewPath {
-      let process = Process()
-      process.executableURL = URL(fileURLWithPath: path)
-      process.arguments = ["--prefix"]
-      let pipe = Pipe()
-      process.standardOutput = pipe
-      try? process.run()
-      process.waitUntilExit()
-      let data = pipe.fileHandleForReading.readDataToEndOfFile()
-      brewPrefix = String(data: data, encoding: .utf8)?.trimmingCharacters(
-        in: .whitespacesAndNewlines)
+  private func createNormalizer() -> PathNormalizer {
+    // Determine brew prefix based on which path exists (no blocking Process call)
+    let brewPrefix: String?
+    if FileManager.default.fileExists(atPath: "/opt/homebrew/bin/brew") {
+      brewPrefix = "/opt/homebrew"
+    } else if FileManager.default.fileExists(atPath: "/usr/local/bin/brew") {
+      brewPrefix = "/usr/local"
+    } else {
+      brewPrefix = nil
     }
 
     return PathNormalizer(brewPrefix: brewPrefix)

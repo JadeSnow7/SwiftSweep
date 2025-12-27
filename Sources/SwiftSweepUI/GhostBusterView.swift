@@ -289,22 +289,37 @@ class GhostBusterViewModel: ObservableObject {
     isScanning = true
     error = nil
 
+    print("[GhostBuster] Starting scan...")
+
     do {
+      print("[GhostBuster] Initializing service...")
       try await service.initialize()
+
+      print("[GhostBuster] Scanning all providers...")
       let result = await service.scanAll()
 
-      if !result.isSuccess && result.nodeCount == 0 {
-        error = result.errors.first?.message ?? "Scan failed"
+      print("[GhostBuster] Scan complete: \(result.nodeCount) nodes, \(result.edgeCount) edges")
+      if !result.errors.isEmpty {
+        print("[GhostBuster] Errors: \(result.errors.map { $0.message })")
       }
 
+      if !result.isSuccess && result.nodeCount == 0 {
+        error = result.errors.first?.message ?? "Scan failed with no packages found"
+      }
+
+      print("[GhostBuster] Getting orphan nodes...")
       orphanNodes = try await service.getOrphanNodes()
+      print("[GhostBuster] Found \(orphanNodes.count) orphans")
+
       stats = try await service.getStatistics()
       hasScanned = true
     } catch {
+      print("[GhostBuster] Error: \(error)")
       self.error = error.localizedDescription
     }
 
     isScanning = false
+    print("[GhostBuster] Scan finished, isScanning = false")
   }
 
   func analyzeImpact(of node: PackageNode) async throws -> RemovalImpact {
