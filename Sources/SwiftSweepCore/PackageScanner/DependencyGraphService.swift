@@ -65,7 +65,6 @@ public actor DependencyGraphService {
       // 转换 records 为 nodes
       for record in result.records {
         let metadata: PackageMetadata
-        var dependencies: [String] = []
 
         // 尝试解析为 Brew 特定元数据以获取 size 和 dependencies
         if let brewMeta = try? JSONDecoder().decode(BrewPackageMetadata.self, from: record.rawJSON)
@@ -77,7 +76,15 @@ public actor DependencyGraphService {
             homepage: brewMeta.homepage,
             license: brewMeta.license
           )
-          dependencies = brewMeta.dependencies
+          // Brew dependencies are simple names (no scope)
+          for dep in brewMeta.dependencies {
+            allEdges.append(
+              DependencyEdge(
+                source: record.identity,
+                target: PackageRef(ecosystemId: result.ecosystemId, scope: nil, name: dep),
+                constraint: .any
+              ))
+          }
         } else if let npmMeta = try? JSONDecoder().decode(
           NpmPackageMetadata.self, from: record.rawJSON)
         {
@@ -85,6 +92,16 @@ public actor DependencyGraphService {
             installPath: npmMeta.installPath,
             size: npmMeta.size
           )
+          // npm dependencies may have scope (@types/react -> scope: @types, name: react)
+          for dep in npmMeta.dependencies {
+            let (scope, name) = Self.parseNpmPackageName(dep)
+            allEdges.append(
+              DependencyEdge(
+                source: record.identity,
+                target: PackageRef(ecosystemId: result.ecosystemId, scope: scope, name: name),
+                constraint: .any
+              ))
+          }
         } else if let pipMeta = try? JSONDecoder().decode(
           PipPackageMetadata.self, from: record.rawJSON)
         {
@@ -93,23 +110,21 @@ public actor DependencyGraphService {
             size: pipMeta.size,
             description: pipMeta.summary
           )
-          dependencies = pipMeta.requiresDist
+          // pip dependencies
+          for dep in pipMeta.requiresDist {
+            allEdges.append(
+              DependencyEdge(
+                source: record.identity,
+                target: PackageRef(ecosystemId: result.ecosystemId, scope: nil, name: dep),
+                constraint: .any
+              ))
+          }
         } else {
           metadata = PackageMetadata()
         }
 
         let node = PackageNode(identity: record.identity, metadata: metadata)
         allNodes.append(node)
-
-        // 提取依赖边
-        for dep in dependencies {
-          let edge = DependencyEdge(
-            source: record.identity,
-            target: PackageRef(ecosystemId: result.ecosystemId, scope: nil, name: dep),
-            constraint: .any
-          )
-          allEdges.append(edge)
-        }
       }
     }
 
@@ -204,6 +219,19 @@ public actor DependencyGraphService {
       byEcosystem: byEcosystem,
       totalSize: totalSize
     )
+  }
+
+  // MARK: - Helpers
+
+  /// Parse npm package name with scope (e.g., @types/react -> scope: @types, name: react)
+  private static func parseNpmPackageName(_ fullName: String) -> (scope: String?, name: String) {
+    if fullName.hasPrefix("@") {
+      let parts = fullName.split(separator: "/", maxSplits: 1)
+      if parts.count == 2 {
+        return (String(parts[0]), String(parts[1]))
+      }
+    }
+    return (nil, fullName)
   }
 }
 

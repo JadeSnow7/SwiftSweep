@@ -358,6 +358,95 @@ public actor SQLiteGraphStore: GraphStoreBackend {
     return nodes
   }
 
+  /// Get full graph snapshot (nodes + valid edges) in single batch query
+  public func getGraphSnapshot() async throws -> GraphSnapshot {
+    let nodes = try await getAllNodes()
+    let edges = try await getAllEdges()
+
+    // Build a set of valid node keys for filtering
+    let nodeKeys = Set(nodes.map { $0.identity.canonicalKey })
+
+    // Filter to only edges where target exists as a node
+    // (match by ecosystem + name, ignoring version differences)
+    let nodeNameKeys = Set(nodes.map { "\($0.identity.ecosystemId)::\($0.identity.name)" })
+    let validEdges = edges.filter { edge in
+      let targetKey = "\(edge.target.ecosystemId)::\(edge.target.name)"
+      return nodeNameKeys.contains(targetKey)
+    }
+
+    return GraphSnapshot(nodes: nodes, edges: validEdges)
+  }
+
+  /// Get all edges
+  public func getAllEdges() async throws -> [DependencyEdge] {
+    let sql = """
+      SELECT e.source_key, e.target_ecosystem, e.target_scope, e.target_name, e.constraint_type, e.constraint_value,
+             n.ecosystem_id, n.scope, n.name, n.version, n.fingerprint
+      FROM edges e
+      JOIN nodes n ON e.source_key = n.canonical_key
+      ORDER BY e.source_key
+      """
+
+    var stmt: OpaquePointer?
+    defer { sqlite3_finalize(stmt) }
+
+    guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+      throw GraphStoreError.prepareFailed(errorMessage)
+    }
+
+    var edges: [DependencyEdge] = []
+    while sqlite3_step(stmt) == SQLITE_ROW {
+      // Parse source identity
+      let sourceEcosystem = String(cString: sqlite3_column_text(stmt, 6))
+      let sourceScope: String? =
+        sqlite3_column_type(stmt, 7) == SQLITE_NULL
+        ? nil : String(cString: sqlite3_column_text(stmt, 7))
+      let sourceName = String(cString: sqlite3_column_text(stmt, 8))
+      let sourceVersionStr = String(cString: sqlite3_column_text(stmt, 9))
+      let sourceFingerprint: String? =
+        sqlite3_column_type(stmt, 10) == SQLITE_NULL
+        ? nil : String(cString: sqlite3_column_text(stmt, 10))
+
+      let sourceVersion: ResolvedVersion =
+        sourceVersionStr == "unknown" ? .unknown : .exact(sourceVersionStr)
+      let sourceIdentity = PackageIdentity(
+        ecosystemId: sourceEcosystem,
+        scope: sourceScope,
+        name: sourceName,
+        version: sourceVersion,
+        instanceFingerprint: sourceFingerprint
+      )
+
+      // Parse target ref
+      let targetEcosystem = String(cString: sqlite3_column_text(stmt, 1))
+      let targetScope: String? =
+        sqlite3_column_type(stmt, 2) == SQLITE_NULL
+        ? nil : String(cString: sqlite3_column_text(stmt, 2))
+      let targetName = String(cString: sqlite3_column_text(stmt, 3))
+      let targetRef = PackageRef(ecosystemId: targetEcosystem, scope: targetScope, name: targetName)
+
+      // Parse constraint
+      let constraintType: String? =
+        sqlite3_column_type(stmt, 4) == SQLITE_NULL
+        ? nil : String(cString: sqlite3_column_text(stmt, 4))
+      let constraintValue: String? =
+        sqlite3_column_type(stmt, 5) == SQLITE_NULL
+        ? nil : String(cString: sqlite3_column_text(stmt, 5))
+
+      let constraint: VersionConstraint
+      switch constraintType {
+      case "exact": constraint = .exact(constraintValue ?? "")
+      case "range": constraint = .range(constraintValue ?? "")
+      default: constraint = .any
+      }
+
+      edges.append(
+        DependencyEdge(source: sourceIdentity, target: targetRef, constraint: constraint))
+    }
+
+    return edges
+  }
+
   public func clear() async throws {
     let sql = "DELETE FROM edges; DELETE FROM nodes;"
     guard sqlite3_exec(db, sql, nil, nil, nil) == SQLITE_OK else {
@@ -431,3 +520,14 @@ public enum GraphStoreError: Error, LocalizedError {
 // MARK: - SQLITE_TRANSIENT
 
 private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+
+// MARK: - GraphSnapshot
+
+/// Complete graph snapshot for visualization
+public struct GraphSnapshot: Sendable {
+  public let nodes: [PackageNode]
+  public let edges: [DependencyEdge]
+
+  public var nodeCount: Int { nodes.count }
+  public var edgeCount: Int { edges.count }
+}

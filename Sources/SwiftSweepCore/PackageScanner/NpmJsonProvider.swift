@@ -173,10 +173,14 @@ public actor NpmJsonProvider: PackageMetadataProvider {
       // 计算目录大小
       let size = Self.calculateDirectorySize(at: installPath)
 
+      // 提取依赖名称
+      let dependencyNames = info.dependencies?.keys.map { String($0) } ?? []
+
       // 构建元数据
       let metadata = NpmPackageMetadata(
         installPath: installPath,
         size: size,
+        dependencies: dependencyNames,
         overridden: info.overridden ?? false
       )
 
@@ -233,6 +237,7 @@ private struct NpmJsonResponse: Decodable {
 private struct NpmDependencyInfo: Decodable {
   let version: String
   let overridden: Bool?
+  let dependencies: [String: NpmDependencyInfo]?  // Nested dependencies
 }
 
 // MARK: - npm Package Metadata
@@ -241,5 +246,6 @@ private struct NpmDependencyInfo: Decodable {
 public struct NpmPackageMetadata: Codable, Sendable {
   public let installPath: String?
   public let size: Int64?
+  public let dependencies: [String]  // Direct dependency names
   public let overridden: Bool
 }
