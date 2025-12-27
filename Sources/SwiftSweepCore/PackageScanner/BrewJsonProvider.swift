@@ -91,14 +91,40 @@ public actor BrewJsonProvider: PackageMetadataProvider {
       process.arguments = ["info", "--json=v2", "--installed"]
       process.environment = ToolLocator.packageFinderEnvironment
 
-      let pipe = Pipe()
-      process.standardOutput = pipe
-      process.standardError = FileHandle.nullDevice
+      let stdoutPipe = Pipe()
+      let stderrPipe = Pipe()
+      process.standardOutput = stdoutPipe
+      process.standardError = stderrPipe
+
+      // Read data BEFORE waitUntilExit to prevent pipe buffer deadlock
+      var outputData = Data()
+      stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
+        outputData.append(handle.availableData)
+      }
 
       try process.run()
-      process.waitUntilExit()
 
-      guard process.terminationStatus == 0 else {
+      // Set timeout of 60 seconds
+      let deadline = Date().addingTimeInterval(60)
+      while process.isRunning && Date() < deadline {
+        Thread.sleep(forTimeInterval: 0.1)
+      }
+
+      if process.isRunning {
+        process.terminate()
+        throw IngestionError(
+          phase: "execute",
+          message: "brew command timed out after 60s",
+          recoverable: true
+        )
+      }
+
+      // Read any remaining data
+      stdoutPipe.fileHandleForReading.readabilityHandler = nil
+      outputData.append(stdoutPipe.fileHandleForReading.readDataToEndOfFile())
+
+      // Allow non-zero exit if we have output (brew might return warnings)
+      if outputData.isEmpty && process.terminationStatus != 0 {
         throw IngestionError(
           phase: "execute",
           message: "brew command failed with code \(process.terminationStatus)",
@@ -106,7 +132,7 @@ public actor BrewJsonProvider: PackageMetadataProvider {
         )
       }
 
-      return pipe.fileHandleForReading.readDataToEndOfFile()
+      return outputData
     }.value
   }
 

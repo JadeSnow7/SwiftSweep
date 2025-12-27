@@ -51,33 +51,72 @@ public actor NpmJsonProvider: PackageMetadataProvider {
   private func executeNpmCommand() async throws -> Data {
     let npmExecutable = findNpmPath()
 
+    guard FileManager.default.fileExists(atPath: npmExecutable) else {
+      throw IngestionError(
+        phase: "execute",
+        message: "npm not found",
+        recoverable: true
+      )
+    }
+
     return try await Task.detached(priority: .userInitiated) {
       let process = Process()
       process.executableURL = URL(fileURLWithPath: npmExecutable)
       process.arguments = ["ls", "-g", "--json", "--depth=0"]
       process.environment = ToolLocator.packageFinderEnvironment
 
-      let pipe = Pipe()
-      process.standardOutput = pipe
-      process.standardError = FileHandle.nullDevice
+      let stdoutPipe = Pipe()
+      let stderrPipe = Pipe()
+      process.standardOutput = stdoutPipe
+      process.standardError = stderrPipe
+
+      // Read data BEFORE wait to prevent pipe buffer deadlock
+      var outputData = Data()
+      stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
+        outputData.append(handle.availableData)
+      }
 
       try process.run()
-      process.waitUntilExit()
 
-      guard process.terminationStatus == 0 else {
+      // Timeout of 30 seconds for npm
+      let deadline = Date().addingTimeInterval(30)
+      while process.isRunning && Date() < deadline {
+        Thread.sleep(forTimeInterval: 0.1)
+      }
+
+      if process.isRunning {
+        process.terminate()
         throw IngestionError(
           phase: "execute",
-          message: "npm command failed with code \(process.terminationStatus)",
+          message: "npm command timed out after 30s",
           recoverable: true
         )
       }
 
-      return pipe.fileHandleForReading.readDataToEndOfFile()
+      // Read remaining data
+      stdoutPipe.fileHandleForReading.readabilityHandler = nil
+      outputData.append(stdoutPipe.fileHandleForReading.readDataToEndOfFile())
+
+      // npm ls often returns exit code 1 for unmet peer deps, but output is still valid JSON
+      // Only fail if no output at all
+      if outputData.isEmpty {
+        throw IngestionError(
+          phase: "execute",
+          message: "npm produced no output (exit: \(process.terminationStatus))",
+          recoverable: true
+        )
+      }
+
+      return outputData
     }.value
   }
 
   private func getNpmGlobalRoot() async throws -> String {
     let npmExecutable = findNpmPath()
+
+    guard FileManager.default.fileExists(atPath: npmExecutable) else {
+      return "/usr/local/lib/node_modules"
+    }
 
     return try await Task.detached(priority: .userInitiated) {
       let process = Process()
@@ -88,20 +127,37 @@ public actor NpmJsonProvider: PackageMetadataProvider {
       let pipe = Pipe()
       process.standardOutput = pipe
 
-      try process.run()
-      process.waitUntilExit()
+      var outputData = Data()
+      pipe.fileHandleForReading.readabilityHandler = { handle in
+        outputData.append(handle.availableData)
+      }
 
-      let data = pipe.fileHandleForReading.readDataToEndOfFile()
-      return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+      try process.run()
+
+      let deadline = Date().addingTimeInterval(10)
+      while process.isRunning && Date() < deadline {
+        Thread.sleep(forTimeInterval: 0.1)
+      }
+
+      pipe.fileHandleForReading.readabilityHandler = nil
+      outputData.append(pipe.fileHandleForReading.readDataToEndOfFile())
+
+      return String(data: outputData, encoding: .utf8)?.trimmingCharacters(
+        in: .whitespacesAndNewlines)
         ?? "/usr/local/lib/node_modules"
     }.value
   }
 
   private func findNpmPath() -> String {
-    // Check common locations
+    let home = NSHomeDirectory()
+    // Check common locations including nvm, volta, fnm
     let paths = [
       "/opt/homebrew/bin/npm",
       "/usr/local/bin/npm",
+      "\(home)/.nvm/current/bin/npm",
+      "\(home)/.volta/bin/npm",
+      "\(home)/.fnm/current/bin/npm",
+      "\(home)/.local/bin/npm",
       npmPath,
     ]
 
