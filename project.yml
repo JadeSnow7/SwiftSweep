@@ -35,7 +35,7 @@ targets:
       PRODUCT_BUNDLE_IDENTIFIER: com.swiftsweep.app
       ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       INFOPLIST_FILE: Resources/Info.plist
-      MARKETING_VERSION: "0.1.0"
+      MARKETING_VERSION: "0.2.0"
       CURRENT_PROJECT_VERSION: 1
       SWIFT_VERSION: "5.9"
       # Hardened Runtime (公证要求)

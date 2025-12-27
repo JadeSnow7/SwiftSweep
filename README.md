@@ -43,6 +43,9 @@ SwiftSweep 采用两栏式布局，包含以下功能模块：
 | **Analyze** | 磁盘空间分析，定位大文件 (WizTree 风格) |
 | **Applications** | 应用清单：筛选/分类/深度扫描应用体积，并可一键跳转卸载 |
 | **Packages** | 包与仓库管理：Homebrew/npm/pip/gem + Git Repos（包卸载/升级，Git GC/Prune） |
+| **Ghost Buster** | 孤儿包检测：识别无依赖包，支持影响分析与删除 |
+| **Galaxy** | 依赖图可视化：Canvas 渲染、力导向布局、LOD 优化、交互式探索 |
+| **Time Machine** | 快照管理：捕获包状态、导出/导入、Diff 对比、影响预警 |
 | **Settings** | 偏好设置与 Helper 管理 |
 
 ### 功能要点（Current）
@@ -51,6 +54,8 @@ SwiftSweep 采用两栏式布局，包含以下功能模块：
 - **统一执行链路**：清理动作走 `ActionExecutor`（去重、dry-run、结果统计、审计日志）
 - **卸载安全策略**：删除计划（DeletionPlan）→ 路径校验（allowlist + symlink escape 防护）→ 先标准删除，权限不足再降级调用 Helper
 - **Git 仓库维护**：扫描常用开发目录，显示 clean/dirty 与 `.git` 体积，支持 `git gc` / `git remote prune`
+- **依赖图可视化 (Galaxy)**：基于 GraphStore 的大规模图渲染，支持力导向动画、节点聚类、LOD 优化、Canvas 视口裁剪
+- **包状态快照 (Time Machine)**：ISO-8601 JSON 快照、请求包/传递依赖分类、Diff 视图、跨生态删除影响分析
 
 ### 截图预览
 
