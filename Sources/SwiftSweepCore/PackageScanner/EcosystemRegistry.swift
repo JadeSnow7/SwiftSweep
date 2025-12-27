@@ -47,20 +47,15 @@ public struct GemEcosystem: EcosystemDescriptor {
 public actor EcosystemRegistry {
   public static let shared = EcosystemRegistry()
 
-  private var descriptors: [String: any EcosystemDescriptor.Type] = [:]
+  private var descriptors: [String: any EcosystemDescriptor.Type] = [
+    HomebrewFormulaEcosystem.identifier: HomebrewFormulaEcosystem.self,
+    HomebrewCaskEcosystem.identifier: HomebrewCaskEcosystem.self,
+    NpmEcosystem.identifier: NpmEcosystem.self,
+    PipEcosystem.identifier: PipEcosystem.self,
+    GemEcosystem.identifier: GemEcosystem.self,
+  ]
 
-  private init() {
-    // 注册内置生态系统
-    registerBuiltins()
-  }
-
-  private func registerBuiltins() {
-    register(HomebrewFormulaEcosystem.self)
-    register(HomebrewCaskEcosystem.self)
-    register(NpmEcosystem.self)
-    register(PipEcosystem.self)
-    register(GemEcosystem.self)
-  }
+  private init() {}
 
   /// 注册新的生态系统描述
   public func register<T: EcosystemDescriptor>(_ descriptor: T.Type) {
