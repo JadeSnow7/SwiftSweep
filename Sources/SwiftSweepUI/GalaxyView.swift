@@ -84,17 +84,14 @@ public struct GalaxyView: View {
 
   private var galaxyCanvas: some View {
     GeometryReader { geometry in
+      let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
+
       ZStack {
         // Edges layer
         Canvas { context, size in
-          let transform = CGAffineTransform(
-            translationX: viewModel.offset.width, y: viewModel.offset.height
-          )
-          .scaledBy(x: viewModel.zoomScale, y: viewModel.zoomScale)
-
           for edge in viewModel.visibleEdges {
-            let sourcePos = edge.sourcePosition.applying(transform)
-            let targetPos = edge.targetPosition.applying(transform)
+            let sourcePos = transformPoint(edge.sourcePosition, center: center)
+            let targetPos = transformPoint(edge.targetPosition, center: center)
 
             let path = Path { p in
               p.move(to: sourcePos)
@@ -104,19 +101,19 @@ public struct GalaxyView: View {
           }
         }
 
-        // Nodes layer with transform
+        // Nodes layer - use transformed position directly
         ForEach(viewModel.visibleNodes) { node in
+          let transformedPos = transformPoint(node.position, center: center)
           nodeView(for: node)
-            .scaleEffect(viewModel.zoomScale)
-            .offset(x: viewModel.offset.width, y: viewModel.offset.height)
+            .position(transformedPos)
         }
 
         // Clusters layer (when in cluster LOD)
         if viewModel.lodLevel == .cluster {
           ForEach(viewModel.clusters) { cluster in
+            let transformedPos = transformPoint(cluster.position, center: center)
             clusterView(for: cluster)
-              .scaleEffect(viewModel.zoomScale)
-              .offset(x: viewModel.offset.width, y: viewModel.offset.height)
+              .position(transformedPos)
           }
         }
 
@@ -146,13 +143,14 @@ public struct GalaxyView: View {
   private func nodeView(for node: VisualNode) -> some View {
     Circle()
       .fill(node.color.opacity(node.isSelected ? 1.0 : 0.7))
-      .frame(width: node.radius * 2, height: node.radius * 2)
+      .frame(
+        width: node.radius * 2 * viewModel.zoomScale, height: node.radius * 2 * viewModel.zoomScale
+      )
       .overlay(
         Circle()
           .stroke(node.isSelected ? Color.white : Color.clear, lineWidth: 2)
       )
       .shadow(color: node.isSelected ? node.color : .clear, radius: 5)
-      .position(node.position)
       .onTapGesture {
         viewModel.selectNode(node.id)
       }
@@ -297,6 +295,21 @@ public struct GalaxyView: View {
       Text("Run Ghost Buster scan first")
         .foregroundColor(.secondary)
     }
+  }
+
+  // MARK: - Transform Helper
+
+  /// Transform a point with zoom (centered on canvas center) and pan offset
+  private func transformPoint(_ point: CGPoint, center: CGPoint) -> CGPoint {
+    // Scale around center
+    let scaledX = center.x + (point.x - center.x) * viewModel.zoomScale
+    let scaledY = center.y + (point.y - center.y) * viewModel.zoomScale
+
+    // Apply pan offset
+    return CGPoint(
+      x: scaledX + viewModel.offset.width,
+      y: scaledY + viewModel.offset.height
+    )
   }
 }
 
