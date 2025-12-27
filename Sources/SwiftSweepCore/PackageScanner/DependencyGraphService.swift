@@ -28,6 +28,7 @@ public actor DependencyGraphService {
     providers = [
       BrewJsonProvider(normalizer: normalizer),
       NpmJsonProvider(normalizer: normalizer),
+      PipMetadataProvider(normalizer: normalizer),
     ]
 
     isInitialized = true
@@ -84,6 +85,15 @@ public actor DependencyGraphService {
             installPath: npmMeta.installPath,
             size: npmMeta.size
           )
+        } else if let pipMeta = try? JSONDecoder().decode(
+          PipPackageMetadata.self, from: record.rawJSON)
+        {
+          metadata = PackageMetadata(
+            installPath: pipMeta.installPath,
+            size: pipMeta.size,
+            description: pipMeta.summary
+          )
+          dependencies = pipMeta.requiresDist
         } else {
           metadata = PackageMetadata()
         }
