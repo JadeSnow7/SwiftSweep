@@ -69,7 +69,7 @@ public actor GraphLayoutEngine {
     let fullLayout = computeLayout(nodes: nodes, edges: edges, canvasSize: canvasSize)
 
     // Apply positions to nodes
-    var positionedNodes = nodes.map { node in
+    let positionedNodes = nodes.map { node in
       var n = node
       n.position = fullLayout.nodePositions[node.id] ?? node.position
       return n
@@ -77,7 +77,7 @@ public actor GraphLayoutEngine {
 
     // Group for clusters
     let nodesByEcosystem = Dictionary(grouping: positionedNodes) { $0.ecosystemId }
-    var clusters: [ClusterInfo] = nodesByEcosystem.map { ecosystemId, ecosystemNodes in
+    let clusters: [ClusterInfo] = nodesByEcosystem.map { ecosystemId, ecosystemNodes in
       var c = ClusterInfo(ecosystemId: ecosystemId, nodes: ecosystemNodes)
       c.position = fullLayout.clusterPositions[c.id] ?? c.position
       return c

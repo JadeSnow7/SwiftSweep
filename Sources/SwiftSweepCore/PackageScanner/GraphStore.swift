@@ -364,7 +364,7 @@ public actor SQLiteGraphStore: GraphStoreBackend {
     let edges = try await getAllEdges()
 
     // Build a set of valid node keys for filtering
-    let nodeKeys = Set(nodes.map { $0.identity.canonicalKey })
+    // (match by ecosystem + name, ignoring version differences)
 
     // Filter to only edges where target exists as a node
     // (match by ecosystem + name, ignoring version differences)
