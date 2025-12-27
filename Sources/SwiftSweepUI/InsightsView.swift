@@ -361,14 +361,10 @@ struct ActionConfirmationSheet: View {
 
           List(pathsToClean.prefix(20), id: \.self) { path in
             HStack {
-              Image(systemName: "doc")
+              Image(systemName: isDirectory(path) ? "folder" : "doc")
                 .foregroundColor(.secondary)
               Text((path as NSString).lastPathComponent)
                 .lineLimit(1)
-              Spacer()
-              Text(pathSize(path))
-                .font(.caption)
-                .foregroundColor(.secondary)
             }
           }
           .frame(height: 250)
@@ -429,6 +425,11 @@ struct ActionConfirmationSheet: View {
       }
     }
     return []
+  }
+
+  private func isDirectory(_ path: String) -> Bool {
+    var isDir: ObjCBool = false
+    return FileManager.default.fileExists(atPath: path, isDirectory: &isDir) && isDir.boolValue
   }
 
   private func pathSize(_ path: String) -> String {
