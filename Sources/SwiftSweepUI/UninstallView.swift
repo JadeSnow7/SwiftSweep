@@ -648,7 +648,7 @@ class UninstallViewModel: ObservableObject {
       guard let self = self else { return }
 
       do {
-        let freshApps = try await UninstallEngine.shared.scanInstalledApps()
+        let freshApps = try await UninstallEngine.shared.scanInstalledApps(includeSizes: true)
 
         // Convert to cached format
         let cachedApps = freshApps.map { CachedAppInfo(from: $0) }

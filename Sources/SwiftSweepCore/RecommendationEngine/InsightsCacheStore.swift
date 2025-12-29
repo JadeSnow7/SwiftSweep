@@ -99,9 +99,9 @@ public actor InsightsCacheStore {
   // MARK: - Configuration
 
   private let ttl: TimeInterval = 300  // 5 minutes
-  private var cachedContext: CachedContext?
+  nonisolated(unsafe) private var cachedContext: CachedContext?
 
-  private var cacheFileURL: URL {
+  private static var cacheFileURL: URL {
     let appSupport = FileManager.default.urls(
       for: .applicationSupportDirectory, in: .userDomainMask
     ).first!
@@ -111,7 +111,15 @@ public actor InsightsCacheStore {
   }
 
   private init() {
-    loadFromDisk()
+    // Load from disk synchronously during init (safe because init is synchronous)
+    let fileURL = Self.cacheFileURL
+    if FileManager.default.fileExists(atPath: fileURL.path),
+      let data = try? Data(contentsOf: fileURL),
+      let cached = try? JSONDecoder().decode(CachedContext.self, from: data),
+      Date().timeIntervalSince(cached.timestamp) < ttl
+    {
+      cachedContext = cached
+    }
   }
 
   // MARK: - Public API
@@ -155,7 +163,7 @@ public actor InsightsCacheStore {
   /// Invalidate cache
   public func invalidate() {
     cachedContext = nil
-    try? FileManager.default.removeItem(at: cacheFileURL)
+    try? FileManager.default.removeItem(at: Self.cacheFileURL)
   }
 
   /// Check if cache is expired
@@ -167,8 +175,8 @@ public actor InsightsCacheStore {
   // MARK: - Persistence
 
   private func loadFromDisk() {
-    guard FileManager.default.fileExists(atPath: cacheFileURL.path),
-      let data = try? Data(contentsOf: cacheFileURL),
+    guard FileManager.default.fileExists(atPath: Self.cacheFileURL.path),
+      let data = try? Data(contentsOf: Self.cacheFileURL),
       let cached = try? JSONDecoder().decode(CachedContext.self, from: data)
     else {
       return
@@ -185,6 +193,6 @@ public actor InsightsCacheStore {
     encoder.dateEncodingStrategy = .iso8601
 
     guard let data = try? encoder.encode(context) else { return }
-    try? data.write(to: cacheFileURL, options: .atomic)
+    try? data.write(to: Self.cacheFileURL, options: .atomic)
   }
 }

@@ -145,18 +145,15 @@ public final class RecommendationEngine: @unchecked Sendable {
     return result.recommendations
   }
 
-  /// Evaluates with system context, cache support, and optional injected apps.
   public func evaluateWithSystemContext(
     forceRefresh: Bool,
     installedApps: [AppInfo]? = nil,
     onPhase: ((String) -> Void)? = nil
   ) async throws -> EvaluationResult {
-    var isCacheHit = false
     var cacheAge: TimeInterval? = nil
 
     // Try cache first
     if !forceRefresh, let cached = await InsightsCacheStore.shared.getCached() {
-      isCacheHit = true
       cacheAge = cached.cacheAge
 
       onPhase?("Loading from cache...")
