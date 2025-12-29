@@ -64,8 +64,11 @@ targets:
           destination: executables
           subpath: ../Library/LaunchDaemons
       - package: SwiftSweepAppInventory
-        product: SwiftSweepAppInventory
+        products:
+          - AppInventoryUI
+          - AppInventoryLogic
       - package: Logging
+        product: Logging
     postCompileScripts:
       - name: Copy Helper LaunchDaemon plist
         script: |

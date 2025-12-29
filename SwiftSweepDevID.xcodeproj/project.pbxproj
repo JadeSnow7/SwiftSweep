@@ -47,7 +47,7 @@
 		50039C9E4F28DB5084FA6865 /* RecommendationRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D92F3811846DEC331C55600 /* RecommendationRule.swift */; };
 		532F1296FB0F40CEFDCCFFC7 /* HelperErrorCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8001EC9BE432F829F3CFFBBD /* HelperErrorCodes.swift */; };
 		558E99EFDD1D1DBDCF5F5F47 /* HelperErrorCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8001EC9BE432F829F3CFFBBD /* HelperErrorCodes.swift */; };
-		56647BB17ABEDBDC9FB503FB /* SwiftSweepAppInventory in Frameworks */ = {isa = PBXBuildFile; productRef = E58894DEC3FB53C63A9DF186 /* SwiftSweepAppInventory */; };
+		56647BB17ABEDBDC9FB503FB /* AppInventoryUI in Frameworks */ = {isa = PBXBuildFile; productRef = BED55513DE610BBD13379FBF /* AppInventoryUI */; };
 		57827FCF4FBF1F0F9C346449 /* OptimizeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A7E55D13E7925AED747255A /* OptimizeView.swift */; };
 		5A5FEBA2EB5684C45F95E072 /* PackageScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28BFA62383E7EAB529579A04 /* PackageScanner.swift */; };
 		616F899B39119881F39ACC60 /* ActionExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99E16FA3F932058B7BEA9C9 /* ActionExecutor.swift */; };
@@ -111,6 +111,7 @@
 		B0AFD640CFDD9B8AA02D83F7 /* UninstallEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A975CE98FBDC7EF022755BEA /* UninstallEngine.swift */; };
 		B1FEB69201B4B5E9AD4EE89B /* SnapshotModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A954EBC2F7CEADF29D248D8 /* SnapshotModels.swift */; };
 		B20054AC2BF62B8F198CFC32 /* UninstallEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A975CE98FBDC7EF022755BEA /* UninstallEngine.swift */; };
+		B2A2EDF5E5BF0DFDBBD08AED /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 2ABFE6083FBE8FF03E9D0E02 /* Logging */; };
 		B3889EBB5B448B2EA59BBCFC /* HelperClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53AD6D1C11B4F08FC5E58B5E /* HelperClient.swift */; };
 		B75A3080FB51C459F7BCA2AF /* GraphStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B02230150D7C1F168F916FB /* GraphStore.swift */; };
 		B81615CE24AFCBDE4294047F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EC414EA68F888C69D022A902 /* Assets.xcassets */; };
@@ -127,7 +128,7 @@
 		D5F229ED5C163523E817ECAE /* NpmJsonProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C4A9505686DC86E4FCD917 /* NpmJsonProvider.swift */; };
 		D6237F372EEEF6A86D4BF60F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8D04377DDF6FACF86EB83E /* SettingsView.swift */; };
 		D95DE1135AB3A412DB935099 /* PipMetadataProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F2C59FA1EECA06A07A0C76 /* PipMetadataProvider.swift */; };
-		DA1E0D4BBA67E9B308253EB3 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 2ABFE6083FBE8FF03E9D0E02 /* Logging */; };
+		DA1E0D4BBA67E9B308253EB3 /* AppInventoryLogic in Frameworks */ = {isa = PBXBuildFile; productRef = B2AADB2A75799FEE310A17DF /* AppInventoryLogic */; };
 		E0CF524845C77E03CEE089FB /* PackageSizeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE46F5514AF4A95D0CE85A0 /* PackageSizeCalculator.swift */; };
 		E117650714D03FEADBEEE3C7 /* GemProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5AA81A68E30A722DE0AC190 /* GemProvider.swift */; };
 		E325FBEAE9064E3B87FD91C5 /* Recommendation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 568DBC900A688E1C6F8682D1 /* Recommendation.swift */; };
@@ -255,8 +256,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				56647BB17ABEDBDC9FB503FB /* SwiftSweepAppInventory in Frameworks */,
-				DA1E0D4BBA67E9B308253EB3 /* Logging in Frameworks */,
+				56647BB17ABEDBDC9FB503FB /* AppInventoryUI in Frameworks */,
+				DA1E0D4BBA67E9B308253EB3 /* AppInventoryLogic in Frameworks */,
+				B2A2EDF5E5BF0DFDBBD08AED /* Logging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -546,7 +548,8 @@
 			);
 			name = SwiftSweepApp;
 			packageProductDependencies = (
-				E58894DEC3FB53C63A9DF186 /* SwiftSweepAppInventory */,
+				BED55513DE610BBD13379FBF /* AppInventoryUI */,
+				B2AADB2A75799FEE310A17DF /* AppInventoryLogic */,
 				2ABFE6083FBE8FF03E9D0E02 /* Logging */,
 			);
 			productName = SwiftSweepApp;
@@ -1171,9 +1174,13 @@
 			package = 8C952D5700CAB0D57EA35919 /* XCRemoteSwiftPackageReference "swift-argument-parser" */;
 			productName = ArgumentParser;
 		};
-		E58894DEC3FB53C63A9DF186 /* SwiftSweepAppInventory */ = {
+		B2AADB2A75799FEE310A17DF /* AppInventoryLogic */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = SwiftSweepAppInventory;
+			productName = AppInventoryLogic;
+		};
+		BED55513DE610BBD13379FBF /* AppInventoryUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppInventoryUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
