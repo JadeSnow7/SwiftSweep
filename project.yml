@@ -64,9 +64,7 @@ targets:
           destination: executables
           subpath: ../Library/LaunchDaemons
       - package: SwiftSweepAppInventory
-        products:
-          - AppInventoryUI
-          - AppInventoryLogic
+        product: SwiftSweepAppInventory
       - package: Logging
         product: Logging
     postCompileScripts:
