@@ -74,33 +74,30 @@
 
 ## 5. 整体架构设计（Design Overview）
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    SwiftSweepUI                          │
-│  ┌─────────────────┐  ┌─────────────────┐               │
-│  │ PluginSettings  │  │ PluginViewFactory│               │
-│  │ (开关管理)      │  │ (UI 映射)        │               │
-│  └─────────────────┘  └─────────────────┘               │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-┌──────────────────────────▼──────────────────────────────┐
-│                   SwiftSweepCore                         │
-│  ┌─────────────────┐  ┌─────────────────┐               │
-│  │  SweepPlugin    │  │  PluginManager  │               │
-│  │  (协议)         │  │  (注册表)       │               │
-│  └─────────────────┘  └─────────────────┘               │
-│  ┌─────────────────┐                                    │
-│  │  PluginContext  │                                    │
-│  │  (安全上下文)   │                                    │
-│  └─────────────────┘                                    │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-┌──────────────────────────▼──────────────────────────────┐
-│              SwiftSweepCapCutPlugin                      │
-│  ┌─────────────────┐                                    │
-│  │  CapCutPlugin   │  implements SweepPlugin            │
-│  └─────────────────┘                                    │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph UI["SwiftSweepUI"]
+        Settings["PluginSettings<br/>(开关管理)"]
+        Factory["PluginViewFactory<br/>(UI映射)"]
+    end
+    
+    subgraph Core["SwiftSweepCore"]
+        Protocol["SweepPlugin<br/>(协议)"]
+        Manager["PluginManager<br/>(注册表)"]
+        Context["PluginContext<br/>(安全上下文)"]
+    end
+    
+    subgraph Plugin["SwiftSweepCapCutPlugin"]
+        CapCut["CapCutPlugin<br/>implements SweepPlugin"]
+    end
+    
+    UI --> Core
+    Core --> Plugin
+    CapCut -.-> Protocol
+    
+    style UI fill:#e1f5fe
+    style Core fill:#fff3e0
+    style Plugin fill:#f3e5f5
 ```
 
 ### 模块职责
@@ -163,24 +160,27 @@ public struct PluginContext {
 
 ## 7. 并发与线程模型（Concurrency Model）
 
-```
-┌────────────────────────────────────────────────────┐
-│                    Main Actor                       │
-│  - 插件开关切换                                     │
-│  - 侧边栏显示/隐藏                                  │
-└───────────────────────┬────────────────────────────┘
-                        │
-┌───────────────────────▼────────────────────────────┐
-│              PluginManager (Sendable)               │
-│  - 线程安全注册表                                   │
-│  - 读写通过 DispatchQueue 隔离                      │
-└───────────────────────┬────────────────────────────┘
-                        │
-┌───────────────────────▼────────────────────────────┐
-│              Plugin.analyze() async                 │
-│  - 在后台线程执行                                   │
-│  - 返回 Recommendation[]                            │
-└────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Main["@MainActor"]
+        Toggle["插件开关切换"]
+        Sidebar["侧边栏显示/隐藏"]
+    end
+    
+    subgraph Manager["PluginManager"]
+        Registry["线程安全注册表<br/>DispatchQueue隔离"]
+    end
+    
+    subgraph BG["Background"]
+        Analyze["Plugin.analyze() async<br/>返回 Recommendation[]"]
+    end
+    
+    Main --> Manager
+    Manager --> BG
+    
+    style Main fill:#c8e6c9
+    style Manager fill:#fff9c4
+    style BG fill:#ffccbc
 ```
 
 ---

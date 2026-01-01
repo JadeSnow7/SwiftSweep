@@ -83,44 +83,50 @@
 
 ## 5. 整体架构设计（Design Overview）
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                   MediaAnalyzerView                     │
-│  (目录选择、进度展示、分组结果、删除操作)                │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-┌──────────────────────────▼──────────────────────────────┐
-│                    MediaAnalyzer                         │
-│  (入口 Actor，协调各模块)                                │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-│ MediaScanner  │  │PerceptualHasher│  │SimilarityDetector│
-│ (文件发现)    │  │ (pHash 计算)   │  │ (LSH 匹配)    │
-└───────────────┘  └───────────────┘  └───────────────┘
-                           │
-                   ┌───────▼───────┐
-                   │  pHashCache   │
-                   │ (SQLite 缓存) │
-                   └───────────────┘
+```mermaid
+flowchart TB
+    subgraph View["UI Layer"]
+        MediaView["MediaAnalyzerView<br/>(目录选择/进度/结果/删除)"]
+    end
+    
+    subgraph Core["MediaAnalyzer Actor"]
+        Coordinator["协调扫描/哈希/匹配"]
+    end
+    
+    subgraph Workers["Worker Modules"]
+        Scanner["MediaScanner<br/>(文件发现)"]
+        Hasher["PerceptualHasher<br/>(pHash 计算)"]
+        Detector["SimilarityDetector<br/>(LSH 匹配)"]
+    end
+    
+    subgraph Storage["Persistence"]
+        Cache[("pHashCache<br/>SQLite")]
+    end
+    
+    View --> Core
+    Core --> Scanner
+    Core --> Hasher
+    Core --> Detector
+    Hasher --> Cache
+    
+    style View fill:#e1f5fe
+    style Core fill:#fff3e0
+    style Workers fill:#f3e5f5
+    style Storage fill:#e8f5e9
 ```
 
 ### 数据流
 
-```
-用户选择目录
-    ↓
-MediaScanner 遍历文件
-    ↓
-PerceptualHasher 计算 pHash（查缓存 → 未命中则计算）
-    ↓
-SimilarityDetector 使用 LSH 构建候选对
-    ↓
-计算 Hamming 距离，过滤相似对
-    ↓
-聚类输出 SimilarGroup[]
+```mermaid
+flowchart LR
+    A["用户选择目录"] --> B["MediaScanner<br/>遍历文件"]
+    B --> C["PerceptualHasher<br/>查缓存→计算pHash"]
+    C --> D["SimilarityDetector<br/>LSH构建候选对"]
+    D --> E["计算Hamming距离<br/>过滤相似对"]
+    E --> F["聚类输出<br/>SimilarGroup[]"]
+    
+    style A fill:#e3f2fd
+    style F fill:#c8e6c9
 ```
 
 ---
@@ -170,23 +176,30 @@ struct CacheEntry {
 
 ## 7. 并发与线程模型（Concurrency Model）
 
-```
-┌────────────────────────────────────────────────────┐
-│                    Main Actor                       │
-│  - UI 更新：进度、分组列表                          │
-└───────────────────────┬────────────────────────────┘
-                        │
-┌───────────────────────▼────────────────────────────┐
-│              MediaAnalyzer Actor                    │
-│  - 协调扫描/哈希/匹配                               │
-│  - 通过 ConcurrentScheduler 控制并发                │
-└───────────────────────┬────────────────────────────┘
-                        │
-┌───────────────────────▼────────────────────────────┐
-│              Background Task Pool                   │
-│  - pHash 计算（CPU 密集）                           │
-│  - 并发度限制为 4                                   │
-└────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Main["@MainActor"]
+        UI["UI更新<br/>进度/分组列表"]
+    end
+    
+    subgraph Analyzer["MediaAnalyzer Actor"]
+        Coord["协调扫描/哈希/匹配"]
+        Scheduler["ConcurrentScheduler<br/>控制并发"]
+    end
+    
+    subgraph BG["Background Task Pool"]
+        Hash1["pHash计算 #1"]
+        Hash2["pHash计算 #2"]
+        Hash3["pHash计算 #3"]
+        Hash4["pHash计算 #4"]
+    end
+    
+    Main --> Analyzer
+    Analyzer --> BG
+    
+    style Main fill:#c8e6c9
+    style Analyzer fill:#fff9c4
+    style BG fill:#ffccbc
 ```
 
 ### 取消处理

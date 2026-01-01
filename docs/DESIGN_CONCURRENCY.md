@@ -83,28 +83,34 @@
 
 ## 5. 整体架构设计（Design Overview）
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                      UI Layer                           │
-│  (IOAnalyzerView, InsightsView, AnalyzeView)            │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-┌──────────────────────────▼──────────────────────────────┐
-│                   Service Layer                          │
-│  (IOAnalyzer, MediaAnalyzer, CleanupEngine)              │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-┌──────────────────────────▼──────────────────────────────┐
-│               Infrastructure Layer                       │
-│  ┌─────────────────┐  ┌─────────────────┐               │
-│  │ConcurrentScheduler│  │PerformanceMonitor│             │
-│  │  (并发控制)      │  │  (性能采集)      │             │
-│  └─────────────────┘  └─────────────────┘               │
-│  ┌─────────────────┐  ┌─────────────────┐               │
-│  │ IOSelfTracer    │  │ IOEventBuffer   │               │
-│  │  (I/O 追踪)     │  │  (环形缓冲)      │               │
-│  └─────────────────┘  └─────────────────┘               │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph UI["UI Layer"]
+        IOView["IOAnalyzerView"]
+        InsightsView["InsightsView"]
+        AnalyzeView["AnalyzeView"]
+    end
+    
+    subgraph Service["Service Layer"]
+        IOAnalyzer["IOAnalyzer"]
+        MediaAnalyzer["MediaAnalyzer"]
+        CleanupEngine["CleanupEngine"]
+    end
+    
+    subgraph Infra["Infrastructure Layer"]
+        Scheduler["ConcurrentScheduler<br/>(并发控制)"]
+        Monitor["PerformanceMonitor<br/>(性能采集)"]
+        Tracer["IOSelfTracer<br/>(I/O 追踪)"]
+        Buffer["IOEventBuffer<br/>(环形缓冲)"]
+    end
+    
+    UI --> Service
+    Service --> Infra
+    Tracer --> Buffer
+    
+    style UI fill:#e1f5fe
+    style Service fill:#fff3e0
+    style Infra fill:#f3e5f5
 ```
 
 ### 模块职责
@@ -149,26 +155,32 @@ public actor ConcurrentScheduler {
 
 ## 7. 并发与线程模型（Concurrency Model）
 
-```
-┌────────────────────────────────────────────────────┐
-│                    Main Actor                       │
-│  - UI 更新                                          │
-│  - 状态绑定 (@Published)                            │
-└───────────────────────┬────────────────────────────┘
-                        │
-┌───────────────────────▼────────────────────────────┐
-│              Background Task Pool                   │
-│  - 文件扫描                                         │
-│  - 媒体哈希计算                                     │
-│  - I/O 操作                                         │
-│  受 ConcurrentScheduler 控制（maxConcurrency=4）    │
-└───────────────────────┬────────────────────────────┘
-                        │
-┌───────────────────────▼────────────────────────────┐
-│              Aggregation Actor                      │
-│  - IOAggregator (1s 时间片聚合)                     │
-│  - 统计累加                                         │
-└────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Main["@MainActor"]
+        UI["UI 更新<br/>@Published 状态绑定"]
+    end
+    
+    subgraph Background["Background Task Pool"]
+        Scan["文件扫描"]
+        Hash["媒体哈希计算"]
+        IO["I/O 操作"]
+    end
+    
+    subgraph Aggregation["Aggregation Actor"]
+        Agg["IOAggregator<br/>(1s 时间片聚合)"]
+        Stats["统计累加"]
+    end
+    
+    Scheduler["ConcurrentScheduler<br/>maxConcurrency=4"]
+    
+    Main --> Scheduler
+    Scheduler --> Background
+    Background --> Aggregation
+    
+    style Main fill:#c8e6c9
+    style Background fill:#fff9c4
+    style Aggregation fill:#ffccbc
 ```
 
 ### 取消策略
