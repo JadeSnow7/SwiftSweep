@@ -1,4 +1,3 @@
-import SwiftSweepCore
 import SwiftUI
 
 // MARK: - I/O Analyzer View
