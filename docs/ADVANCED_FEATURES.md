@@ -124,9 +124,35 @@ trackedRead/Write/Contents
 
 ---
 
-## 5. 扩展建议（可选）
+## 5. 已实现扩展功能 ⭐ NEW
 
-- **CapCut 草稿解析**：新增 `.ccp` 解析器，检测孤儿草稿与引用媒体（规划中）。
-- **系统级 I/O 追踪**：后续可引入 `fs_usage`/`kdebug`，但需额外权限与签名。
-- **并发优化**：媒体哈希阶段可接入 `ConcurrentScheduler` 进行受控并行。
+### 5.1 插件架构
+- **CapCut 草稿解析插件**：已实现 MVP，支持解析草稿目录、检测孤儿素材。
+- **插件管理**：`SweepPlugin` 协议 + `PluginManager`，支持开关与权限控制。
+- 详见：`Sources/SwiftSweepCapCutPlugin/`
 
+### 5.2 商业前端组件
+| 组件 | 文件 | 功能 |
+|------|------|------|
+| 规则配置 | `InsightsAdvancedConfigView.swift` | 分组、优先级拖拽、灰度开关 |
+| 虚拟表格 | `DataGridView.swift` | NSTableView 10k+ 行 |
+| 数据看板 | `ResultDashboardView.swift` | Swift Charts 趋势图 |
+
+### 5.3 AI Coding 能力
+| 组件 | 文件 | 功能 |
+|------|------|------|
+| 智能解释器 | `SmartInterpreter.swift` | 证据 → 自然语言（白盒 AI）|
+| 决策图 | `DecisionGraphView.swift` | 证据树可视化 |
+| NL 解析器 | `NLCommandParser.swift` | 自然语言 → 过滤条件（中英双语）|
+
+### 5.4 体验统一
+- **UnifiedStorageView**：磁盘分析 + 媒体分析一体化入口
+- **CleanupHistoryView**：清理前后对比、趋势追踪
+
+---
+
+## 6. 后续规划
+
+- **系统级 I/O 追踪**：引入 `fs_usage`/`kdebug`（需额外权限）。
+- **并发优化**：媒体哈希阶段接入 `ConcurrentScheduler`。
+- **CapCut 增强**：草稿依赖图、影响分析、多版本对比。
