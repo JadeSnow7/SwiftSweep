@@ -1,5 +1,9 @@
 import SwiftUI
 
+#if canImport(SwiftSweepCore)
+  import SwiftSweepCore
+#endif
+
 // MARK: - I/O Analyzer View
 
 /// I/O 性能分析视图

@@ -1,5 +1,9 @@
 import SwiftUI
 
+#if canImport(SwiftSweepCore)
+  import SwiftSweepCore
+#endif
+
 // MARK: - Media Analyzer View
 
 /// 媒体文件分析视图

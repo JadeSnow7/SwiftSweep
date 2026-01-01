@@ -7,18 +7,23 @@ import AppInventoryUI
 /// Shared navigation state for passing data between views
 @MainActor
 final class NavigationState: ObservableObject {
-    @Published var uninstallAppURL: URL?
+    struct UninstallRequest: Equatable {
+        let id: UUID
+        let appURL: URL?
+    }
+
+    @Published var uninstallRequest: UninstallRequest?
     
     static let shared = NavigationState()
     
     private init() {}
     
-    func requestUninstall(appURL: URL) {
-        uninstallAppURL = appURL
+    func requestUninstall(appURL: URL?) {
+        uninstallRequest = UninstallRequest(id: UUID(), appURL: appURL)
     }
     
     func clearUninstallRequest() {
-        uninstallAppURL = nil
+        uninstallRequest = nil
     }
 }
 
@@ -35,8 +40,15 @@ struct MainApplicationsView: View {
                 NavigationState.shared.requestUninstall(appURL: app.url)
             }
         )
-        .onChange(of: navigationState.uninstallAppURL) { newURL in
-            // Parent ContentView will observe this and navigate
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    navigationState.requestUninstall(appURL: nil)
+                } label: {
+                    Label(L10n.Nav.uninstall.localized, systemImage: "xmark.bin.fill")
+                }
+                .help(L10n.Nav.uninstall.localized)
+            }
         }
     }
 }

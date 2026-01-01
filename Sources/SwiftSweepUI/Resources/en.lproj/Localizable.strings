@@ -1,7 +1,7 @@
 /* Navigation */
-"nav.system" = "System";
+"nav.system" = "Overview";
 "nav.status" = "Status";
-"nav.maintenance" = "Maintenance";
+"nav.maintenance" = "Maintenance & Optimization";
 "nav.clean" = "Clean";
 "nav.uninstall" = "Uninstall";
 "nav.optimize" = "Optimize";
@@ -11,7 +11,7 @@
 "nav.packages" = "Packages";
 "nav.settings" = "Settings";
 "nav.appManagement" = "App Management";
-"nav.developer" = "Developer Tools";
+"nav.developer" = "Developer & Diagnostics";
 "nav.media" = "Media & Storage";
 
 /* Status View */

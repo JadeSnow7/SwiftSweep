@@ -35,6 +35,7 @@ let package = Package(
         "Shared",
         "PackageScanner",
         "GitRepoScanner",
+        "Git",
         "RecommendationEngine",
         "RecommendationEngine/Rules",
         "Snapshot",

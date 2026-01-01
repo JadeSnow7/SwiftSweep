@@ -1,7 +1,7 @@
 /* Navigation */
-"nav.system" = "系统";
+"nav.system" = "总览";
 "nav.status" = "状态";
-"nav.maintenance" = "维护";
+"nav.maintenance" = "维护与优化";
 "nav.clean" = "清理";
 "nav.uninstall" = "卸载";
 "nav.optimize" = "优化";
@@ -11,7 +11,7 @@
 "nav.packages" = "软件包";
 "nav.settings" = "设置";
 "nav.appManagement" = "应用管理";
-"nav.developer" = "开发者工具";
+"nav.developer" = "开发者与诊断";
 "nav.media" = "影音与存储";
 
 /* Status View */

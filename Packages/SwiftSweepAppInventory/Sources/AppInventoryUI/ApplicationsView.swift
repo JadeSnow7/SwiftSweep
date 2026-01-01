@@ -231,6 +231,7 @@ struct AppCell: View {
     let onUninstall: (() -> Void)?
     
     @State private var icon: NSImage?
+    @State private var isHovering = false
     
     var body: some View {
         VStack(spacing: 8) {
@@ -247,6 +248,10 @@ struct AppCell: View {
                 }
             }
             .frame(width: 48, height: 48)
+            .contentShape(Rectangle())
+            .onTapGesture(count: 2) {
+                openApp()
+            }
             
             Text(app.displayName)
                 .font(.caption)
@@ -259,16 +264,36 @@ struct AppCell: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
+
+            if let onUninstall = onUninstall {
+                Button(action: onUninstall) {
+                    Label("Uninstall", systemImage: "trash")
+                        .labelStyle(.titleAndIcon)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.mini)
+                .tint(.red)
+                .opacity(isHovering ? 1 : 0)
+                .offset(y: isHovering ? 0 : 6)
+                .animation(.easeOut(duration: 0.15), value: isHovering)
+                .disabled(!isHovering)
+            }
         }
         .frame(width: 100)
         .padding(8)
         .background(Color(nsColor: .controlBackgroundColor))
         .cornerRadius(10)
+        .contentShape(Rectangle())
         .contextMenu {
             contextMenuItems
         }
         .onAppear {
             loadIcon()
+        }
+        .onHover { hovering in
+            isHovering = hovering
         }
     }
     
@@ -318,7 +343,11 @@ struct AppCell: View {
             }
         }
     }
-    
+
+    private func openApp() {
+        NSWorkspace.shared.open(app.url)
+    }
+
     private func formatBytes(_ bytes: Int64) -> String {
         let mb = Double(bytes) / 1_000_000
         if mb >= 1000 {

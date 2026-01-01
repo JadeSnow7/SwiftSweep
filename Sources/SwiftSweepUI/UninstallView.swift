@@ -381,14 +381,17 @@ struct UninstallConfirmationSheet: View {
   var body: some View {
     VStack(spacing: 0) {
       // Header
-      HStack {
-        Image(systemName: "trash.fill")
-          .font(.title)
-          .foregroundColor(.red)
-        VStack(alignment: .leading) {
+      HStack(spacing: 12) {
+        appIconView
+          .frame(width: 44, height: 44)
+          .cornerRadius(8)
+        VStack(alignment: .leading, spacing: 4) {
           Text("确认卸载")
             .font(.headline)
-          Text(plan.app.name.replacingOccurrences(of: ".app", with: ""))
+          Text(appDisplayName)
+            .foregroundColor(.secondary)
+          Text("占用空间: \(appSizeText)")
+            .font(.caption)
             .foregroundColor(.secondary)
         }
         Spacer()
@@ -402,6 +405,17 @@ struct UninstallConfirmationSheet: View {
         Text("将删除以下文件 (\(plan.items.count) 个项目，共 \(formatBytes(plan.totalSize)))")
           .font(.caption)
           .foregroundColor(.secondary)
+
+        HStack(alignment: .top, spacing: 8) {
+          Image(systemName: "info.circle")
+            .foregroundColor(.secondary)
+          Text("默认移动到废纸篓，可在废纸篓恢复。清空废纸篓后才会释放空间。")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+        .padding(8)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .cornerRadius(6)
 
         List {
           ForEach(plan.items) { item in
@@ -510,6 +524,33 @@ struct UninstallConfirmationSheet: View {
       return String(format: "%.2f GB", mb / 1024)
     }
     return String(format: "%.1f MB", mb)
+  }
+
+  private var appDisplayName: String {
+    plan.app.name.replacingOccurrences(of: ".app", with: "")
+  }
+
+  private var appSizeText: String {
+    let appItemSize = plan.items.first(where: { $0.kind == .app })?.size ?? 0
+    if appItemSize > 0 {
+      return formatBytes(appItemSize)
+    }
+    if plan.totalSize > 0 {
+      return formatBytes(plan.totalSize)
+    }
+    return "—"
+  }
+
+  @ViewBuilder
+  private var appIconView: some View {
+    if FileManager.default.fileExists(atPath: plan.app.path) {
+      Image(nsImage: NSWorkspace.shared.icon(forFile: plan.app.path))
+        .resizable()
+    } else {
+      Image(systemName: "app.fill")
+        .resizable()
+        .foregroundColor(.secondary)
+    }
   }
 }
 
