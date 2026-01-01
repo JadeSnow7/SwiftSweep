@@ -13,6 +13,14 @@ public struct MediaAnalyzerView: View {
   @State private var showDirectoryPicker = false
   @State private var expandedGroups: Set<UUID> = []
   @State private var selectedForDeletion: Set<UUID> = []
+  @State private var isDeleting = false
+  @State private var deletionAlert: DeletionAlert?
+
+  private struct DeletionAlert: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
+  }
 
   public init() {}
 
@@ -38,6 +46,22 @@ public struct MediaAnalyzerView: View {
       allowedContentTypes: [.folder],
       onCompletion: handleDirectorySelection
     )
+    .alert(item: $deletionAlert) { alert in
+      Alert(
+        title: Text(alert.title),
+        message: Text(alert.message),
+        dismissButton: .default(Text("OK"))
+      )
+    }
+    .overlay {
+      if isDeleting {
+        Color.black.opacity(0.3)
+          .ignoresSafeArea()
+        ProgressView("Deleting...")
+          .padding()
+          .background(RoundedRectangle(cornerRadius: 10).fill(Color(NSColor.windowBackgroundColor)))
+      }
+    }
   }
 
   // MARK: - Header
@@ -276,7 +300,82 @@ public struct MediaAnalyzerView: View {
   }
 
   private func deleteSelected() {
-    // TODO: Implement deletion
+    guard let currentResult = result else { return }
+
+    isDeleting = true
+
+    Task {
+      var successCount = 0
+      var failCount = 0
+      var deletedBytes: Int64 = 0
+
+      // Find all files to delete
+      let filesToDelete = currentResult.similarGroups.flatMap { group in
+        group.duplicates.filter { selectedForDeletion.contains($0.id) }
+      }
+
+      let fm = FileManager.default
+
+      for file in filesToDelete {
+        do {
+          // Move to trash instead of permanent delete
+          try fm.trashItem(at: file.url, resultingItemURL: nil)
+          successCount += 1
+          deletedBytes += file.size
+        } catch {
+          failCount += 1
+          print("Failed to delete \(file.url.path): \(error)")
+        }
+      }
+
+      // Update UI on main thread
+      await MainActor.run {
+        isDeleting = false
+
+        // Remove deleted files from the result
+        if successCount > 0 {
+          var updatedGroups: [SimilarGroup] = []
+          for group in currentResult.similarGroups {
+            let remainingDuplicates = group.duplicates.filter {
+              !selectedForDeletion.contains($0.id)
+            }
+            if !remainingDuplicates.isEmpty {
+              // Create updated group with remaining duplicates
+              let updatedGroup = SimilarGroup(
+                representative: group.representative,
+                duplicates: remainingDuplicates
+              )
+              updatedGroups.append(updatedGroup)
+            }
+          }
+
+          result = MediaAnalysisResult(
+            scanResult: currentResult.scanResult,
+            similarGroups: updatedGroups
+          )
+          selectedForDeletion.removeAll()
+
+          // Show result alert
+          let sizeStr = ByteCountFormatter.string(fromByteCount: deletedBytes, countStyle: .file)
+          if failCount == 0 {
+            deletionAlert = DeletionAlert(
+              title: "Deletion Complete",
+              message: "Successfully moved \(successCount) file(s) to Trash, freed \(sizeStr)."
+            )
+          } else {
+            deletionAlert = DeletionAlert(
+              title: "Deletion Partial",
+              message: "Moved \(successCount) file(s) to Trash, \(failCount) failed."
+            )
+          }
+        } else if failCount > 0 {
+          deletionAlert = DeletionAlert(
+            title: "Deletion Failed",
+            message: "Failed to delete \(failCount) file(s). Check permissions."
+          )
+        }
+      }
+    }
   }
 
   // MARK: - Helpers
