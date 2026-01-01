@@ -40,7 +40,6 @@ public actor SimilarityDetector {
 
     // 精确验证候选对
     var unionFind = UnionFind(count: hashedFiles.count)
-    let fileIndices = Dictionary(uniqueKeysWithValues: hashedFiles.enumerated().map { ($1.id, $0) })
 
     var verified = 0
     for (i, j) in candidates {

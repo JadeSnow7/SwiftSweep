@@ -13,18 +13,13 @@ public actor pHashCache {
 
   public init(maxEntries: Int = 100_000) {
     self.maxEntries = maxEntries
-    setupDatabase()
-  }
-
-  deinit {
-    if let db = db {
-      sqlite3_close(db)
-    }
+    // Setup database synchronously during init
+    self.db = Self.openDatabase()
   }
 
   // MARK: - Setup
 
-  private func setupDatabase() {
+  private static func openDatabase() -> OpaquePointer? {
     let fileManager = FileManager.default
     let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
     let cacheDir = appSupport.appendingPathComponent("SwiftSweep", isDirectory: true)
@@ -33,8 +28,9 @@ public actor pHashCache {
 
     let dbPath = cacheDir.appendingPathComponent("phash_cache.db").path
 
+    var db: OpaquePointer?
     guard sqlite3_open(dbPath, &db) == SQLITE_OK else {
-      return
+      return nil
     }
 
     // 创建表
@@ -50,6 +46,13 @@ public actor pHashCache {
       """
 
     sqlite3_exec(db, createSQL, nil, nil, nil)
+    return db
+  }
+
+  deinit {
+    if let db = db {
+      sqlite3_close(db)
+    }
   }
 
   // MARK: - Query
@@ -103,7 +106,7 @@ public actor pHashCache {
     sqlite3_step(stmt)
 
     // 如果超过最大条目，删除最旧的
-    Task { await pruneIfNeeded() }
+    pruneIfNeeded()
   }
 
   // MARK: - Maintenance

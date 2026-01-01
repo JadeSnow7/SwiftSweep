@@ -113,7 +113,10 @@ public actor MediaScanner {
       return MediaScanResult(files: [], scanDuration: 0)
     }
 
-    for case let fileURL as URL in enumerator {
+    // Convert to array to avoid 'makeIterator' unavailable in async context warning
+    let allURLs = enumerator.allObjects.compactMap { $0 as? URL }
+
+    for fileURL in allURLs {
       if Task.isCancelled { break }
 
       guard let values = try? fileURL.resourceValues(forKeys: resourceKeys),
