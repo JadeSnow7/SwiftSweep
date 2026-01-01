@@ -139,6 +139,48 @@ public final class RuleSettings: @unchecked Sendable {
   public static func rules(in category: RuleCategory) -> [String] {
     allRuleIDs.filter { ruleCategories[$0] == category }
   }
+
+  // MARK: - Priority
+
+  private let prioritiesKey = "com.swiftsweep.rulePriorities"
+
+  /// Get priority for a rule (higher = more important). Default: 50
+  public func priority(forRule ruleID: String) -> Int {
+    if let priorities = userDefaults.dictionary(forKey: prioritiesKey) as? [String: Int],
+      let value = priorities[ruleID]
+    {
+      return value
+    }
+    return 50
+  }
+
+  /// Set priority for a rule
+  public func setPriority(forRule ruleID: String, value: Int) {
+    var priorities = userDefaults.dictionary(forKey: prioritiesKey) as? [String: Int] ?? [:]
+    priorities[ruleID] = value
+    userDefaults.set(priorities, forKey: prioritiesKey)
+  }
+
+  // MARK: - Gray Release / Feature Flags
+
+  private let grayReleaseKey = "com.swiftsweep.ruleGrayRelease"
+
+  /// Check if a rule is in gray release mode (experimental)
+  public func isGrayRelease(forRule ruleID: String) -> Bool {
+    if let flags = userDefaults.dictionary(forKey: grayReleaseKey) as? [String: Bool],
+      let value = flags[ruleID]
+    {
+      return value
+    }
+    return false
+  }
+
+  /// Set gray release flag for a rule
+  public func setGrayRelease(forRule ruleID: String, isGray: Bool) {
+    var flags = userDefaults.dictionary(forKey: grayReleaseKey) as? [String: Bool] ?? [:]
+    flags[ruleID] = isGray
+    userDefaults.set(flags, forKey: grayReleaseKey)
+  }
 }
 
 // MARK: - Rule Display Info

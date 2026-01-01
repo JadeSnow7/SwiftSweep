@@ -1,8 +1,13 @@
+import SwiftSweepCapCutPlugin
+import SwiftSweepCore
 import SwiftUI
 
 @main
 struct SwiftSweepApp: App {
   init() {
+    // Register Plugins
+    PluginManager.shared.register(CapCutPlugin())
+
     // Ensure the app appears in the Dock and has a UI
     NSApplication.shared.setActivationPolicy(.regular)
 
@@ -34,6 +39,7 @@ struct ContentView: View {
   @State private var selection: NavigationItem? = .status
   @StateObject private var navigationState = NavigationState.shared
   @State private var uninstallTargetURL: URL?
+  @AppStorage("PluginEnabled_com.swiftsweep.capcut") private var isCapCutEnabled = false
 
   enum NavigationItem: String, Hashable {
     case status
@@ -49,6 +55,7 @@ struct ContentView: View {
     case snapshot
     case mediaAnalyzer
     case ioAnalyzer
+    case capCut
     case settings
   }
 
@@ -103,6 +110,11 @@ struct ContentView: View {
           }
           NavigationLink(value: NavigationItem.ioAnalyzer) {
             Label("I/O Analyzer", systemImage: "chart.line.uptrend.xyaxis")
+          }
+          if isCapCutEnabled {
+            NavigationLink(value: NavigationItem.capCut) {
+              Label("CapCut Cleaner", systemImage: "video.badge.plus")
+            }
           }
         }
 
@@ -162,6 +174,8 @@ struct ContentView: View {
           MediaAnalyzerView()
         case .ioAnalyzer:
           IOAnalyzerView()
+        case .capCut:
+          Text("CapCut Cleaner Plugin")
         case .settings:
           SettingsView()
         case .none:

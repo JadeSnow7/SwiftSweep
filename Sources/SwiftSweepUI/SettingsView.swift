@@ -106,6 +106,11 @@ struct SettingsView: View {
           }
         }
 
+        // Plugins
+        SettingsSection(title: "Plugins", icon: "powerplug") {
+          PluginSettingsView()
+        }
+
         // Privileged Helper
         SettingsSection(title: "Privileged Helper", icon: "lock.shield") {
           HStack {

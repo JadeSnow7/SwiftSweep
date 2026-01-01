@@ -11,6 +11,7 @@ let package = Package(
     .executable(name: "swiftsweep", targets: ["SwiftSweepCLI"]),
     .executable(name: "SwiftSweepApp", targets: ["SwiftSweepUI"]),
     .library(name: "SwiftSweepCore", targets: ["SwiftSweepCore"]),
+    .library(name: "SwiftSweepCapCutPlugin", targets: ["SwiftSweepCapCutPlugin"]),
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
@@ -41,6 +42,8 @@ let package = Package(
         "Snapshot",
         "MediaAnalyzer",
         "IOAnalyzer",
+        "Plugin",
+        "SmartInterpreter",
       ]
     ),
 
@@ -59,9 +62,17 @@ let package = Package(
       name: "SwiftSweepUI",
       dependencies: [
         "SwiftSweepCore",
+        "SwiftSweepCapCutPlugin",
         .product(name: "SwiftSweepAppInventory", package: "SwiftSweepAppInventory"),
       ],
       path: "Sources/SwiftSweepUI"
+    ),
+
+    // CapCut Plugin
+    .target(
+      name: "SwiftSweepCapCutPlugin",
+      dependencies: ["SwiftSweepCore"],
+      path: "Sources/SwiftSweepCapCutPlugin"
     ),
 
     // Helper Tool
