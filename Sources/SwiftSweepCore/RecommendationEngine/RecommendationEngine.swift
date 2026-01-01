@@ -55,6 +55,16 @@ public final class RecommendationEngine: @unchecked Sendable {
     context: RecommendationContext,
     onProgress: ((String, Int, Int) -> Void)? = nil
   ) async throws -> [Recommendation] {
+    return try await PerformanceMonitor.shared.track("recommendation.evaluate") {
+      try await self.evaluateInternal(context: context, onProgress: onProgress)
+    }
+  }
+
+  /// Internal implementation of evaluate
+  private func evaluateInternal(
+    context: RecommendationContext,
+    onProgress: ((String, Int, Int) -> Void)? = nil
+  ) async throws -> [Recommendation] {
     // Get rules with sync access before async work
     let enabledRuleIDs = RuleSettings.shared.enabledRuleIDs
     let rulesToEvaluate: [any RecommendationRule] = rules.filter { enabledRuleIDs.contains($0.id) }

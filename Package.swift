@@ -38,6 +38,8 @@ let package = Package(
         "RecommendationEngine",
         "RecommendationEngine/Rules",
         "Snapshot",
+        "MediaAnalyzer",
+        "IOAnalyzer",
       ]
     ),
 

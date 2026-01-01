@@ -182,6 +182,18 @@ public final class AnalyzerEngine: @unchecked Sendable {
   ) async throws
     -> FileNode
   {
+    return try await PerformanceMonitor.shared.track("analyzer.buildTree") {
+      try await self.buildTreeInternal(
+        path: path, includeHiddenFiles: includeHiddenFiles, onProgress: onProgress)
+    }
+  }
+
+  /// Internal implementation of buildTree
+  private func buildTreeInternal(
+    path: String, includeHiddenFiles: Bool = false, onProgress: ((Int, Int64) -> Void)? = nil
+  ) async throws
+    -> FileNode
+  {
     let fileManager = FileManager.default
     let rootURL = URL(fileURLWithPath: path)
     let skipHidden = !includeHiddenFiles

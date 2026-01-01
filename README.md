@@ -24,6 +24,8 @@
 - 🗑️ **应用卸载** — 残留扫描 + 删除计划预览 + 执行
 - ⚡ **系统优化** — DNS 刷新、Spotlight 重建、内存清理、Dock/Finder 重置、字体缓存清理
 - 📦 **包与仓库管理** — Homebrew/npm/pip/gem 扫描与管理（卸载/升级），并支持 Git 仓库发现与维护（状态/体积/GC/Prune）
+- 🎬 **媒体智能分析** ⭐ NEW — pHash 感知哈希检测相似/重复视频图片，LSH 加速 O(n) 查找
+- 📊 **I/O 性能分析** ⭐ NEW — 实时吞吐量/延迟图表、热点路径检测、优化建议
 - 🧩 **模块化架构** — CLI + GUI 共享 `SwiftSweepCore`
 - 🛡️ **安全至上** — 预览模式 (dry-run)、二次确认、移入废纸篓优先、执行审计日志、权限受控（Helper / AppleScript）
 
@@ -128,11 +130,18 @@ SwiftSweep/
 │   │   ├── OptimizationEngine/   # 系统优化
 │   │   ├── PackageScanner/       # 包管理器扫描
 │   │   ├── GitRepoScanner/       # Git 仓库扫描与维护
+│   │   ├── MediaAnalyzer/        # 媒体智能分析 ⭐ NEW
+│   │   ├── IOAnalyzer/           # I/O 性能分析 ⭐ NEW
+│   │   ├── Shared/               # 共享组件 (PerformanceMonitor, ConcurrentScheduler)
 │   │   └── PrivilegedHelper/     # 权限管理
 │   ├── SwiftSweepCLI/            # 命令行工具
 │   └── SwiftSweepUI/             # SwiftUI 界面
 ├── Packages/                     # 内置子包（应用清单等）
 ├── Helper/                       # Privileged Helper 源码
+├── docs/                         # 文档
+│   ├── ARCHITECTURE.md           # 架构文档
+│   ├── MediaAnalyzer.md          # 媒体分析使用指南
+│   └── IOAnalyzer.md             # I/O 分析使用指南
 └── Tests/                        # 单元测试
 ```
 
@@ -162,6 +171,9 @@ swift run swiftsweep analyze ~/Documents
 ## 📚 文档
 
 - `PROJECT_DESIGN.md`：整体架构与核心模块说明
+- `docs/ARCHITECTURE.md`：模块架构与设计原则
+- `docs/MediaAnalyzer.md`：媒体智能分析使用指南
+- `docs/IOAnalyzer.md`：I/O 性能分析使用指南
 - `docs/INTELLIGENT_ANALYSIS.md`：智能分析能力边界与路线图
 
 ---

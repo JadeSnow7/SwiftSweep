@@ -109,14 +109,35 @@ public final class CleanupEngine {
   public func performRobustCleanup(items: [CleanupItem], dryRun: Bool = false) async
     -> [CleanupResultItem]
   {
+    // Use simple track since this function doesn't throw
+    let start = mach_absolute_time()
     logger.info("Starting robust cleanup. Dry run: \(dryRun)")
 
     var results: [CleanupResultItem] = []
 
     for item in items where item.isSelected {
+      if Task.isCancelled { break }
       let result = await deleteItemChecked(item, dryRun: dryRun)
       results.append(result)
     }
+
+    // Record metrics manually
+    let end = mach_absolute_time()
+    var info = mach_timebase_info_data_t()
+    mach_timebase_info(&info)
+    let nanos = (end - start) * UInt64(info.numer) / UInt64(info.denom)
+
+    await PerformanceMonitor.shared.record(
+      OperationMetrics(
+        operationName: "cleanup.robust",
+        startTicks: start,
+        endTicks: end,
+        durationNanos: nanos,
+        itemsProcessed: results.count,
+        bytesProcessed: results.reduce(0) { $0 + $1.size },
+        outcome: Task.isCancelled ? .cancelled : .success
+      )
+    )
 
     return results
   }
