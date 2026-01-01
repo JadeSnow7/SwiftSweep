@@ -85,6 +85,16 @@ struct StatusView: View {
               progress: monitor.metrics.batteryLevel / 100
             )
           }
+
+          // Disk I/O Card (uses IOAnalyzer if tracing)
+          MetricCard(
+            title: "Disk I/O",
+            value: "↓ " + formatSpeed(monitor.ioReadRate),
+            subtitle: "↑ " + formatSpeed(monitor.ioWriteRate),
+            icon: "arrow.up.arrow.down.circle",
+            color: ioColor(monitor.ioReadRate + monitor.ioWriteRate),
+            progress: 0
+          )
         }
 
         Spacer()
@@ -122,17 +132,36 @@ struct StatusView: View {
     if mbps < 1.0 { return String(format: "%.1f KB/s", mbps * 1024) }
     return String(format: "%.1f MB/s", mbps)
   }
+
+  func ioColor(_ totalMBps: Double) -> Color {
+    if totalMBps > 50 { return .red }
+    if totalMBps > 20 { return .orange }
+    if totalMBps > 5 { return .yellow }
+    return .green
+  }
 }
 
 @MainActor
 class StatusMonitorViewModel: ObservableObject {
   @Published var metrics = SystemMonitor.SystemMetrics()
   @Published var isLoading = false
+  @Published var ioReadRate: Double = 0  // MB/s
+  @Published var ioWriteRate: Double = 0  // MB/s
 
   private var timer: Timer?
+  private var lastIOSlice: IOTimeSlice?
 
   func startMonitoring() {
     refresh()
+    // Start IO tracing for this session
+    Task {
+      await IOAnalyzer.shared.startAnalysis { [weak self] slice in
+        Task { @MainActor [weak self] in
+          self?.ioReadRate = slice.readThroughput / (1024 * 1024)  // bytes -> MB
+          self?.ioWriteRate = slice.writeThroughput / (1024 * 1024)
+        }
+      }
+    }
     timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
       Task { @MainActor [weak self] in
         self?.refresh()
@@ -143,15 +172,16 @@ class StatusMonitorViewModel: ObservableObject {
   func stopMonitoring() {
     timer?.invalidate()
     timer = nil
+    Task {
+      await IOAnalyzer.shared.stopAnalysis()
+    }
   }
 
   func refresh() {
     Task {
       do {
         let newMetrics = try await SystemMonitor.shared.getMetrics()
-        DispatchQueue.main.async {
-          self.metrics = newMetrics
-        }
+        self.metrics = newMetrics
       } catch {
         print("Failed to fetch metrics: \(error)")
       }

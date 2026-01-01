@@ -47,6 +47,8 @@ struct ContentView: View {
     case ghostBuster
     case galaxy
     case snapshot
+    case mediaAnalyzer
+    case ioAnalyzer
     case settings
   }
 
@@ -92,6 +94,12 @@ struct ContentView: View {
           }
           NavigationLink(value: NavigationItem.snapshot) {
             Label("Time Machine", systemImage: "camera.on.rectangle")
+          }
+          NavigationLink(value: NavigationItem.mediaAnalyzer) {
+            Label("Media Analyzer", systemImage: "photo.stack")
+          }
+          NavigationLink(value: NavigationItem.ioAnalyzer) {
+            Label("I/O Analyzer", systemImage: "chart.line.uptrend.xyaxis")
           }
         }
 
@@ -147,6 +155,10 @@ struct ContentView: View {
           } else {
             Text("Time Machine requires macOS 13.0 or later")
           }
+        case .mediaAnalyzer:
+          MediaAnalyzerView()
+        case .ioAnalyzer:
+          IOAnalyzerView()
         case .settings:
           SettingsView()
         case .none:
