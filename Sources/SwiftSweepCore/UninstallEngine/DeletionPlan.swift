@@ -350,11 +350,12 @@ public struct PathValidator {
 extension UninstallEngine {
 
   /// 创建删除计划（异步计算体积）
+  /// 支持：1) 正常卸载应用+残留 2) 仅清理孤立残留（当应用已被删除）
   public func createDeletionPlan(for app: InstalledApp) async throws -> DeletionPlan {
     logger.info("Creating deletion plan for: \(app.name)")
 
-    // 验证应用可删除
-    try PathValidator.validateApp(app)
+    let fm = FileManager.default
+    let appExists = fm.fileExists(atPath: app.path)
 
     var items: [DeletionItem] = []
 
@@ -375,23 +376,36 @@ extension UninstallEngine {
       }
     }
 
-    // 添加应用本体（放在最后删除）
-    // 计算应用体积（如果还没计算）
-    var appSize = app.size
-    if appSize == 0 {
-      appSize = await calculateSizeAsync(at: app.path)
+    // 仅当应用存在时才添加应用本体
+    if appExists {
+      // 验证应用可删除
+      try PathValidator.validateApp(app)
+
+      // 计算应用体积（如果还没计算）
+      var appSize = app.size
+      if appSize == 0 {
+        appSize = await calculateSizeAsync(at: app.path)
+      }
+
+      let appResolvedPath = try PathValidator.validate(path: app.path)
+      let appItem = DeletionItem(
+        path: app.path,
+        resolvedPath: appResolvedPath,
+        kind: .app,
+        size: appSize
+      )
+      items.append(appItem)
+    } else {
+      // 应用已被删除，仅清理残留
+      logger.info("App bundle already deleted, cleaning up \(items.count) orphan residuals")
     }
 
-    let appResolvedPath = try PathValidator.validate(path: app.path)
-    let appItem = DeletionItem(
-      path: app.path,
-      resolvedPath: appResolvedPath,
-      kind: .app,
-      size: appSize
-    )
-    items.append(appItem)
+    // 如果没有任何可删除项，抛出错误
+    if items.isEmpty {
+      throw PathValidationError.pathNotExists(app.path)
+    }
 
-    logger.info("Deletion plan created with \(items.count) items")
+    logger.info("Deletion plan created with \(items.count) items (app exists: \(appExists))")
     return DeletionPlan(app: app, items: items)
   }
 
