@@ -1,6 +1,11 @@
-import SwiftSweepCapCutPlugin
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 import SwiftUI
+
+#if canImport(SwiftSweepCapCutPlugin)
+  import SwiftSweepCapCutPlugin
+#endif
 
 @main
 struct SwiftSweepApp: App {

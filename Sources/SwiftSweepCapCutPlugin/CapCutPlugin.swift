@@ -1,6 +1,9 @@
 import Foundation
 import Logging
-import SwiftSweepCore
+
+#if canImport(SwiftSweepCore)
+  import SwiftSweepCore
+#endif
 
 public struct CapCutPlugin: SweepPlugin {
   public let id = "com.swiftsweep.capcut"

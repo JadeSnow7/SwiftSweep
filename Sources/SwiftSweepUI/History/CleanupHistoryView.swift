@@ -1,4 +1,6 @@
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 import SwiftUI
 
 /// Cleanup History View - Shows historical cleanup comparisons

@@ -1,4 +1,6 @@
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 import SwiftUI
 
 /// Unified Storage Analyzer View

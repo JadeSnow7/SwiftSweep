@@ -1,4 +1,6 @@
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 import SwiftUI
 
 /// Advanced Insights Configuration View (Commercial Frontend Showcase)

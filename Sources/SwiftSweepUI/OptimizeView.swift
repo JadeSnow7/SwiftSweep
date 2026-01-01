@@ -1,6 +1,8 @@
 import SwiftUI
 #if canImport(SwiftSweepCore)
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 #endif
 
 struct OptimizeView: View {

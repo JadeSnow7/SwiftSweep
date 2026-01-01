@@ -1,4 +1,6 @@
+#if canImport(SwiftSweepCore)
 import SwiftSweepCore
+#endif
 import SwiftUI
 
 /// Decision Graph View - Visualizes explanation evidence as a tree/graph.
