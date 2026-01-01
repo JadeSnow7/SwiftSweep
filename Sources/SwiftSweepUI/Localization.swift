@@ -77,6 +77,9 @@ enum L10n {
     static let applications = "nav.applications"
     static let packages = "nav.packages"
     static let settings = "nav.settings"
+    static let appManagement = "nav.appManagement"
+    static let developer = "nav.developer"
+    static let media = "nav.media"
   }
 
   // MARK: - Status

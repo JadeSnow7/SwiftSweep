@@ -10,6 +10,9 @@
 "nav.applications" = "应用程序";
 "nav.packages" = "软件包";
 "nav.settings" = "设置";
+"nav.appManagement" = "应用管理";
+"nav.developer" = "开发者工具";
+"nav.media" = "影音与存储";
 
 /* Status View */
 "status.title" = "系统状态";

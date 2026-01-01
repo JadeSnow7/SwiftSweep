@@ -10,6 +10,9 @@
 "nav.applications" = "Applications";
 "nav.packages" = "Packages";
 "nav.settings" = "Settings";
+"nav.appManagement" = "App Management";
+"nav.developer" = "Developer Tools";
+"nav.media" = "Media & Storage";
 
 /* Status View */
 "status.title" = "System Status";
