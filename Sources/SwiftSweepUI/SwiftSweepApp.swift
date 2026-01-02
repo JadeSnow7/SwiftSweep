@@ -1,7 +1,8 @@
-#if canImport(SwiftSweepCore)
-import SwiftSweepCore
-#endif
 import SwiftUI
+
+#if canImport(SwiftSweepCore)
+  import SwiftSweepCore
+#endif
 
 #if canImport(SwiftSweepCapCutPlugin)
   import SwiftSweepCapCutPlugin
@@ -26,6 +27,7 @@ struct SwiftSweepApp: App {
     WindowGroup {
       ContentView()
         .frame(minWidth: 900, minHeight: 700)
+        .withMotionConfig()  // Enable global motion configuration
     }
     .windowResizability(.contentSize)
     .commands {

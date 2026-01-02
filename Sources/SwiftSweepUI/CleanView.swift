@@ -38,8 +38,8 @@ struct CleanView: View {
         if viewModel.isScanning {
           VStack(alignment: .leading, spacing: 10) {
             HStack {
-              ProgressView()
-                .scaleEffect(0.8)
+              PulseView(icon: "magnifyingglass", color: .blue)
+                .frame(width: 40, height: 40)
               Text("Scanning system...")
                 .font(.headline)
             }
@@ -47,6 +47,9 @@ struct CleanView: View {
             Text("Found \(viewModel.items.count) items...")
               .font(.caption)
               .foregroundColor(.secondary)
+
+            IndeterminateProgressBar(color: .blue, height: 4)
+              .padding(.top, 4)
           }
           .padding()
           .background(Color(nsColor: .controlBackgroundColor))
@@ -404,7 +407,8 @@ class CleanupViewModel: ObservableObject {
       }
     }
 
-    return CleanupResult(successCount: successCount, failedCount: failedCount, freedBytes: freedBytes)
+    return CleanupResult(
+      successCount: successCount, failedCount: failedCount, freedBytes: freedBytes)
   }
 
   func reset() {

@@ -179,8 +179,8 @@ struct InsightsView: View {
 
   private var loadingView: some View {
     VStack(spacing: 16) {
-      ProgressView()
-        .scaleEffect(1.5)
+      PulseView(icon: "brain", color: .blue)
+        .frame(width: 60, height: 60)
       Text(loadingPhase.isEmpty ? "Analyzing your system..." : loadingPhase)
         .foregroundColor(.secondary)
     }
@@ -210,9 +210,7 @@ struct InsightsView: View {
 
   private var emptyStateView: some View {
     VStack(spacing: 16) {
-      Image(systemName: "checkmark.circle.fill")
-        .font(.system(size: 64))
-        .foregroundColor(.green)
+      SuccessCheckmark(size: 64, color: .green)
       Text("All Good!")
         .font(.title2.bold())
       Text("No recommendations at this time.\nYour system is in great shape.")

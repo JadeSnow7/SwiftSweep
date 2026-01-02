@@ -27,7 +27,7 @@ struct StatusView: View {
             Image(systemName: "arrow.clockwise")
               .font(.title3)
           }
-          .buttonStyle(.borderless)
+          .animatedButton()
           .disabled(monitor.isLoading)
         }
         .padding(.bottom)
@@ -197,6 +197,9 @@ struct MetricCard: View {
   let color: Color
   let progress: Double
 
+  @State private var isHovered = false
+  @Environment(\.motionConfig) private var motion
+
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
@@ -229,8 +232,17 @@ struct MetricCard: View {
     }
     .padding()
     .frame(height: 110)
-    .background(Color(nsColor: .controlBackgroundColor))
-    .cornerRadius(12)
-    .shadow(color: .black.opacity(0.05), radius: 2)
+    .background(
+      RoundedRectangle(cornerRadius: 12)
+        .fill(Color(nsColor: .controlBackgroundColor))
+        .shadow(
+          color: .black.opacity(isHovered ? 0.12 : 0.05),
+          radius: isHovered ? 8 : 2,
+          y: isHovered ? 4 : 1
+        )
+    )
+    .scaleEffect(isHovered && !motion.reduceMotion ? 1.02 : 1.0)
+    .animation(motion.reduceMotion ? nil : .spring(response: 0.3), value: isHovered)
+    .onHover { isHovered = $0 }
   }
 }
