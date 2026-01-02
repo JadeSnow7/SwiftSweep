@@ -70,65 +70,52 @@ struct ContentView: View {
     NavigationSplitView {
       List(selection: $selection) {
         Section(L10n.Nav.system.localized) {
-          NavigationLink(value: NavigationItem.status) {
-            Label(L10n.Nav.status.localized, systemImage: "chart.bar.fill")
-          }
-          NavigationLink(value: NavigationItem.insights) {
-            Label("Insights", systemImage: "lightbulb.fill")
-          }
+          SidebarNavLink(
+            value: NavigationItem.status, title: L10n.Nav.status.localized, icon: "chart.bar.fill")
+          SidebarNavLink(value: NavigationItem.insights, title: "Insights", icon: "lightbulb.fill")
         }
 
         Section(L10n.Nav.maintenance.localized) {
-          NavigationLink(value: NavigationItem.clean) {
-            Label(L10n.Nav.clean.localized, systemImage: "sparkles")
-          }
-          NavigationLink(value: NavigationItem.optimize) {
-            Label(L10n.Nav.optimize.localized, systemImage: "bolt.fill")
-          }
+          SidebarNavLink(
+            value: NavigationItem.clean, title: L10n.Nav.clean.localized, icon: "sparkles")
+          SidebarNavLink(
+            value: NavigationItem.optimize, title: L10n.Nav.optimize.localized, icon: "bolt.fill")
         }
 
         Section(L10n.Nav.appManagement.localized) {
-          NavigationLink(value: NavigationItem.applications) {
-            Label(L10n.Nav.applications.localized, systemImage: "square.grid.2x2")
-          }
+          SidebarNavLink(
+            value: NavigationItem.applications, title: L10n.Nav.applications.localized,
+            icon: "square.grid.2x2")
         }
 
         Section(L10n.Nav.media.localized) {
-          NavigationLink(value: NavigationItem.analyze) {
-            Label(L10n.Nav.analyze.localized, systemImage: "magnifyingglass")
-          }
-          NavigationLink(value: NavigationItem.mediaAnalyzer) {
-            Label("Media Analyzer", systemImage: "photo.stack")
-          }
-          NavigationLink(value: NavigationItem.snapshot) {
-            Label("Time Machine", systemImage: "camera.on.rectangle")
-          }
+          SidebarNavLink(
+            value: NavigationItem.analyze, title: L10n.Nav.analyze.localized,
+            icon: "magnifyingglass")
+          SidebarNavLink(
+            value: NavigationItem.mediaAnalyzer, title: "Media Analyzer", icon: "photo.stack")
+          SidebarNavLink(
+            value: NavigationItem.snapshot, title: "Time Machine", icon: "camera.on.rectangle")
         }
 
         Section(L10n.Nav.developer.localized) {
-          NavigationLink(value: NavigationItem.packages) {
-            Label(L10n.Nav.packages.localized, systemImage: "shippingbox")
-          }
-          NavigationLink(value: NavigationItem.ghostBuster) {
-            Label("Ghost Buster", systemImage: "figure.wave")
-          }
-          NavigationLink(value: NavigationItem.galaxy) {
-            Label("Galaxy", systemImage: "circle.hexagongrid")
-          }
-          NavigationLink(value: NavigationItem.ioAnalyzer) {
-            Label("I/O Analyzer", systemImage: "chart.line.uptrend.xyaxis")
-          }
+          SidebarNavLink(
+            value: NavigationItem.packages, title: L10n.Nav.packages.localized, icon: "shippingbox")
+          SidebarNavLink(
+            value: NavigationItem.ghostBuster, title: "Ghost Buster", icon: "figure.wave")
+          SidebarNavLink(value: NavigationItem.galaxy, title: "Galaxy", icon: "circle.hexagongrid")
+          SidebarNavLink(
+            value: NavigationItem.ioAnalyzer, title: "I/O Analyzer",
+            icon: "chart.line.uptrend.xyaxis")
           if isCapCutEnabled {
-            NavigationLink(value: NavigationItem.capCut) {
-              Label("CapCut Cleaner", systemImage: "video.badge.plus")
-            }
+            SidebarNavLink(
+              value: NavigationItem.capCut, title: "CapCut Cleaner", icon: "video.badge.plus")
           }
         }
 
         Section(L10n.Nav.settings.localized) {
-          NavigationLink(value: NavigationItem.settings) {
-            Label(L10n.Nav.settings.localized, systemImage: "gear")
-          }
+          SidebarNavLink(
+            value: NavigationItem.settings, title: L10n.Nav.settings.localized, icon: "gear")
         }
       }
       .navigationTitle("SwiftSweep")
@@ -197,6 +184,40 @@ struct ContentView: View {
       selection = .uninstall
       navigationState.clearUninstallRequest()
     }
+  }
+}
+
+// MARK: - Sidebar Navigation Link with Hover Effect
+
+/// Custom NavigationLink wrapper with hover animation for sidebar
+struct SidebarNavLink<Value: Hashable>: View {
+  let value: Value
+  let title: String
+  let icon: String
+
+  @State private var isHovered = false
+  @Environment(\.motionConfig) private var motion
+
+  var body: some View {
+    NavigationLink(value: value) {
+      Label(title, systemImage: icon)
+    }
+    .padding(.vertical, 2)
+    .background(
+      RoundedRectangle(cornerRadius: 6)
+        .fill(isHovered ? Color.accentColor.opacity(0.08) : Color.clear)
+        .shadow(
+          color: isHovered ? Color.black.opacity(0.08) : Color.clear,
+          radius: isHovered ? 4 : 0,
+          y: isHovered ? 2 : 0
+        )
+    )
+    .scaleEffect(isHovered && !motion.reduceMotion ? 1.02 : 1.0)
+    .animation(
+      motion.reduceMotion ? nil : .spring(response: 0.2, dampingFraction: 0.8),
+      value: isHovered
+    )
+    .onHover { isHovered = $0 }
   }
 }
 
