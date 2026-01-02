@@ -85,7 +85,7 @@ struct ContentView: View {
         Section(L10n.Nav.appManagement.localized) {
           SidebarNavLink(
             value: NavigationItem.applications, title: L10n.Nav.applications.localized,
-            icon: "square.grid.2x2")
+            shortTitle: "Apps", icon: "square.grid.2x2")
         }
 
         Section(L10n.Nav.media.localized) {
@@ -93,23 +93,28 @@ struct ContentView: View {
             value: NavigationItem.analyze, title: L10n.Nav.analyze.localized,
             icon: "magnifyingglass")
           SidebarNavLink(
-            value: NavigationItem.mediaAnalyzer, title: "Media Analyzer", icon: "photo.stack")
+            value: NavigationItem.mediaAnalyzer, title: "Media Analyzer",
+            shortTitle: "Media", icon: "photo.stack")
           SidebarNavLink(
-            value: NavigationItem.snapshot, title: "Time Machine", icon: "camera.on.rectangle")
+            value: NavigationItem.snapshot, title: "Time Machine",
+            shortTitle: "Snapshot", icon: "camera.on.rectangle")
         }
 
         Section(L10n.Nav.developer.localized) {
           SidebarNavLink(
-            value: NavigationItem.packages, title: L10n.Nav.packages.localized, icon: "shippingbox")
+            value: NavigationItem.packages, title: L10n.Nav.packages.localized,
+            shortTitle: "Pkgs", icon: "shippingbox")
           SidebarNavLink(
-            value: NavigationItem.ghostBuster, title: "Ghost Buster", icon: "figure.wave")
+            value: NavigationItem.ghostBuster, title: "Ghost Buster",
+            shortTitle: "Ghost", icon: "figure.wave")
           SidebarNavLink(value: NavigationItem.galaxy, title: "Galaxy", icon: "circle.hexagongrid")
           SidebarNavLink(
             value: NavigationItem.ioAnalyzer, title: "I/O Analyzer",
-            icon: "chart.line.uptrend.xyaxis")
+            shortTitle: "I/O", icon: "chart.line.uptrend.xyaxis")
           if isCapCutEnabled {
             SidebarNavLink(
-              value: NavigationItem.capCut, title: "CapCut Cleaner", icon: "video.badge.plus")
+              value: NavigationItem.capCut, title: "CapCut Cleaner",
+              shortTitle: "CapCut", icon: "video.badge.plus")
           }
         }
 
@@ -118,8 +123,10 @@ struct ContentView: View {
             value: NavigationItem.settings, title: L10n.Nav.settings.localized, icon: "gear")
         }
       }
+      .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
       .navigationTitle("SwiftSweep")
       .listStyle(SidebarListStyle())
+      .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 280)
     } detail: {
       Group {
         switch selection {
@@ -190,38 +197,58 @@ struct ContentView: View {
 // MARK: - Sidebar Navigation Link with Hover Effect
 
 /// Custom NavigationLink wrapper with hover animation for sidebar
-/// Simplified version without DragGesture to avoid lag
+/// Supports short/long text with ViewThatFits for adaptive display
 struct SidebarNavLink<Value: Hashable>: View {
   let value: Value
   let title: String
+  let shortTitle: String?
   let icon: String
 
   @State private var isHovered = false
   @Environment(\.motionConfig) private var motion
 
+  init(value: Value, title: String, shortTitle: String? = nil, icon: String) {
+    self.value = value
+    self.title = title
+    self.shortTitle = shortTitle
+    self.icon = icon
+  }
+
   var body: some View {
     NavigationLink(value: value) {
-      HStack(spacing: 8) {
+      HStack(spacing: 6) {
         Image(systemName: icon)
           .foregroundColor(isHovered ? .accentColor : .secondary)
           .font(.body)
-        Text(title)
-          .foregroundColor(.primary)
-        Spacer()
+          .frame(width: 18)
+
+        // ViewThatFits: try full title, fallback to short title
+        ViewThatFits(in: .horizontal) {
+          Text(title)
+            .lineLimit(1)
+
+          if let short = shortTitle {
+            Text(short)
+              .lineLimit(1)
+          }
+        }
+        .foregroundColor(.primary)
       }
-      .padding(.horizontal, 10)
-      .padding(.vertical, 8)
+      .padding(.horizontal, 6)
+      .padding(.vertical, 6)
+      .frame(maxWidth: .infinity, alignment: .leading)
       .background(
-        RoundedRectangle(cornerRadius: 8)
+        RoundedRectangle(cornerRadius: 6)
           .fill(isHovered ? Color.accentColor.opacity(0.12) : Color.clear)
       )
       .overlay(
-        RoundedRectangle(cornerRadius: 8)
+        RoundedRectangle(cornerRadius: 6)
           .stroke(isHovered ? Color.accentColor.opacity(0.3) : Color.clear, lineWidth: 1)
       )
       .scaleEffect(isHovered && !motion.reduceMotion ? 1.01 : 1.0)
     }
     .buttonStyle(.plain)
+    .help(title)  // Full title on hover tooltip
     .animation(
       motion.reduceMotion ? nil : .easeOut(duration: 0.15),
       value: isHovered
