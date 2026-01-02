@@ -1,0 +1,19 @@
+theme: jekyll-theme-minimal
+title: SwiftSweep
+description: Smart macOS System Cleaner with AI Insights
+baseurl: ""
+url: "https://jadesnow7.github.io/SwiftSweep"
+
+# Social links
+github_username: JadeSnow7
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Exclude from build
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
