@@ -59,6 +59,8 @@ targets:
         LSMinimumSystemVersion: "13.0"
         NSHighResolutionCapable: true
         LSApplicationCategoryType: public.app-category.utilities
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
     dependencies:
       - target: SwiftSweepHelper
         embed: false
