@@ -189,114 +189,44 @@ struct ContentView: View {
 
 // MARK: - Sidebar Navigation Link with Hover Effect
 
-/// Custom NavigationLink wrapper with hover animation and selection transition for sidebar
+/// Custom NavigationLink wrapper with hover animation for sidebar
+/// Simplified version without DragGesture to avoid lag
 struct SidebarNavLink<Value: Hashable>: View {
   let value: Value
   let title: String
   let icon: String
 
   @State private var isHovered = false
-  @State private var isPressed = false
   @Environment(\.motionConfig) private var motion
 
   var body: some View {
     NavigationLink(value: value) {
-      Label(title, systemImage: icon)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
+      HStack(spacing: 8) {
+        Image(systemName: icon)
+          .foregroundColor(isHovered ? .accentColor : .secondary)
+          .font(.body)
+        Text(title)
+          .foregroundColor(.primary)
+        Spacer()
+      }
+      .padding(.horizontal, 10)
+      .padding(.vertical, 8)
+      .background(
+        RoundedRectangle(cornerRadius: 8)
+          .fill(isHovered ? Color.accentColor.opacity(0.12) : Color.clear)
+      )
+      .overlay(
+        RoundedRectangle(cornerRadius: 8)
+          .stroke(isHovered ? Color.accentColor.opacity(0.3) : Color.clear, lineWidth: 1)
+      )
+      .scaleEffect(isHovered && !motion.reduceMotion ? 1.01 : 1.0)
     }
-    .buttonStyle(SidebarButtonStyle(isHovered: isHovered, isPressed: isPressed, motion: motion))
-    .onHover { isHovered = $0 }
-    .simultaneousGesture(
-      DragGesture(minimumDistance: 0)
-        .onChanged { _ in
-          if !isPressed { isPressed = true }
-        }
-        .onEnded { _ in
-          isPressed = false
-        }
+    .buttonStyle(.plain)
+    .animation(
+      motion.reduceMotion ? nil : .easeOut(duration: 0.15),
+      value: isHovered
     )
-  }
-}
-
-/// Custom button style for sidebar items with hover → press → select transitions
-struct SidebarButtonStyle: ButtonStyle {
-  let isHovered: Bool
-  let isPressed: Bool
-  let motion: MotionConfig
-
-  func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .padding(.horizontal, 8)
-      .padding(.vertical, 6)
-      .background(backgroundView)
-      .scaleEffect(scaleValue)
-      .animation(
-        motion.reduceMotion ? nil : .spring(response: 0.2, dampingFraction: 0.75),
-        value: isHovered
-      )
-      .animation(
-        motion.reduceMotion ? nil : .spring(response: 0.15, dampingFraction: 0.8),
-        value: isPressed
-      )
-  }
-
-  private var backgroundView: some View {
-    ZStack {
-      // Hover shadow layer
-      RoundedRectangle(cornerRadius: 8)
-        .fill(Color.accentColor.opacity(hoverOpacity))
-        .shadow(
-          color: Color.black.opacity(shadowOpacity),
-          radius: shadowRadius,
-          y: shadowY
-        )
-
-      // Press/selection transition layer
-      RoundedRectangle(cornerRadius: 8)
-        .stroke(Color.accentColor.opacity(borderOpacity), lineWidth: borderWidth)
-    }
-  }
-
-  // MARK: - Computed Animation Values
-
-  private var hoverOpacity: Double {
-    if isPressed { return 0.15 }
-    if isHovered { return 0.08 }
-    return 0
-  }
-
-  private var shadowOpacity: Double {
-    if isPressed { return 0.02 }
-    if isHovered { return 0.08 }
-    return 0
-  }
-
-  private var shadowRadius: CGFloat {
-    if isPressed { return 1 }
-    if isHovered { return 4 }
-    return 0
-  }
-
-  private var shadowY: CGFloat {
-    if isPressed { return 0 }
-    if isHovered { return 2 }
-    return 0
-  }
-
-  private var borderOpacity: Double {
-    if isPressed { return 0.6 }
-    return 0
-  }
-
-  private var borderWidth: CGFloat {
-    isPressed ? 2 : 0
-  }
-
-  private var scaleValue: CGFloat {
-    if isPressed && !motion.reduceMotion { return 0.98 }
-    if isHovered && !motion.reduceMotion { return 1.02 }
-    return 1.0
+    .onHover { isHovered = $0 }
   }
 }
 
