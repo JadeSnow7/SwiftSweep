@@ -6,6 +6,7 @@ import SwiftUI
 
 public struct PluginSettingsView: View {
   @State private var plugins: [any SweepPlugin] = []
+  @State private var showPluginStore = false
 
   public init() {}
 
@@ -14,6 +15,24 @@ public struct PluginSettingsView: View {
       // Sys AI Box Integration
       Section(header: Text("Sys AI Box")) {
         SysAIBoxSettingsRow()
+      }
+
+      // Plugin Store
+      Section(header: Text("Plugin Store")) {
+        HStack {
+          VStack(alignment: .leading, spacing: 4) {
+            Text("Browse Plugins")
+              .font(.headline)
+            Text("Discover and install data pack plugins")
+              .font(.caption)
+              .foregroundColor(.secondary)
+          }
+          Spacer()
+          Button(action: { showPluginStore = true }) {
+            Label("Browse Store", systemImage: "bag")
+          }
+          .buttonStyle(.borderedProminent)
+        }
       }
 
       Section(header: Text("Installed Plugins")) {
@@ -29,6 +48,10 @@ public struct PluginSettingsView: View {
     }
     .onAppear {
       self.plugins = PluginManager.shared.allPlugins
+    }
+    .sheet(isPresented: $showPluginStore) {
+      PluginStoreView()
+        .frame(minWidth: 500, minHeight: 400)
     }
   }
 }

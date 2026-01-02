@@ -1,0 +1,206 @@
+import CommonCrypto
+import Foundation
+
+// MARK: - Plugin Catalog Models
+
+/// Represents the plugin catalog fetched from remote registry.
+public struct PluginCatalog: Codable, Sendable {
+  public let version: String
+  public let plugins: [PluginManifest]
+}
+
+/// Metadata for a single plugin available in the store.
+public struct PluginManifest: Codable, Sendable, Identifiable {
+  public let id: String
+  public let name: String
+  public let version: String
+  public let description: String
+  public let author: String
+  public let minAppVersion: String
+  public let downloadUrl: String
+  public let checksum: String  // sha256:...
+  public let category: String?
+  public let iconUrl: String?
+
+  enum CodingKeys: String, CodingKey {
+    case id, name, version, description, author
+    case minAppVersion = "min_app_version"
+    case downloadUrl = "download_url"
+    case checksum
+    case category
+    case iconUrl = "icon_url"
+  }
+}
+
+/// Represents an installed plugin data pack.
+public struct InstalledPlugin: Codable, Sendable, Identifiable {
+  public var id: String { manifestId }
+  public let manifestId: String
+  public let name: String
+  public let version: String
+  public let installedAt: Date
+  public let localPath: URL
+}
+
+// MARK: - Plugin Store Manager
+
+/// Manages plugin catalog fetching, installation, and removal.
+/// Only handles **data packs** (rules, templates, metadata), not executable code.
+public actor PluginStoreManager {
+  public static let shared = PluginStoreManager()
+
+  private let catalogUrl = URL(
+    string: "https://raw.githubusercontent.com/JadeSnow7/SwiftSweep/main/plugins.json")!
+  private let pluginsDirectory: URL
+
+  private var installedPlugins: [InstalledPlugin] = []
+
+  private init() {
+    // ~/Library/Application Support/SwiftSweep/Plugins
+    let appSupport = FileManager.default.urls(
+      for: .applicationSupportDirectory, in: .userDomainMask
+    ).first!
+    pluginsDirectory = appSupport.appendingPathComponent("SwiftSweep/Plugins", isDirectory: true)
+
+    // Ensure directory exists
+    try? FileManager.default.createDirectory(
+      at: pluginsDirectory, withIntermediateDirectories: true)
+
+    // Load installed plugins
+    loadInstalledPlugins()
+  }
+
+  // MARK: - Catalog
+
+  /// Fetch the plugin catalog from the remote registry.
+  public func fetchCatalog() async throws -> PluginCatalog {
+    let (data, response) = try await URLSession.shared.data(from: catalogUrl)
+
+    guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+      throw StoreError.fetchFailed
+    }
+
+    let decoder = JSONDecoder()
+    return try decoder.decode(PluginCatalog.self, from: data)
+  }
+
+  // MARK: - Installation
+
+  /// Install a plugin data pack from the catalog.
+  public func install(manifest: PluginManifest) async throws {
+    guard let downloadUrl = URL(string: manifest.downloadUrl) else {
+      throw StoreError.invalidUrl
+    }
+
+    // Download the data pack
+    let (tempUrl, _) = try await URLSession.shared.download(from: downloadUrl)
+
+    // Verify checksum
+    let fileData = try Data(contentsOf: tempUrl)
+    let computedChecksum = "sha256:" + fileData.sha256Hash
+    guard computedChecksum == manifest.checksum else {
+      throw StoreError.checksumMismatch
+    }
+
+    // Extract to plugins directory
+    let pluginDir = pluginsDirectory.appendingPathComponent(manifest.id, isDirectory: true)
+    try? FileManager.default.removeItem(at: pluginDir)
+    try FileManager.default.createDirectory(at: pluginDir, withIntermediateDirectories: true)
+
+    // Unzip (simple implementation - assumes zip file)
+    let unzipProcess = Process()
+    unzipProcess.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+    unzipProcess.arguments = ["-o", tempUrl.path, "-d", pluginDir.path]
+    try unzipProcess.run()
+    unzipProcess.waitUntilExit()
+
+    // Record installation
+    let installed = InstalledPlugin(
+      manifestId: manifest.id,
+      name: manifest.name,
+      version: manifest.version,
+      installedAt: Date(),
+      localPath: pluginDir
+    )
+    installedPlugins.append(installed)
+    saveInstalledPlugins()
+
+    // Cleanup temp file
+    try? FileManager.default.removeItem(at: tempUrl)
+  }
+
+  /// Remove an installed plugin.
+  public func uninstall(pluginId: String) throws {
+    guard let index = installedPlugins.firstIndex(where: { $0.id == pluginId }) else {
+      throw StoreError.notInstalled
+    }
+
+    let plugin = installedPlugins[index]
+    try FileManager.default.removeItem(at: plugin.localPath)
+
+    installedPlugins.remove(at: index)
+    saveInstalledPlugins()
+  }
+
+  /// Get all installed plugins.
+  public func getInstalledPlugins() -> [InstalledPlugin] {
+    return installedPlugins
+  }
+
+  /// Check if a plugin is installed.
+  public func isInstalled(pluginId: String) -> Bool {
+    return installedPlugins.contains { $0.id == pluginId }
+  }
+
+  // MARK: - Persistence
+
+  private func loadInstalledPlugins() {
+    let indexFile = pluginsDirectory.appendingPathComponent("installed.json")
+    guard let data = try? Data(contentsOf: indexFile) else { return }
+    installedPlugins = (try? JSONDecoder().decode([InstalledPlugin].self, from: data)) ?? []
+  }
+
+  private func saveInstalledPlugins() {
+    let indexFile = pluginsDirectory.appendingPathComponent("installed.json")
+    if let data = try? JSONEncoder().encode(installedPlugins) {
+      try? data.write(to: indexFile)
+    }
+  }
+}
+
+// MARK: - Errors
+
+public enum StoreError: Error, LocalizedError {
+  case fetchFailed
+  case invalidUrl
+  case checksumMismatch
+  case notInstalled
+  case extractionFailed
+
+  public var errorDescription: String? {
+    switch self {
+    case .fetchFailed:
+      return "Failed to fetch plugin catalog"
+    case .invalidUrl:
+      return "Invalid download URL"
+    case .checksumMismatch:
+      return "Checksum verification failed"
+    case .notInstalled:
+      return "Plugin is not installed"
+    case .extractionFailed:
+      return "Failed to extract plugin"
+    }
+  }
+}
+
+// MARK: - SHA256 Helper
+
+extension Data {
+  var sha256Hash: String {
+    var hash = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
+    withUnsafeBytes {
+      _ = CC_SHA256($0.baseAddress, CC_LONG(count), &hash)
+    }
+    return hash.map { String(format: "%02x", $0) }.joined()
+  }
+}

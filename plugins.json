@@ -1,0 +1,41 @@
+{
+    "version": "1.0.0",
+    "plugins": [
+        {
+            "id": "com.swiftsweep.capcut",
+            "name": "CapCut Cleaner",
+            "version": "1.0.0",
+            "description": "Cleans unused CapCut drafts and cache files to free up disk space.",
+            "author": "SwiftSweep Team",
+            "min_app_version": "0.3.0",
+            "download_url": "https://github.com/JadeSnow7/SwiftSweep/releases/download/v0.3.0/capcut-rules.zip",
+            "checksum": "sha256:placeholder",
+            "category": "Media",
+            "icon_url": null
+        },
+        {
+            "id": "com.swiftsweep.xcode",
+            "name": "Xcode Cleaner",
+            "version": "1.0.0",
+            "description": "Removes derived data, archives, and old simulators from Xcode.",
+            "author": "SwiftSweep Team",
+            "min_app_version": "0.3.0",
+            "download_url": "https://github.com/JadeSnow7/SwiftSweep/releases/download/v0.3.0/xcode-rules.zip",
+            "checksum": "sha256:placeholder",
+            "category": "Developer",
+            "icon_url": null
+        },
+        {
+            "id": "com.swiftsweep.docker",
+            "name": "Docker Cleanup",
+            "version": "1.0.0",
+            "description": "Prunes unused Docker images, containers, and volumes.",
+            "author": "SwiftSweep Team",
+            "min_app_version": "0.3.0",
+            "download_url": "https://github.com/JadeSnow7/SwiftSweep/releases/download/v0.3.0/docker-rules.zip",
+            "checksum": "sha256:placeholder",
+            "category": "Developer",
+            "icon_url": null
+        }
+    ]
+}
