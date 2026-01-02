@@ -1,8 +1,8 @@
 theme: jekyll-theme-minimal
 title: SwiftSweep
 description: Smart macOS System Cleaner with AI Insights
-baseurl: ""
-url: "https://jadesnow7.github.io/SwiftSweep"
+baseurl: "/SwiftSweep"
+url: "https://jadesnow7.github.io"
 
 # Social links
 github_username: JadeSnow7

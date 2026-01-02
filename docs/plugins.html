@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwiftSweep Plugin Ecosystem</title>
+    <meta name="description" content="SwiftSweep plugin ecosystem with safe data packs, checksum validation, and device pairing.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/css/main.css">
+    <script src="./assets/js/main.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <nav>
+          <div class="logo">SwiftSweep</div>
+          <ul class="nav-links">
+            <li><a href="./index.html">Home</a></li>
+            <li><a href="./features.html">Features</a></li>
+            <li><a class="is-active" href="./plugins.html">Plugins</a></li>
+            <li><a href="https://github.com/JadeSnow7/SwiftSweep/blob/main/docs/README.md" target="_blank" rel="noreferrer">Docs</a></li>
+            <li><a href="https://github.com/JadeSnow7/SwiftSweep" target="_blank" rel="noreferrer">GitHub</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container hero-grid">
+          <div>
+            <div class="eyebrow">Plugin ecosystem</div>
+            <h1 class="hero-title reveal">Safe plugins, zero code execution.</h1>
+            <p class="hero-lead reveal" style="--delay: 0.08s;">
+              SwiftSweep plugins are data packs: secure, checksum-verified, and designed for fast updates without
+              compromising macOS sandbox rules.
+            </p>
+            <div class="cta reveal" style="--delay: 0.16s;">
+              <a class="btn btn-primary" href="https://github.com/JadeSnow7/SwiftSweep/blob/main/docs/PLUGIN_DEVELOPMENT.md">Build a Plugin</a>
+              <a class="btn btn-ghost" href="https://github.com/JadeSnow7/SwiftSweep/releases/latest">Download</a>
+            </div>
+          </div>
+          <div class="preview reveal" style="--delay: 0.12s;">
+            <div class="preview-header">
+              <span>Data Pack Lifecycle</span>
+              <span>Security-first</span>
+            </div>
+            <div class="signal">
+              <div class="signal-item">
+                <strong>Discover</strong>
+                <span>Catalog fetch with version + compatibility metadata</span>
+              </div>
+              <div class="signal-item">
+                <strong>Verify</strong>
+                <span>SHA256 checksum and optional signature validation</span>
+              </div>
+              <div class="signal-item">
+                <strong>Activate</strong>
+                <span>Rules loaded into the engine, no dynamic code</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="section-head">
+            <h2 class="section-title">Why data-only plugins?</h2>
+            <p class="section-lead">Designed to pass Hardened Runtime and keep users safe.</p>
+          </div>
+          <div class="grid duo">
+            <div class="card reveal">
+              <h3>Security guarantees</h3>
+              <ul class="list">
+                <li>No executable code, no dynamic bundles</li>
+                <li>Checksum verification for every download</li>
+                <li>Rules run inside audited cleanup engine</li>
+              </ul>
+            </div>
+            <div class="card reveal" style="--delay: 0.08s;">
+              <h3>Fast iteration</h3>
+              <ul class="list">
+                <li>Update rules without shipping new binaries</li>
+                <li>Support new apps via data packs</li>
+                <li>Consistent UX with feature gating</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="section-head">
+            <h2 class="section-title">Plugin catalog</h2>
+            <p class="section-lead">Curated packs built for real workflows.</p>
+          </div>
+          <div class="grid features">
+            <div class="card reveal">
+              <div class="tag">CapCut</div>
+              <h3>CapCut Cleaner</h3>
+              <p>Draft cleanup, orphan detection, and recoverable storage analysis.</p>
+            </div>
+            <div class="card reveal" style="--delay: 0.05s;">
+              <div class="tag">Xcode</div>
+              <h3>Xcode Optimizer</h3>
+              <p>Derived data, archives, simulator runtimes, and build cache.</p>
+            </div>
+            <div class="card reveal" style="--delay: 0.1s;">
+              <div class="tag">Docker</div>
+              <h3>Docker Cleanup</h3>
+              <p>Images, volumes, and container pruning with preview-first controls.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="section-head">
+            <h2 class="section-title">Store workflow</h2>
+            <p class="section-lead">How a plugin pack is fetched, verified, and activated.</p>
+          </div>
+          <div class="grid duo">
+            <div class="card reveal">
+              <div class="pipeline">
+                <div class="pipeline-step">1. Discover <span>Fetch catalog JSON</span></div>
+                <div class="pipeline-step">2. Download <span>Retrieve ZIP data pack</span></div>
+                <div class="pipeline-step">3. Verify <span>Checksum + optional signature</span></div>
+                <div class="pipeline-step">4. Install <span>Extract to App Support</span></div>
+                <div class="pipeline-step">5. Activate <span>Load rules into engine</span></div>
+              </div>
+            </div>
+            <div class="card reveal" style="--delay: 0.08s;">
+              <h3>Manifest example</h3>
+              <pre class="code-block"><code>{
+  "plugins": [
+    {
+      "id": "com.swiftsweep.capcut",
+      "name": "CapCut Cleaner",
+      "version": "1.0.0",
+      "downloadUrl": "https://github.com/.../CapCut.rules.zip",
+      "checksum": "sha256:..."
+    }
+  ]
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="cta-band reveal">
+            <div>
+              <h3>Want to publish a plugin pack?</h3>
+              <p>Read the data pack schema and authoring guide.</p>
+            </div>
+            <div class="cta">
+              <a class="btn btn-primary" href="https://github.com/JadeSnow7/SwiftSweep/blob/main/docs/PLUGIN_DEVELOPMENT.md">Plugin Guide</a>
+              <a class="btn btn-ghost" href="https://github.com/JadeSnow7/SwiftSweep">GitHub Repo</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <p>SwiftSweep by <a href="https://github.com/JadeSnow7">JadeSnow7</a>. MIT License.</p>
+      </div>
+    </footer>
+  </body>
+</html>
