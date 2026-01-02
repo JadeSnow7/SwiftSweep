@@ -6,6 +6,7 @@ import SwiftUI
 
 /// Plugin Store view for browsing and installing data pack plugins.
 public struct PluginStoreView: View {
+  @Environment(\.dismiss) private var dismiss
   @State private var catalog: PluginCatalog?
   @State private var installedIds: Set<String> = []
   @State private var isLoading = false
@@ -32,6 +33,13 @@ public struct PluginStoreView: View {
         }
         .buttonStyle(.bordered)
         .disabled(isLoading)
+
+        Button(action: { dismiss() }) {
+          Image(systemName: "xmark.circle.fill")
+            .foregroundColor(.secondary)
+            .font(.title2)
+        }
+        .buttonStyle(.plain)
       }
       .padding()
 
