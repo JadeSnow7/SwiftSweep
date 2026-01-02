@@ -82,8 +82,17 @@ struct SysAIBoxSettingsRow: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
-      // URL Input
+      // Row 1: Title + Status Badges
       HStack {
+        Text("Sys AI Box")
+          .font(.headline)
+        Spacer()
+        statusBadge
+        authBadge
+      }
+
+      // Row 2: URL Input + Test Button
+      HStack(spacing: 8) {
         TextField("Base URL (e.g., https://box.local:8080)", text: $baseURLString)
           .textFieldStyle(.roundedBorder)
 
@@ -91,23 +100,19 @@ struct SysAIBoxSettingsRow: View {
           if isLoading {
             ProgressView()
               .scaleEffect(0.7)
+              .frame(width: 40)
           } else {
             Text("Test")
+              .frame(width: 40)
           }
         }
+        .buttonStyle(.bordered)
         .disabled(baseURLString.isEmpty || isLoading || isPairing)
       }
 
-      // Status Row
-      HStack {
-        statusBadge
-        Spacer()
-        authBadge
-      }
-
-      // Action Buttons
-      HStack {
-        // Pair Device Button
+      // Row 3: Action Buttons
+      HStack(spacing: 12) {
+        // Pair Device / Disconnect
         if authStatus == .notPaired {
           Button(action: startPairing) {
             if isPairing {
@@ -117,49 +122,54 @@ struct SysAIBoxSettingsRow: View {
               Label("Pair Device", systemImage: "link")
             }
           }
+          .buttonStyle(.bordered)
           .disabled(connectionStatus != .connected || isPairing)
-        }
-
-        // Disconnect Button
-        if authStatus == .paired {
+        } else if authStatus == .paired {
           Button(action: disconnect) {
             Label("Disconnect", systemImage: "xmark.circle")
           }
-          .foregroundColor(.red)
+          .buttonStyle(.bordered)
+          .tint(.red)
         }
 
         Spacer()
 
-        // Open Console Button
+        // Open Console
         Button(action: openConsole) {
           Label("Open Console", systemImage: "arrow.up.right.square")
         }
+        .buttonStyle(.borderedProminent)
         .disabled(connectionStatus != .connected)
       }
 
       // User Code Display (during pairing)
       if let code = userCode, authStatus == .pairing {
-        VStack(alignment: .leading, spacing: 8) {
-          Text("Enter this code in the Web UI:")
-            .font(.caption)
-            .foregroundColor(.secondary)
-          Text(code)
-            .font(.system(.title, design: .monospaced))
-            .fontWeight(.bold)
-            .foregroundColor(.accentColor)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color.accentColor.opacity(0.1))
-            .cornerRadius(8)
+        HStack {
+          VStack(alignment: .leading, spacing: 4) {
+            Text("Enter this code in the Web UI:")
+              .font(.caption)
+              .foregroundColor(.secondary)
+            Text(code)
+              .font(.system(.title2, design: .monospaced))
+              .fontWeight(.bold)
+              .foregroundColor(.accentColor)
+          }
+          Spacer()
         }
-        .padding(.top, 4)
+        .padding(12)
+        .background(Color.accentColor.opacity(0.1))
+        .cornerRadius(8)
       }
 
       // Error Message
       if let error = errorMessage {
-        Text(error)
-          .font(.caption)
-          .foregroundColor(.red)
+        HStack {
+          Image(systemName: "exclamationmark.triangle.fill")
+            .foregroundColor(.red)
+          Text(error)
+            .font(.caption)
+            .foregroundColor(.red)
+        }
       }
 
       // Offline Indicator
@@ -171,13 +181,13 @@ struct SysAIBoxSettingsRow: View {
             .font(.caption)
             .foregroundColor(.orange)
           if let lastUpdated = lastUpdated {
-            Text("• Last online: \(lastUpdated.formatted(.relative(presentation: .named)))")
+            Text("• \(lastUpdated.formatted(.relative(presentation: .named)))")
               .font(.caption)
               .foregroundColor(.secondary)
           }
         }
-        .padding(.vertical, 4)
-        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 10)
         .background(Color.orange.opacity(0.1))
         .cornerRadius(6)
       }

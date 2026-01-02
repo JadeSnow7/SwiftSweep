@@ -125,15 +125,25 @@ struct SettingsView: View {
           }
 
           if helperViewModel.status == .requiresApproval {
-            Text("Please enable SwiftSweep Helper in System Settings > Login Items")
-              .font(.caption)
-              .foregroundColor(.orange)
+            HStack {
+              Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.orange)
+              Text("Please approve SwiftSweep Helper in System Settings > Login Items")
+                .font(.caption)
+                .foregroundColor(.orange)
+            }
+
+            Button(action: openLoginItems) {
+              Label("Open Login Items", systemImage: "gear")
+            }
+            .buttonStyle(.bordered)
           }
 
-          HStack {
+          HStack(spacing: 12) {
             Button(action: { Task { await helperViewModel.registerHelper() } }) {
               Label("Install Helper", systemImage: "plus.circle")
             }
+            .buttonStyle(.bordered)
             .disabled(helperViewModel.status == .enabled || helperViewModel.isLoading)
 
             if helperViewModel.isLoading {
@@ -145,14 +155,19 @@ struct SettingsView: View {
               Button(action: { Task { await helperViewModel.unregisterHelper() } }) {
                 Label("Remove", systemImage: "minus.circle")
               }
-              .foregroundColor(.red)
+              .buttonStyle(.bordered)
+              .tint(.red)
             }
           }
 
           if let error = helperViewModel.errorMessage {
-            Text(error)
-              .font(.caption)
-              .foregroundColor(.red)
+            HStack {
+              Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.red)
+              Text(error)
+                .font(.caption)
+                .foregroundColor(.red)
+            }
           }
         }
 
@@ -188,6 +203,13 @@ struct SettingsView: View {
         .padding(.vertical, 4)
         .background(Color.gray.opacity(0.1))
         .cornerRadius(6)
+    }
+  }
+
+  private func openLoginItems() {
+    // Open System Settings > Login Items
+    if let url = URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension") {
+      NSWorkspace.shared.open(url)
     }
   }
 }
