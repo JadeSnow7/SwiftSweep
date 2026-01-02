@@ -88,7 +88,7 @@ public struct ConfettiView: View {
     pieces = (0..<60).map { _ in
       ConfettiPiece(
         x: CGFloat.random(in: 0...400),
-        initialY: CGFloat.random(in: -80 ...- 20),
+        initialY: CGFloat.random(in: -80 ... -20),
         rotation: Double.random(in: 0...360),
         color: colors.randomElement()!,
         size: CGFloat.random(in: 8...14),
