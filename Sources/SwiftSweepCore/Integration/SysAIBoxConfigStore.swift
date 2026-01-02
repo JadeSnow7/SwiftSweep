@@ -27,9 +27,22 @@ public final class SysAIBoxConfigStore: @unchecked Sendable {
       throw ConfigError.invalidURL
     }
 
-    // Enforce HTTPS (except localhost/127.0.0.1)
+    // Allow HTTP for: localhost, 127.0.0.1, 192.168.x.x, 10.x.x.x, 172.16-31.x.x, and any IP (dev mode)
     let isLocalhost = host == "localhost" || host == "127.0.0.1"
-    if !isLocalhost && baseURL.scheme != "https" {
+    let isPrivateIP =
+      host.hasPrefix("192.168.") || host.hasPrefix("10.")
+      || host.hasPrefix("172.16.") || host.hasPrefix("172.17.")
+      || host.hasPrefix("172.18.") || host.hasPrefix("172.19.")
+      || host.hasPrefix("172.2") || host.hasPrefix("172.3")
+
+    // For development, also allow any IP address (we can tighten this in production)
+    #if DEBUG
+      let allowHTTP = true
+    #else
+      let allowHTTP = isLocalhost || isPrivateIP
+    #endif
+
+    if !allowHTTP && baseURL.scheme != "https" {
       throw ConfigError.httpsRequired
     }
 
