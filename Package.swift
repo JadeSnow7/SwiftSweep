@@ -44,6 +44,7 @@ let package = Package(
         "IOAnalyzer",
         "Plugin",
         "SmartInterpreter",
+        "Integration",
       ]
     ),
 
