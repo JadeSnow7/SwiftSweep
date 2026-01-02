@@ -1,0 +1,15 @@
+{
+    "id": "xcode-simulators",
+    "name": "iOS Simulator Caches",
+    "description": "Simulator app data and caches",
+    "category": "Developer",
+    "paths": [
+        "~/Library/Developer/CoreSimulator/Caches",
+        "~/Library/Developer/CoreSimulator/Devices/*/data/Containers/Data/Application"
+    ],
+    "patterns": [
+        "*"
+    ],
+    "excludePatterns": [],
+    "safeToDelete": true
+}

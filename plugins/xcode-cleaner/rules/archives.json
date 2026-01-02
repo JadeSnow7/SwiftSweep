@@ -1,0 +1,14 @@
+{
+    "id": "xcode-archives",
+    "name": "Xcode Archives",
+    "description": "Old app archives and dSYM files",
+    "category": "Developer",
+    "paths": [
+        "~/Library/Developer/Xcode/Archives"
+    ],
+    "patterns": [
+        "*.xcarchive"
+    ],
+    "excludePatterns": [],
+    "safeToDelete": false
+}

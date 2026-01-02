@@ -1,0 +1,14 @@
+{
+    "id": "xcode-derived-data",
+    "name": "Xcode Derived Data",
+    "description": "Build artifacts, indexes, and intermediate files",
+    "category": "Developer",
+    "paths": [
+        "~/Library/Developer/Xcode/DerivedData"
+    ],
+    "patterns": [
+        "*"
+    ],
+    "excludePatterns": [],
+    "safeToDelete": true
+}

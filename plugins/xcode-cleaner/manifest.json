@@ -1,0 +1,13 @@
+{
+    "id": "com.swiftsweep.xcode",
+    "name": "Xcode Cleaner",
+    "version": "1.0.0",
+    "description": "Removes derived data, archives, and old simulators from Xcode",
+    "author": "SwiftSweep Team",
+    "minAppVersion": "0.3.0",
+    "rules": [
+        "rules/derived-data.json",
+        "rules/archives.json",
+        "rules/simulators.json"
+    ]
+}
