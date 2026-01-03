@@ -22,35 +22,55 @@ public struct IOAnalyzerView: View {
   public init() {}
 
   public var body: some View {
-    VStack(spacing: 0) {
-      // Header
-      headerView
+    GeometryReader { geometry in
+      let isCompact = geometry.size.width < 700
 
-      Divider()
+      VStack(spacing: 0) {
+        // Header
+        headerView(isCompact: isCompact)
 
-      // Content
-      ScrollView {
-        VStack(spacing: 16) {
-          // Speed Cards
-          speedCardsRow
+        Divider()
 
-          // Charts
-          HStack(spacing: 16) {
-            throughputChart
-            latencyChart
+        // Content
+        ScrollView {
+          VStack(spacing: 16) {
+            // Speed Cards - wrap to 2x2 grid when compact
+            speedCardsRow(isCompact: isCompact)
+
+            // Charts - stack vertically when compact
+            if isCompact {
+              VStack(spacing: 16) {
+                throughputChart
+                  .frame(height: 180)
+                latencyChart
+                  .frame(height: 180)
+              }
+            } else {
+              HStack(spacing: 16) {
+                throughputChart
+                latencyChart
+              }
+              .frame(height: 200)
+            }
+
+            // Bottom row - stack vertically when compact
+            if isCompact {
+              VStack(spacing: 16) {
+                topPathsView
+                optimizationsView
+              }
+            } else {
+              HStack(alignment: .top, spacing: 16) {
+                topPathsView
+                optimizationsView
+              }
+            }
           }
-          .frame(height: 200)
-
-          // Bottom row
-          HStack(alignment: .top, spacing: 16) {
-            topPathsView
-            optimizationsView
-          }
+          .padding()
         }
-        .padding()
       }
     }
-    .frame(minWidth: 800, minHeight: 600)
+    .frame(minWidth: 500, minHeight: 500)
     .onDisappear {
       Task {
         await IOAnalyzer.shared.stopAnalysis()
@@ -60,11 +80,13 @@ public struct IOAnalyzerView: View {
 
   // MARK: - Header
 
-  private var headerView: some View {
+  private func headerView(isCompact: Bool) -> some View {
     HStack {
       VStack(alignment: .leading, spacing: 4) {
         Text("I/O Performance Analyzer")
           .font(.title2.bold())
+          .lineLimit(1)
+          .minimumScaleFactor(0.8)
 
         HStack(spacing: 8) {
           if isTracing {
@@ -92,9 +114,9 @@ public struct IOAnalyzerView: View {
 
       Spacer()
 
-      // Buffer stats
-      if isTracing, let stats = bufferStats {
-        HStack(spacing: 20) {
+      // Buffer stats - hide completely when compact
+      if !isCompact, isTracing, let stats = bufferStats {
+        HStack(spacing: 12) {
           StatPill(value: "\(stats.count)", label: "Events", color: .blue)
           StatPill(value: "\(Int(stats.sampleRate * 100))%", label: "Sample", color: .green)
           StatPill(
@@ -103,8 +125,6 @@ public struct IOAnalyzerView: View {
         }
         .padding(.horizontal)
       }
-
-      Spacer()
 
       Button(action: {
         isTracing.toggle()
@@ -116,9 +136,11 @@ public struct IOAnalyzerView: View {
       }) {
         HStack {
           Image(systemName: isTracing ? "stop.fill" : "record.circle")
-          Text(isTracing ? "Stop" : "Start")
+          if !isCompact {
+            Text(isTracing ? "Stop" : "Start")
+          }
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, isCompact ? 8 : 16)
         .padding(.vertical, 8)
       }
       .buttonStyle(.borderedProminent)
@@ -130,8 +152,15 @@ public struct IOAnalyzerView: View {
 
   // MARK: - Speed Cards
 
-  private var speedCardsRow: some View {
-    HStack(spacing: 16) {
+  private func speedCardsRow(isCompact: Bool) -> some View {
+    let columns =
+      isCompact
+      ? [GridItem(.flexible()), GridItem(.flexible())]
+      : [
+        GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()),
+      ]
+
+    return LazyVGrid(columns: columns, spacing: 12) {
       SpeedCard(
         title: "Read Speed",
         currentValue: currentReadSpeed,
@@ -164,25 +193,27 @@ public struct IOAnalyzerView: View {
             .font(.title2)
           Text("Operations")
             .font(.subheadline.bold())
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
         }
 
         if let last = timeSlices.last {
           Text("\(last.readOps + last.writeOps)")
-            .font(.system(size: 28, weight: .bold, design: .rounded))
+            .font(.system(size: isCompact ? 20 : 28, weight: .bold, design: .rounded))
             .foregroundColor(.primary)
           Text("ops/sec")
             .font(.caption)
             .foregroundColor(.secondary)
         } else {
           Text("--")
-            .font(.system(size: 28, weight: .bold, design: .rounded))
+            .font(.system(size: isCompact ? 20 : 28, weight: .bold, design: .rounded))
             .foregroundColor(.secondary)
           Text("ops/sec")
             .font(.caption)
             .foregroundColor(.secondary)
         }
       }
-      .frame(maxWidth: .infinity)
+      .frame(maxWidth: .infinity, alignment: .leading)
       .padding()
       .background(Color(NSColor.controlBackgroundColor))
       .cornerRadius(12)
@@ -468,7 +499,7 @@ public struct IOAnalyzerView: View {
         }
       }
     }
-    .frame(minWidth: 300)
+    .frame(minWidth: 200)
     .padding()
     .background(Color(NSColor.controlBackgroundColor))
     .cornerRadius(12)
@@ -535,7 +566,7 @@ public struct IOAnalyzerView: View {
         }
       }
     }
-    .frame(minWidth: 300)
+    .frame(minWidth: 200)
     .padding()
     .background(Color(NSColor.controlBackgroundColor))
     .cornerRadius(12)
