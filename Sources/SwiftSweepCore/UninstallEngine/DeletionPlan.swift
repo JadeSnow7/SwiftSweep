@@ -84,7 +84,7 @@ private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () throw
 // MARK: - Deletion Types
 
 /// 待删除项的类型
-public enum DeletionItemKind: String, Codable {
+public enum DeletionItemKind: String, Codable, Sendable {
   case app = "App"
   case cache = "Cache"
   case preferences = "Preferences"
@@ -106,7 +106,7 @@ public enum DeletionItemKind: String, Codable {
 }
 
 /// 单个待删除项
-public struct DeletionItem: Identifiable, Hashable {
+public struct DeletionItem: Identifiable, Hashable, Sendable {
   public let id: UUID
   public let path: String
   public let resolvedPath: String  // 解析符号链接后的真实路径
@@ -123,7 +123,7 @@ public struct DeletionItem: Identifiable, Hashable {
 }
 
 /// 删除项执行结果
-public struct DeletionItemResult: Identifiable {
+public struct DeletionItemResult: Identifiable, Equatable, Sendable {
   public let id: UUID
   public let item: DeletionItem
   public let success: Bool
@@ -138,7 +138,7 @@ public struct DeletionItemResult: Identifiable {
 }
 
 /// 删除计划
-public struct DeletionPlan {
+public struct DeletionPlan: Equatable, Sendable {
   public let app: UninstallEngine.InstalledApp
   public let items: [DeletionItem]
 
@@ -152,7 +152,7 @@ public struct DeletionPlan {
 }
 
 /// 删除执行结果
-public struct DeletionResult {
+public struct DeletionResult: Equatable, Sendable {
   public let itemResults: [DeletionItemResult]
 
   public init(itemResults: [DeletionItemResult]) {

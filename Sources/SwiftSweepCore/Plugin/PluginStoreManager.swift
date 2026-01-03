@@ -66,8 +66,8 @@ public actor PluginStoreManager {
     try? FileManager.default.createDirectory(
       at: pluginsDirectory, withIntermediateDirectories: true)
 
-    // Load installed plugins
-    loadInstalledPlugins()
+    // Load installed plugins synchronously during init
+    self.installedPlugins = Self.loadInstalledPluginsFromDisk(pluginsDirectory: pluginsDirectory)
   }
 
   // MARK: - Catalog
@@ -205,10 +205,17 @@ public actor PluginStoreManager {
 
   // MARK: - Persistence
 
-  private func loadInstalledPlugins() {
+  /// Static helper to load installed plugins from disk (nonisolated for use in init)
+  private nonisolated static func loadInstalledPluginsFromDisk(pluginsDirectory: URL)
+    -> [InstalledPlugin]
+  {
     let indexFile = pluginsDirectory.appendingPathComponent("installed.json")
-    guard let data = try? Data(contentsOf: indexFile) else { return }
-    installedPlugins = (try? JSONDecoder().decode([InstalledPlugin].self, from: data)) ?? []
+    guard let data = try? Data(contentsOf: indexFile) else { return [] }
+    return (try? JSONDecoder().decode([InstalledPlugin].self, from: data)) ?? []
+  }
+
+  private func loadInstalledPlugins() {
+    installedPlugins = Self.loadInstalledPluginsFromDisk(pluginsDirectory: pluginsDirectory)
   }
 
   private func saveInstalledPlugins() {

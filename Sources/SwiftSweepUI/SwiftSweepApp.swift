@@ -21,13 +21,25 @@ struct SwiftSweepApp: App {
       NSApplication.shared.activate(ignoringOtherApps: true)
       NSApp.windows.first?.makeKeyAndOrderFront(nil)
     }
+
+    // Initialize Store and Effects
+    let store = AppStore.shared
+    store.setEffectHandler { action, store in
+      await uninstallEffects(action, store)
+      await cleanupEffects(action, store)
+    }
+    self.store = store
   }
+
+  // Persist store to inject in body
+  private let store: AppStore
 
   var body: some Scene {
     WindowGroup {
       ContentView()
         .frame(minWidth: 900, minHeight: 700)
         .withMotionConfig()  // Enable global motion configuration
+        .environmentObject(store)
     }
     .windowResizability(.contentSize)
     .commands {
@@ -43,8 +55,8 @@ struct SwiftSweepApp: App {
 }
 
 struct ContentView: View {
+  @EnvironmentObject private var store: AppStore
   @State private var selection: NavigationItem? = .status
-  @StateObject private var navigationState = NavigationState.shared
   @State private var uninstallTargetURL: URL?
   @AppStorage("PluginEnabled_com.swiftsweep.capcut") private var isCapCutEnabled = false
 
@@ -185,11 +197,11 @@ struct ContentView: View {
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    .onChange(of: navigationState.uninstallRequest) { request in
-      guard let request else { return }
-      uninstallTargetURL = request.appURL
+    .onChange(of: store.state.navigation.pendingUninstallURL) { newURL in
+      guard let url = newURL else { return }
+      uninstallTargetURL = url
       selection = .uninstall
-      navigationState.clearUninstallRequest()
+      store.dispatch(.navigation(.clearUninstallRequest))
     }
   }
 }

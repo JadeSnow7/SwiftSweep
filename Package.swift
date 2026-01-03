@@ -45,6 +45,7 @@ let package = Package(
         "Plugin",
         "SmartInterpreter",
         "Integration",
+        "State",
       ]
     ),
 

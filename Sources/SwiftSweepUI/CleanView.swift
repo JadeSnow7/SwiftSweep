@@ -5,10 +5,11 @@ import SwiftUI
 #endif
 
 struct CleanView: View {
-  @StateObject private var viewModel = CleanupViewModel()
+  @EnvironmentObject var store: AppStore
   @State private var showingConfirmation = false
-  @State private var cleanupResult: CleanupResult?
   @State private var showingResult = false
+
+  var state: CleanupState { store.state.cleanup }
 
   var body: some View {
     ScrollView {
@@ -21,9 +22,9 @@ struct CleanView: View {
           .foregroundColor(.secondary)
 
         // Scan Control
-        if !viewModel.isScanning && !viewModel.scanComplete {
+        if state.phase == .idle {
           Button(action: {
-            Task { await viewModel.startScan() }
+            store.dispatch(.cleanup(.startScan))
           }) {
             Label("Start Scan", systemImage: "magnifyingglass")
               .frame(maxWidth: .infinity)
@@ -35,7 +36,7 @@ struct CleanView: View {
         }
 
         // Scanning Progress
-        if viewModel.isScanning {
+        if state.phase == .scanning {
           VStack(alignment: .leading, spacing: 10) {
             HStack {
               PulseView(icon: "magnifyingglass", color: .blue)
@@ -44,7 +45,7 @@ struct CleanView: View {
                 .font(.headline)
             }
 
-            Text("Found \(viewModel.items.count) items...")
+            Text("Found \(state.items.count) items...")
               .font(.caption)
               .foregroundColor(.secondary)
 
@@ -56,8 +57,30 @@ struct CleanView: View {
           .cornerRadius(10)
         }
 
+        // Error State
+        if case .error(let message) = state.phase {
+          VStack(alignment: .leading, spacing: 8) {
+            HStack {
+              Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.red)
+                .font(.title)
+              Text("Scan Failed")
+                .font(.headline)
+            }
+            Text(message)
+              .foregroundColor(.secondary)
+            Button("Try Again") {
+              store.dispatch(.cleanup(.startScan))
+            }
+            .buttonStyle(.borderedProminent)
+          }
+          .padding()
+          .background(Color(nsColor: .controlBackgroundColor))
+          .cornerRadius(10)
+        }
+
         // Results
-        if viewModel.scanComplete {
+        if state.phase == .scanned || state.phase == .completed {
           VStack(alignment: .leading, spacing: 0) {
             HStack {
               Image(systemName: "checkmark.circle.fill")
@@ -66,7 +89,7 @@ struct CleanView: View {
               VStack(alignment: .leading) {
                 Text("Scan Complete")
                   .font(.headline)
-                Text("Found \(viewModel.formattedTotalSize)")
+                Text("Found \(formattedSize(state.totalSize))")
                   .foregroundColor(.secondary)
               }
               Spacer()
@@ -75,7 +98,7 @@ struct CleanView: View {
 
             Divider()
 
-            if viewModel.items.isEmpty {
+            if state.items.isEmpty {
               HStack {
                 Spacer()
                 VStack(spacing: 10) {
@@ -90,9 +113,8 @@ struct CleanView: View {
               .padding(.vertical, 40)
             } else {
               List {
-                ForEach($viewModel.items) { $item in
-                  CleanupItemRow(item: $item)
-                    .padding(.vertical, 4)
+                ForEach(state.items) { item in
+                  CleanupItemRowStore(itemID: item.id)
                 }
               }
               .listStyle(.plain)
@@ -104,13 +126,14 @@ struct CleanView: View {
             // Action Buttons
             HStack {
               Button("Scan Again") {
-                viewModel.reset()
+                store.dispatch(.cleanup(.reset))
+                store.dispatch(.cleanup(.startScan))
               }
               .keyboardShortcut("r", modifiers: .command)
 
               Spacer()
 
-              if !viewModel.items.isEmpty {
+              if !state.items.isEmpty {
                 Button(action: {
                   showingConfirmation = true
                 }) {
@@ -119,7 +142,7 @@ struct CleanView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.green)
-                .disabled(viewModel.selectedSize == 0)
+                .disabled(state.selectedSize == 0)
               }
             }
             .padding()
@@ -137,15 +160,10 @@ struct CleanView: View {
       .padding()
     }
     .sheet(isPresented: $showingConfirmation) {
-      CleanupConfirmationSheet(
-        items: viewModel.items.filter { $0.isSelected },
+      CleanupConfirmationSheetStore(
         onConfirm: {
           showingConfirmation = false
-          Task {
-            let result = await viewModel.cleanSelected()
-            cleanupResult = result
-            showingResult = true
-          }
+          store.dispatch(.cleanup(.startClean))
         },
         onCancel: {
           showingConfirmation = false
@@ -154,48 +172,108 @@ struct CleanView: View {
     }
     .alert("Cleanup Result", isPresented: $showingResult) {
       Button("OK") {
-        cleanupResult = nil
-        Task { await viewModel.startScan() }  // Rescan
+        store.dispatch(.cleanup(.startScan))  // Rescan
       }
     } message: {
-      if let result = cleanupResult {
+      if let result = state.cleanResult {
         Text(
-          "\(result.successCount) items deleted\n\(result.failedCount) failed\nFreed: \(result.formattedFreedSpace)"
+          "\(result.successCount) items deleted\n\(result.failedCount) failed\nFreed: \(formattedSize(result.freedBytes))"
         )
       }
     }
+    .onChange(of: state.phase) { newPhase in
+      if case .completed = newPhase {
+        showingResult = true
+      }
+    }
+  }
+
+  private func formattedSize(_ bytes: Int64) -> String {
+    ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
   }
 }
 
-// MARK: - Cleanup Result
+// MARK: - Store-connected Item Row
 
-struct CleanupResult {
-  let successCount: Int
-  let failedCount: Int
-  let freedBytes: Int64
+struct CleanupItemRowStore: View {
+  @EnvironmentObject var store: AppStore
+  let itemID: UUID
 
-  var formattedFreedSpace: String {
-    let formatter = ByteCountFormatter()
-    formatter.countStyle = .file
-    return formatter.string(fromByteCount: freedBytes)
+  var item: CleanupEngine.CleanupItem? {
+    store.state.cleanup.items.first { $0.id == itemID }
+  }
+
+  var body: some View {
+    if let item = item {
+      HStack {
+        Toggle(
+          "",
+          isOn: Binding(
+            get: { item.isSelected },
+            set: { _ in store.dispatch(.cleanup(.toggleItem(itemID))) }
+          )
+        )
+        .labelsHidden()
+
+        Image(systemName: iconForCategory(item.category))
+          .foregroundColor(.blue)
+          .frame(width: 24)
+
+        VStack(alignment: .leading, spacing: 2) {
+          Text(item.name)
+            .fontWeight(.medium)
+          Text(item.path)
+            .font(.caption2)
+            .foregroundColor(.secondary)
+            .lineLimit(1)
+            .truncationMode(.middle)
+        }
+
+        Spacer()
+
+        Text(formatBytes(item.size))
+          .fontWeight(.semibold)
+          .foregroundColor(.secondary)
+          .font(.monospacedDigit(.body)())
+      }
+      .padding(.vertical, 4)
+    }
+  }
+
+  func iconForCategory(_ category: CleanupEngine.CleanupCategory) -> String {
+    switch category {
+    case .userCache, .systemCache: return "folder.fill"
+    case .logs: return "doc.text.fill"
+    case .trash: return "trash.fill"
+    case .browserCache: return "globe"
+    case .developerTools: return "hammer.fill"
+    case .applications: return "app.fill"
+    case .other: return "doc.fill"
+    }
+  }
+
+  func formatBytes(_ bytes: Int64) -> String {
+    let mb = Double(bytes) / 1024 / 1024
+    if mb > 1024 {
+      return String(format: "%.2f GB", mb / 1024)
+    }
+    return String(format: "%.1f MB", mb)
   }
 }
 
-// MARK: - Confirmation Sheet
+// MARK: - Confirmation Sheet (Store-connected)
 
-struct CleanupConfirmationSheet: View {
-  let items: [CleanupEngine.CleanupItem]
+struct CleanupConfirmationSheetStore: View {
+  @EnvironmentObject var store: AppStore
   let onConfirm: () -> Void
   let onCancel: () -> Void
 
-  private var totalSize: Int64 {
-    items.reduce(0) { $0 + $1.size }
+  var items: [CleanupEngine.CleanupItem] {
+    store.state.cleanup.selectedItems
   }
 
-  private var formattedSize: String {
-    let formatter = ByteCountFormatter()
-    formatter.countStyle = .file
-    return formatter.string(fromByteCount: totalSize)
+  var totalSize: Int64 {
+    store.state.cleanup.selectedSize
   }
 
   var body: some View {
@@ -208,7 +286,7 @@ struct CleanupConfirmationSheet: View {
         VStack(alignment: .leading) {
           Text("Confirm Deletion")
             .font(.headline)
-          Text("\(items.count) items • \(formattedSize)")
+          Text("\(items.count) items • \(formattedSize(totalSize))")
             .foregroundColor(.secondary)
         }
         Spacer()
@@ -229,7 +307,7 @@ struct CleanupConfirmationSheet: View {
       .background(Color.orange.opacity(0.1))
       .cornerRadius(4)
 
-      // Items preview (Top 10)
+      // Items preview
       VStack(alignment: .leading, spacing: 4) {
         Text("Items to delete:")
           .font(.caption)
@@ -284,136 +362,15 @@ struct CleanupConfirmationSheet: View {
     .frame(width: 450)
   }
 
+  private func formattedSize(_ bytes: Int64) -> String {
+    ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+  }
+
   private func formatBytes(_ bytes: Int64) -> String {
-    let formatter = ByteCountFormatter()
-    formatter.countStyle = .file
-    return formatter.string(fromByteCount: bytes)
-  }
-}
-
-struct CleanupItemRow: View {
-  @Binding var item: CleanupEngine.CleanupItem
-
-  var body: some View {
-    HStack {
-      Toggle("", isOn: $item.isSelected)
-        .labelsHidden()
-
-      Image(systemName: iconForCategory(item.category))
-        .foregroundColor(.blue)
-        .frame(width: 24)
-
-      VStack(alignment: .leading, spacing: 2) {
-        Text(item.name)
-          .fontWeight(.medium)
-        Text(item.path)
-          .font(.caption2)
-          .foregroundColor(.secondary)
-          .lineLimit(1)
-          .truncationMode(.middle)
-      }
-
-      Spacer()
-
-      Text(formatBytes(item.size))
-        .fontWeight(.semibold)
-        .foregroundColor(.secondary)
-        .font(.monospacedDigit(.body)())
-    }
-  }
-
-  func iconForCategory(_ category: CleanupEngine.CleanupCategory) -> String {
-    switch category {
-    case .userCache, .systemCache: return "folder.fill"
-    case .logs: return "doc.text.fill"
-    case .trash: return "trash.fill"
-    case .browserCache: return "globe"
-    case .developerTools: return "hammer.fill"
-    case .applications: return "app.fill"
-    case .other: return "doc.fill"
-    }
-  }
-
-  func formatBytes(_ bytes: Int64) -> String {
     let mb = Double(bytes) / 1024 / 1024
     if mb > 1024 {
       return String(format: "%.2f GB", mb / 1024)
     }
     return String(format: "%.1f MB", mb)
-  }
-}
-
-@MainActor
-class CleanupViewModel: ObservableObject {
-  @Published var items: [CleanupEngine.CleanupItem] = []
-  @Published var isScanning = false
-  @Published var scanComplete = false
-
-  var selectedSize: Int64 {
-    items.filter { $0.isSelected }.reduce(0) { $0 + $1.size }
-  }
-
-  var formattedTotalSize: String {
-    let bytes = items.reduce(0) { $0 + $1.size }
-    let mb = Double(bytes) / 1024 / 1024
-    if mb > 1024 {
-      return String(format: "%.2f GB", mb / 1024)
-    }
-    return String(format: "%.1f MB", mb)
-  }
-
-  func startScan() async {
-    isScanning = true
-    scanComplete = false
-    items = []
-
-    do {
-      // Artificial delay for better UX if scan is too fast
-      try? await Task.sleep(nanoseconds: 500_000_000)
-
-      let foundItems = try await CleanupEngine.shared.scanForCleanableItems()
-
-      withAnimation {
-        self.items = foundItems
-        self.isScanning = false
-        self.scanComplete = true
-      }
-    } catch {
-      print("Scan failed: \(error)")
-      self.isScanning = false
-      self.scanComplete = true
-    }
-  }
-
-  func cleanSelected() async -> CleanupResult {
-    let selectedItems = items.filter { $0.isSelected }
-    guard !selectedItems.isEmpty else {
-      return CleanupResult(successCount: 0, failedCount: 0, freedBytes: 0)
-    }
-
-    var successCount = 0
-    var failedCount = 0
-    var freedBytes: Int64 = 0
-    let fm = FileManager.default
-
-    for item in selectedItems {
-      do {
-        try fm.removeItem(atPath: item.path)
-        successCount += 1
-        freedBytes += item.size
-      } catch {
-        failedCount += 1
-        print("Failed to delete \(item.path): \(error)")
-      }
-    }
-
-    return CleanupResult(
-      successCount: successCount, failedCount: failedCount, freedBytes: freedBytes)
-  }
-
-  func reset() {
-    items = []
-    scanComplete = false
-    isScanning = false
   }
 }

@@ -148,10 +148,10 @@ public struct PluginStoreView: View {
   }
 
   private func uninstallPlugin(_ pluginId: String) {
-    Task {
+    _ = Task {
       do {
         try await PluginStoreManager.shared.uninstall(pluginId: pluginId)
-        await MainActor.run {
+        _ = await MainActor.run {
           installedIds.remove(pluginId)
         }
       } catch {

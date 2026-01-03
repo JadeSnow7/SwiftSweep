@@ -7,7 +7,7 @@ public final class CleanupEngine {
 
   private let logger = Logger(label: "com.molekit.cleanup")
 
-  public struct CleanupItem: Identifiable {
+  public struct CleanupItem: Identifiable, Equatable, Sendable {
     public let id: UUID
     public let name: String
     public let path: String
@@ -27,7 +27,7 @@ public final class CleanupEngine {
     }
   }
 
-  public enum CleanupCategory: String, Codable {
+  public enum CleanupCategory: String, Codable, Sendable {
     case userCache = "User Cache"
     case systemCache = "System Cache"
     case logs = "Logs"
