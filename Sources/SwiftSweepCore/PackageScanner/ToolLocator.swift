@@ -51,13 +51,21 @@ public struct ToolLocator: Sendable {
   /// Environment variables for Package Finder commands
   /// Includes PATH, HOME, and settings to prevent unwanted updates
   public static var packageFinderEnvironment: [String: String] {
+    // Include sbin paths for Homebrew
+    let pathWithSbin =
+      searchPaths.joined(separator: ":") + ":/opt/homebrew/sbin:/usr/local/sbin:/usr/sbin:/sbin"
+
     var env: [String: String] = [
-      "PATH": searchPaths.joined(separator: ":"),
+      "PATH": pathWithSbin,
       "LANG": "en_US.UTF-8",
       "LC_ALL": "en_US.UTF-8",
       // Prevent Homebrew from auto-updating during scan
       "HOMEBREW_NO_AUTO_UPDATE": "1",
       "HOMEBREW_NO_INSTALL_CLEANUP": "1",
+      // Homebrew prefix environment (required for brew to function properly)
+      "HOMEBREW_PREFIX": "/opt/homebrew",
+      "HOMEBREW_CELLAR": "/opt/homebrew/Cellar",
+      "HOMEBREW_REPOSITORY": "/opt/homebrew",
       // Prevent npm from checking for updates
       "NO_UPDATE_NOTIFIER": "1",
     ]
@@ -70,6 +78,11 @@ public struct ToolLocator: Sendable {
     // Add USER if available
     if let user = ProcessInfo.processInfo.environment["USER"] {
       env["USER"] = user
+    }
+
+    // Add SHELL if available (some tools check this)
+    if let shell = ProcessInfo.processInfo.environment["SHELL"] {
+      env["SHELL"] = shell
     }
 
     return env
