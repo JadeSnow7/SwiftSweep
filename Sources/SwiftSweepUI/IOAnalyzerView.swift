@@ -19,6 +19,11 @@ public struct IOAnalyzerView: View {
   @State private var peakReadSpeed: Double = 0
   @State private var peakWriteSpeed: Double = 0
 
+  // System mode state
+  @State private var tracerMode: IOAnalyzer.TracerMode = .selfOnly
+  @State private var showPermissionSheet = false
+  @State private var permissionStatus: ESPermissionManager.PermissionStatus = .notDetermined
+
   public init() {}
 
   public var body: some View {
@@ -71,10 +76,25 @@ public struct IOAnalyzerView: View {
       }
     }
     .frame(minWidth: 500, minHeight: 500)
+    .onAppear {
+      permissionStatus = ESPermissionManager.shared.checkStatus()
+    }
     .onDisappear {
       Task {
         await IOAnalyzer.shared.stopAnalysis()
       }
+    }
+    .sheet(isPresented: $showPermissionSheet) {
+      PermissionRequestSheet(
+        status: permissionStatus,
+        onOpenSettings: {
+          ESPermissionManager.shared.openSecurityPreferences()
+        },
+        onDismiss: {
+          showPermissionSheet = false
+          permissionStatus = ESPermissionManager.shared.checkStatus()
+        }
+      )
     }
   }
 
@@ -100,7 +120,7 @@ public struct IOAnalyzerView: View {
                     .scaleEffect(1.5)
                     .opacity(0.6)
                 }
-              Text("Recording")
+              Text(tracerMode == .systemWide ? "System-wide" : "App Only")
                 .font(.caption.bold())
                 .foregroundColor(.red)
             }
@@ -113,6 +133,28 @@ public struct IOAnalyzerView: View {
       }
 
       Spacer()
+
+      // Mode Picker (disabled during tracing)
+      if !isCompact {
+        Picker("Mode", selection: $tracerMode) {
+          Label("App Only", systemImage: "app.fill")
+            .tag(IOAnalyzer.TracerMode.selfOnly)
+          Label("System-wide", systemImage: "globe")
+            .tag(IOAnalyzer.TracerMode.systemWide)
+        }
+        .pickerStyle(.segmented)
+        .frame(width: 200)
+        .disabled(isTracing)
+        .onChange(of: tracerMode) { newMode in
+          if newMode == .systemWide {
+            permissionStatus = ESPermissionManager.shared.checkStatus()
+            if permissionStatus != .authorized {
+              showPermissionSheet = true
+              tracerMode = .selfOnly  // Revert if not authorized
+            }
+          }
+        }
+      }
 
       // Buffer stats - hide completely when compact
       if !isCompact, isTracing, let stats = bufferStats {
@@ -585,25 +627,36 @@ public struct IOAnalyzerView: View {
     peakWriteSpeed = 0
 
     Task {
-      try? await IOAnalyzer.shared.startAnalysis(aggregationInterval: 1.0) { slice in
-        Task { @MainActor in
-          timeSlices.append(slice)
-          if timeSlices.count > 120 {
-            timeSlices.removeFirst(timeSlices.count - 120)
-          }
+      do {
+        try await IOAnalyzer.shared.startAnalysis(
+          mode: tracerMode,
+          aggregationInterval: 1.0
+        ) { slice in
+          Task { @MainActor in
+            timeSlices.append(slice)
+            if timeSlices.count > 120 {
+              timeSlices.removeFirst(timeSlices.count - 120)
+            }
 
-          // Update current speeds
-          currentReadSpeed = slice.readThroughput
-          currentWriteSpeed = slice.writeThroughput
+            // Update current speeds
+            currentReadSpeed = slice.readThroughput
+            currentWriteSpeed = slice.writeThroughput
 
-          // Track peaks
-          if slice.readThroughput > peakReadSpeed {
-            peakReadSpeed = slice.readThroughput
-          }
-          if slice.writeThroughput > peakWriteSpeed {
-            peakWriteSpeed = slice.writeThroughput
+            // Track peaks
+            if slice.readThroughput > peakReadSpeed {
+              peakReadSpeed = slice.readThroughput
+            }
+            if slice.writeThroughput > peakWriteSpeed {
+              peakWriteSpeed = slice.writeThroughput
+            }
           }
         }
+      } catch {
+        await MainActor.run {
+          isTracing = false
+          showPermissionSheet = true
+        }
+        return
       }
 
       // Periodic stats update
@@ -744,6 +797,126 @@ struct LegendItem: View {
       Text(label)
         .font(.caption)
         .foregroundColor(.secondary)
+    }
+  }
+}
+
+// MARK: - Permission Request Sheet
+
+struct PermissionRequestSheet: View {
+  let status: ESPermissionManager.PermissionStatus
+  let onOpenSettings: () -> Void
+  let onDismiss: () -> Void
+
+  var body: some View {
+    VStack(spacing: 20) {
+      // Icon
+      Image(systemName: statusIcon)
+        .font(.system(size: 48))
+        .foregroundColor(statusColor)
+        .padding(.top, 20)
+
+      // Title
+      Text(statusTitle)
+        .font(.title2.bold())
+
+      // Description
+      Text(statusDescription)
+        .font(.body)
+        .foregroundColor(.secondary)
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: 350)
+
+      // Steps (for denied status)
+      if status == .denied || status == .notDetermined {
+        VStack(alignment: .leading, spacing: 12) {
+          StepRow(number: 1, text: "Click 'Open Settings' below")
+          StepRow(number: 2, text: "Find SwiftSweep in the list")
+          StepRow(number: 3, text: "Toggle to enable access")
+          StepRow(number: 4, text: "Restart SwiftSweep")
+        }
+        .padding()
+        .background(Color.secondary.opacity(0.1))
+        .cornerRadius(12)
+      }
+
+      Spacer()
+
+      // Buttons
+      HStack(spacing: 16) {
+        Button("Cancel") {
+          onDismiss()
+        }
+        .buttonStyle(.bordered)
+
+        if status != .restricted {
+          Button("Open Settings") {
+            onOpenSettings()
+          }
+          .buttonStyle(.borderedProminent)
+        }
+      }
+      .padding(.bottom, 20)
+    }
+    .padding()
+    .frame(width: 400, height: 420)
+  }
+
+  private var statusIcon: String {
+    switch status {
+    case .authorized: return "checkmark.shield.fill"
+    case .denied, .notDetermined: return "lock.shield"
+    case .restricted: return "xmark.shield.fill"
+    }
+  }
+
+  private var statusColor: Color {
+    switch status {
+    case .authorized: return .green
+    case .denied, .notDetermined: return .orange
+    case .restricted: return .red
+    }
+  }
+
+  private var statusTitle: String {
+    switch status {
+    case .authorized: return "Permission Granted"
+    case .denied: return "Full Disk Access Required"
+    case .notDetermined: return "Permission Needed"
+    case .restricted: return "Not Available"
+    }
+  }
+
+  private var statusDescription: String {
+    switch status {
+    case .authorized:
+      return "System-wide I/O monitoring is ready."
+    case .denied:
+      return "SwiftSweep needs Full Disk Access to monitor system-wide file operations."
+    case .notDetermined:
+      return "To enable system-wide monitoring, please grant Full Disk Access permission."
+    case .restricted:
+      return "This app does not have the required Endpoint Security entitlement from Apple."
+    }
+  }
+}
+
+struct StepRow: View {
+  let number: Int
+  let text: String
+
+  var body: some View {
+    HStack(spacing: 12) {
+      Circle()
+        .fill(Color.accentColor)
+        .frame(width: 24, height: 24)
+        .overlay(
+          Text("\(number)")
+            .font(.caption.bold())
+            .foregroundColor(.white)
+        )
+      Text(text)
+        .font(.callout)
     }
   }
 }
