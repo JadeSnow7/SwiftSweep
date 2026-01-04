@@ -144,9 +144,10 @@ SwiftSweep/
 ├── Packages/                     # 内置子包（应用清单等）
 ├── Helper/                       # Privileged Helper 源码
 ├── docs/                         # 文档
-│   ├── ARCHITECTURE.md           # 架构文档
-│   ├── MediaAnalyzer.md          # 媒体分析使用指南
-│   └── IOAnalyzer.md             # I/O 分析使用指南
+│   ├── DESIGN_SYSTEM.md          # 系统架构总览
+│   ├── ARCHITECTURE_REFACTORING_PLAN.md  # UDF 迁移计划与现状
+│   ├── COMPLIANCE_REPORT.md      # TS_008 合规报告
+│   └── tech_specs/TS_008_DECOUPLED_ARCHITECTURE.md  # UDF 规范
 └── Tests/                        # 单元测试
 ```
 
@@ -175,11 +176,10 @@ swift run swiftsweep analyze ~/Documents
 
 ## 📚 文档
 
-- `PROJECT_DESIGN.md`：整体架构与核心模块说明
-- `docs/ARCHITECTURE.md`：模块架构与设计原则
-- `docs/MediaAnalyzer.md`：媒体智能分析使用指南
-- `docs/IOAnalyzer.md`：I/O 性能分析使用指南
-- `docs/INTELLIGENT_ANALYSIS.md`：智能分析能力边界与路线图
+- `docs/DESIGN_SYSTEM.md`：系统架构总览与模块关系
+- `docs/ARCHITECTURE_REFACTORING_PLAN.md`：UDF 架构迁移计划与现状
+- `docs/COMPLIANCE_REPORT.md`：TS_008 合规审计与差距分析
+- `docs/tech_specs/TS_008_DECOUPLED_ARCHITECTURE.md`：UDF 分层规范
 
 ---
 

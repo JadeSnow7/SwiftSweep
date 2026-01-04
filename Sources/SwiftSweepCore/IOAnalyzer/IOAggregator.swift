@@ -7,7 +7,12 @@ import Foundation
 public actor IOAggregator {
   public static let shared = IOAggregator()
 
-  private let tracer: IOSelfTracer
+  /// 事件源
+  public enum EventSource: Sendable {
+    case selfTracer(IOSelfTracer)
+    case systemTracer(ESSystemTracer)
+  }
+
   private var timeSlices: [IOTimeSlice] = []
   private var pathStats: [String: MutablePathStats] = [:]
   private var aggregationTask: Task<Void, Never>?
@@ -15,15 +20,14 @@ public actor IOAggregator {
   /// 最多保留的时间片数量
   private let maxTimeSlices = 300  // 5 分钟 @ 1秒/slice
 
-  public init(tracer: IOSelfTracer = .shared) {
-    self.tracer = tracer
-  }
+  public init() {}
 
   // MARK: - Aggregation Control
 
   /// 开始聚合
   public func startAggregation(
     interval: TimeInterval = 1.0,
+    source: EventSource = .selfTracer(.shared),
     onSlice: (@Sendable (IOTimeSlice) -> Void)? = nil
   ) {
     stopAggregation()
@@ -34,8 +38,14 @@ public actor IOAggregator {
       while !Task.isCancelled {
         try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
 
-        // 批量获取事件
-        let events = await tracer.drainEvents(maxCount: 5000)
+        // 根据源获取事件
+        let events: [IOEvent]
+        switch source {
+        case .selfTracer(let tracer):
+          events = await tracer.drainEvents(maxCount: 5000)
+        case .systemTracer(let tracer):
+          events = await tracer.drainEvents(maxCount: 5000)
+        }
 
         if !events.isEmpty {
           // 聚合为时间片

@@ -145,3 +145,26 @@ enum StateMutation {
 - [ ] Do tasks persist across page cuts? / 跨页面任务是否可持续？
 - [ ] Are concurrency rules centralized? / 并发规则是否集中化？
 - [ ] Is AI generated code controlled? / AI 生成代码是否受控？
+
+## 6. Implementation Reference (SwiftSweep) / 实现参考（SwiftSweep）
+当前 SwiftSweep 的 UDF 落地覆盖卸载与清理功能，其它模块仍在迁移。 / 当前仅部分模块完成迁移。
+
+**State / 状态**
+- `AppState`, `NavigationState`, `UninstallState`, `CleanupState`  
+  Files: `Sources/SwiftSweepCore/State/AppState.swift`
+
+**Actions / 动作**
+- `AppAction`, `NavigationAction`, `UninstallAction`, `CleanupAction`  
+  Files: `Sources/SwiftSweepCore/State/AppAction.swift`
+
+**Store + Reducer / Store 与 Reducer**
+- `AppStore.dispatch`, `setEffectHandler`, `appReducer`  
+  Files: `Sources/SwiftSweepCore/State/AppStore.swift`, `Sources/SwiftSweepCore/State/Reducer.swift`
+
+**Effects / 副作用**
+- `uninstallEffects`, `cleanupEffects`  
+  Files: `Sources/SwiftSweepCore/State/Effects/UninstallEffects.swift`, `Sources/SwiftSweepCore/State/Effects/CleanupEffects.swift`
+
+**UI (Action-driven) / 视图（Action 驱动）**
+- `UninstallView`, `CleanView`  
+  Files: `Sources/SwiftSweepUI/UninstallView.swift`, `Sources/SwiftSweepUI/CleanView.swift`

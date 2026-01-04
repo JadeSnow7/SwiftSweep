@@ -64,15 +64,31 @@
 
 ## 5. 整体架构设计（Design Overview）
 
-系统采用 **MVVM + Clean Architecture**，核心层围绕 Actor 模型构建。
+系统正在迁移至 **UDF（单向数据流）+ 分层架构**，核心层围绕 Actor 模型构建。  
+当前卸载与清理功能已落地 Store/Reducer/Effects，其它模块仍保留部分 ViewModel，处于迁移阶段。
 
 ### 模块划分
 
 ```mermaid
 flowchart TB
-    subgraph UI_Layer ["UI Layer (@MainActor)"]
-        DashboardView
-        StatusViewModel
+    subgraph UI_Layer ["UI Layer (SwiftUI)"]
+        Views["Views (Uninstall/Clean)"]
+    end
+
+    subgraph State_Layer ["State Layer"]
+        Store["AppStore"]
+        Reducer["appReducer"]
+        State["AppState"]
+    end
+
+    subgraph Effects_Layer ["Effects Layer"]
+        Effects["UninstallEffects / CleanupEffects"]
+    end
+
+    subgraph Engine_Layer ["Business Engines"]
+        CleanupEngine
+        UninstallEngine
+        MediaAnalyzer
     end
 
     subgraph Infra_Layer ["Infrastructure Layer"]
@@ -80,20 +96,28 @@ flowchart TB
         IOAnalyzer[IOAnalyzer (Actor)]
     end
 
-    subgraph Engine_Layer ["Business Engines"]
-        CleanupEngine
-        MediaAnalyzer
-    end
-
-    UI_Layer --> StatusViewModel
-    StatusViewModel --> Scheduler
-    Engine_Layer --> Scheduler
-    Engine_Layer --> IOAnalyzer
+    Views --> Store --> Reducer --> State
+    Store --> Effects
+    Effects --> CleanupEngine
+    Effects --> UninstallEngine
+    CleanupEngine --> Scheduler
+    UninstallEngine --> Scheduler
+    MediaAnalyzer --> Scheduler
+    CleanupEngine --> IOAnalyzer
 ```
 
--   **UI Layer**: SwiftUI 视图，订阅 ViewModel 的 `@Published` 属性。
--   **Infrastructure**: 提供通用的并发调度和性能监控能力。
--   **Engine Layer**: 具体业务逻辑（如清理、分析），只负责提交任务到 Infrastructure。
+-   **UI Layer**: SwiftUI 视图通过 `AppStore` 派发 Action，并渲染 `AppState`。
+-   **State Layer**: `AppStore` + Reducer 负责纯状态变更。
+-   **Effects Layer**: 统一处理异步任务与副作用。
+-   **Infrastructure**: 提供并发调度与性能监控能力。
+-   **Engine Layer**: 业务引擎保持纯逻辑，通过 Effects 调用。
+
+### 5.1 UDF 状态与动作 API（当前实现）
+
+-   **AppState**：`NavigationState` / `UninstallState` / `CleanupState`（含 `CleanupResult` 及计算属性）。  
+-   **AppAction**：`NavigationAction` / `UninstallAction` / `CleanupAction`（含 `setPendingSelection`、`scanFailed` 等）。  
+-   **AppStore**：`dispatch(_:)` 驱动 Reducer；`setEffectHandler` 注入 effects。  
+-   **Effects**：`uninstallEffects` 与 `cleanupEffects` 作为副作用入口。  
 
 ---
 
@@ -145,7 +169,7 @@ flowchart TB
 -   **Actor Reentrancy (重入)**：Swift Actor 是可重入的。如果一个 Actor 方法中有 `await`，在挂起期间状态可能被修改。
     -   *缓解*：在 `await` 之后重新检查状态假设；尽量保持 Actor 方法同步完成或不依赖跨 `await` 的状态一致性。
 -   **UI 延迟**：如果 MainActor 承担了过多的数据转换工作。
-    -   *缓解*：ViewModel 仅做简单赋值，复杂转换在后台 Actor 完成。
+    -   *缓解*：Reducer/Store 仅做状态更新，复杂转换在后台 Actor 或 Effects 中完成。
 
 ---
 

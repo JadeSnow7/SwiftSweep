@@ -46,6 +46,9 @@ let package = Package(
         "SmartInterpreter",
         "Integration",
         "State",
+      ],
+      linkerSettings: [
+        .linkedFramework("EndpointSecurity")
       ]
     ),
 

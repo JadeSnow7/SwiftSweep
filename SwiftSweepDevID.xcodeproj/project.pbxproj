@@ -29,6 +29,7 @@
 		1B28BF7E52AB190137217BF0 /* PackageScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28BFA62383E7EAB529579A04 /* PackageScanner.swift */; };
 		1B52CD45D4E77CDCB151F859 /* ShakeModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D640DD41E8DA01CAC252F67 /* ShakeModifier.swift */; };
 		1D21926B9F5A259B7BD50B0D /* ActionLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06AE729A52B7F14140C24366 /* ActionLogger.swift */; };
+		1ECC4FF83B1A4A766E13E9C2 /* libEndpointSecurity.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 223BA2A6B3A4FA8061C0D9DF /* libEndpointSecurity.tbd */; };
 		1F6E72A29DB6446B33711BE6 /* MediaAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C9EB600D90112F48D69802 /* MediaAnalyzer.swift */; };
 		2036D8EAE24036894FAE445E /* SmartInterpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A2E1E58680505FA8280EFAB /* SmartInterpreter.swift */; };
 		22C1393EA638BBAE219E45AD /* GitRepoScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015010576BED1F646B80672A /* GitRepoScanner.swift */; };
@@ -78,6 +79,7 @@
 		558E99EFDD1D1DBDCF5F5F47 /* HelperErrorCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8001EC9BE432F829F3CFFBBD /* HelperErrorCodes.swift */; };
 		55CA41E3AEB8127ABA15D4A1 /* MediaAnalyzerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F78FFAAA0580781BD9F977 /* MediaAnalyzerView.swift */; };
 		56647BB17ABEDBDC9FB503FB /* SwiftSweepAppInventory in Frameworks */ = {isa = PBXBuildFile; productRef = E58894DEC3FB53C63A9DF186 /* SwiftSweepAppInventory */; };
+		56719F1284C3F292909C99A4 /* ESPermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 294F638D603C4E88402F23C9 /* ESPermissionManager.swift */; };
 		57688565785222B7A3F7492A /* PerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C9E4159D78AC9D5BE34A31 /* PerformanceMonitor.swift */; };
 		57827FCF4FBF1F0F9C346449 /* OptimizeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A7E55D13E7925AED747255A /* OptimizeView.swift */; };
 		57CEADAB15ED2BDF48301BA0 /* PluginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AC34DC9CB7AD22388F43AD1 /* PluginManager.swift */; };
@@ -169,6 +171,7 @@
 		A24594257E72552F88ECD6BF /* BrowserCacheRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65B36142B70F448F3601681 /* BrowserCacheRule.swift */; };
 		A30354D9D76345F72DEF3F3F /* PrivilegedDeleting.swift in Sources */ = {isa = PBXBuildFile; fileRef = D768177BC39540073011FEC3 /* PrivilegedDeleting.swift */; };
 		A64DD46819472FC7C3926AE0 /* LargeCacheRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADCAC4E4AFB9DEF4ABAEDBE /* LargeCacheRule.swift */; };
+		A7D86D10C0B8D2D8CDE9E3AC /* ESSystemTracer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31752336DDCE0B5BA70C6EC6 /* ESSystemTracer.swift */; };
 		AA99B354E4569EF3CE708A4B /* Reducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D640006E90BBFAF5425CAC /* Reducer.swift */; };
 		AC6E00E70B2650182D20027E /* PackageIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45756DADD4A1526871D1EFF6 /* PackageIdentity.swift */; };
 		ADB6E7E7106A86857FC368E8 /* DirectorySizeCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F539166B61D2A4E990D78C1 /* DirectorySizeCache.swift */; };
@@ -184,6 +187,7 @@
 		B81615CE24AFCBDE4294047F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EC414EA68F888C69D022A902 /* Assets.xcassets */; };
 		B8B13416400D5885E8C9B2C9 /* LowDiskSpaceRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83614B56481CF8F4FC78E00 /* LowDiskSpaceRule.swift */; };
 		B8C5249A3C3147DC64710607 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA561F9CAA20228329C3D13 /* main.swift */; };
+		B97276B6616F48F494885330 /* ESSystemTracer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31752336DDCE0B5BA70C6EC6 /* ESSystemTracer.swift */; };
 		BAC045067BF53BD553CF87D3 /* IOEventBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8314B1EB70F264DF4B52F44 /* IOEventBuffer.swift */; };
 		BCFF1AB668EF79DBF8DA3AFA /* IOAnalyzerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3DC5F60C5D32306EB949CBA /* IOAnalyzerView.swift */; };
 		C116AD066BDA05A27E846E7A /* IOSelfTracer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC321B2CCB370B789AD487 /* IOSelfTracer.swift */; };
@@ -196,6 +200,7 @@
 		CA97D481D45124088D4C5EF4 /* EcosystemRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33DD48A77760EAE73BFEBE90 /* EcosystemRegistry.swift */; };
 		CB4052EBF1DDA6DC1BEA5DBD /* DeletionPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D19FF450DE2C15D5E26F29 /* DeletionPlan.swift */; };
 		CE93F467BD2C84CCB4DE1C2E /* ScreenshotCleanupRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8611145D32CDE04879E237D0 /* ScreenshotCleanupRule.swift */; };
+		D091F8961814D6A0FAEE7DFB /* ESPermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 294F638D603C4E88402F23C9 /* ESPermissionManager.swift */; };
 		D2A1A2454D0EEB6812C7913F /* IOTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A6D9E6A65F9F61B5B12D19 /* IOTypes.swift */; };
 		D3CC47D7A639E93938643F97 /* RecommendationContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = A89D0856329A4461454F046D /* RecommendationContext.swift */; };
 		D42E3CCD061391F00B4142FF /* IOAggregator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18F9487382EF474608BF68C /* IOAggregator.swift */; };
@@ -265,12 +270,15 @@
 		1C1C2A17944BE9D79268865E /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
 		1EDC6F3B0B3E52E1D8B37E14 /* BrewJsonProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewJsonProvider.swift; sourceTree = "<group>"; };
 		1F625A4273667BD082394BE7 /* RecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationEngine.swift; sourceTree = "<group>"; };
+		223BA2A6B3A4FA8061C0D9DF /* libEndpointSecurity.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libEndpointSecurity.tbd; path = usr/lib/libEndpointSecurity.tbd; sourceTree = SDKROOT; };
 		2396C4875731341B8DDF05B6 /* UnusedAppsRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnusedAppsRule.swift; sourceTree = "<group>"; };
 		24095CAF50FD31E0F277F138 /* MainApplicationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainApplicationsView.swift; sourceTree = "<group>"; };
 		24CAA1D5DC33E39F85557AB2 /* MediaScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaScanner.swift; sourceTree = "<group>"; };
 		28467C6AB1698BC9FB3D4E25 /* SlideInModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlideInModifier.swift; sourceTree = "<group>"; };
 		28BFA62383E7EAB529579A04 /* PackageScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageScanner.swift; sourceTree = "<group>"; };
+		294F638D603C4E88402F23C9 /* ESPermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ESPermissionManager.swift; sourceTree = "<group>"; };
 		30C19B7A2B70BEEC44CAA286 /* IOHotspotDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOHotspotDetector.swift; sourceTree = "<group>"; };
+		31752336DDCE0B5BA70C6EC6 /* ESSystemTracer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ESSystemTracer.swift; sourceTree = "<group>"; };
 		31FC552DBE6AD30DE990DEE5 /* MotionConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionConfig.swift; sourceTree = "<group>"; };
 		3298AE85D27A6C3754A6C36D /* PathNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathNormalizer.swift; sourceTree = "<group>"; };
 		33DD48A77760EAE73BFEBE90 /* EcosystemRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcosystemRegistry.swift; sourceTree = "<group>"; };
@@ -404,6 +412,7 @@
 			files = (
 				56647BB17ABEDBDC9FB503FB /* SwiftSweepAppInventory in Frameworks */,
 				DA1E0D4BBA67E9B308253EB3 /* Logging in Frameworks */,
+				1ECC4FF83B1A4A766E13E9C2 /* libEndpointSecurity.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -560,6 +569,7 @@
 				3D248CFBBFC289D61264DA28 /* Packages */,
 				B8B2E92D12A9435E17C31B16 /* Resources */,
 				9DD0E18EA2E57DC192C91D42 /* Sources */,
+				AFF2D6A676552C06CC2C20D5 /* Frameworks */,
 				BF5596539AA3510CBC8068F7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -670,6 +680,14 @@
 				BB9BB5C32CA4EC58C1BFE0F1 /* Localizable.strings */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		AFF2D6A676552C06CC2C20D5 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				223BA2A6B3A4FA8061C0D9DF /* libEndpointSecurity.tbd */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		B0DC5583C02DEC999F279890 /* Layout */ = {
@@ -787,6 +805,8 @@
 		CD017C9FB5A906BA8EE062E6 /* IOAnalyzer */ = {
 			isa = PBXGroup;
 			children = (
+				294F638D603C4E88402F23C9 /* ESPermissionManager.swift */,
+				31752336DDCE0B5BA70C6EC6 /* ESSystemTracer.swift */,
 				A18F9487382EF474608BF68C /* IOAggregator.swift */,
 				7B50B5F947753542394C2582 /* IOAnalyzer.swift */,
 				E8314B1EB70F264DF4B52F44 /* IOEventBuffer.swift */,
@@ -1062,6 +1082,8 @@
 				821A831687A9D989FBA9EAD2 /* DeveloperCacheRule.swift in Sources */,
 				527E733AC4764DE5C91DA8E7 /* DeviceAuthManager.swift in Sources */,
 				ADB6E7E7106A86857FC368E8 /* DirectorySizeCache.swift in Sources */,
+				D091F8961814D6A0FAEE7DFB /* ESPermissionManager.swift in Sources */,
+				A7D86D10C0B8D2D8CDE9E3AC /* ESSystemTracer.swift in Sources */,
 				ECCBDB18D714FAC924F3DD2E /* EcosystemRegistry.swift in Sources */,
 				98F63F3DC95CAE6D7F47871D /* GemProvider.swift in Sources */,
 				7726DDE3D42F6D0FD82656A9 /* GitPackFixer.swift in Sources */,
@@ -1166,6 +1188,8 @@
 				79BD97381D59C321218D20C5 /* DeveloperCacheRule.swift in Sources */,
 				DCE0B5BCCE74D2EFE7E2DE30 /* DeviceAuthManager.swift in Sources */,
 				753A4791BEC6215F22667EF0 /* DirectorySizeCache.swift in Sources */,
+				56719F1284C3F292909C99A4 /* ESPermissionManager.swift in Sources */,
+				B97276B6616F48F494885330 /* ESSystemTracer.swift in Sources */,
 				CA97D481D45124088D4C5EF4 /* EcosystemRegistry.swift in Sources */,
 				D58D90BD611E8E4838820B9D /* FileTreeView.swift in Sources */,
 				2AB1E6DB20812586C76B6906 /* GalaxyModels.swift in Sources */,

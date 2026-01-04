@@ -153,9 +153,9 @@ class StatusMonitorViewModel: ObservableObject {
 
   func startMonitoring() {
     refresh()
-    // Start IO tracing for this session
+    // Start IO tracing for this session (self mode, won't throw)
     Task {
-      await IOAnalyzer.shared.startAnalysis { [weak self] slice in
+      try? await IOAnalyzer.shared.startAnalysis { [weak self] slice in
         Task { @MainActor [weak self] in
           self?.ioReadRate = slice.readThroughput / (1024 * 1024)  // bytes -> MB
           self?.ioWriteRate = slice.writeThroughput / (1024 * 1024)

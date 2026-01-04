@@ -19,82 +19,138 @@ Dispatch Action -> Reducer -> AppState -> Store Publish -> View Update
                      Effects (Async/IO) -> Dispatch Result Action
 ```
 
+## Current Implementation Snapshot / 当前实现快照
+- **State Layer**: `AppState` includes `NavigationState`, `UninstallState`, `CleanupState`, and `CleanupResult`. / `AppState` 已包含导航、卸载、清理及清理结果状态。  
+  Files: `Sources/SwiftSweepCore/State/AppState.swift`
+- **Action Layer**: `AppAction` now includes `NavigationAction`, `UninstallAction`, `CleanupAction` (with `setPendingSelection`, `scanFailed`, `confirmClean`, `cleanCompleted`, etc.). / `AppAction` 已包含导航/卸载/清理动作。  
+  Files: `Sources/SwiftSweepCore/State/AppAction.swift`
+- **Store + Reducer**: `AppStore` uses `appReducer`, and effects are injected via `setEffectHandler`. / `AppStore` 使用 `appReducer`，通过 `setEffectHandler` 注入 effects。  
+  Files: `Sources/SwiftSweepCore/State/AppStore.swift`, `Sources/SwiftSweepCore/State/Reducer.swift`
+- **Effects**: `uninstallEffects` and `cleanupEffects` are registered in `SwiftSweepApp`. / 在 `SwiftSweepApp` 中注册 `uninstallEffects` 与 `cleanupEffects`。  
+  Files: `Sources/SwiftSweepCore/State/Effects/UninstallEffects.swift`, `Sources/SwiftSweepCore/State/Effects/CleanupEffects.swift`, `Sources/SwiftSweepUI/SwiftSweepApp.swift`
+- **UI Migration**: `UninstallView` and `CleanView` now dispatch actions via `AppStore` (no `Task {}` in these views). / 卸载与清理视图已改为通过 Store 派发 Action。  
+  Files: `Sources/SwiftSweepUI/UninstallView.swift`, `Sources/SwiftSweepUI/CleanView.swift`
+- **Scheduler Usage**: Cleanup scan uses `ConcurrentScheduler`; Uninstall effects still use `Task.detached` for heavy work. / 清理扫描使用调度器，卸载 effects 仍使用 `Task.detached`。
+- **Partial Coverage**: Other features still use local ViewModels/`Task {}`; full UDF coverage is not complete. / 其他功能仍保留 ViewModel 与 `Task {}`。
+
 ---
 
 ## Phase 1: Introduce AppState (State Layer) / 第一阶段：引入 AppState（状态层）
-**Objective / 目标**: Create a Single Source of Truth. / 建立唯一事实来源。
+**Objective / 目标**: Create a Single Source of Truth. / 建立唯一事实来源。  
+**Status / 状态**: Implemented (Navigation + Uninstall + Cleanup). / 已实现（导航 + 卸载 + 清理）。
 
 [NEW] `Sources/SwiftSweepCore/State/AppState.swift`
 ```swift
-// Global application state
-public struct AppState: Equatable {
+public struct AppState: Equatable, Sendable {
     public var navigation: NavigationState
     public var uninstall: UninstallState
     public var cleanup: CleanupState
-    // ... other feature states
 }
 
-public struct UninstallState: Equatable {
+public struct NavigationState: Equatable, Sendable {
+    public var pendingUninstallURL: URL?
+}
+
+public struct UninstallState: Equatable, Sendable {
     public enum Phase { case idle, scanning, scanned, deleting, done, error(String) }
-    public var phase: Phase = .idle
-    public var apps: [InstalledApp] = []
+    public var phase: Phase
+    public var apps: [UninstallEngine.InstalledApp]
     public var selectedAppID: UUID?
-    public var residuals: [ResidualFile] = []
+    public var residuals: [UninstallEngine.ResidualFile]
+    public var deletionPlan: DeletionPlan?
+    public var deletionResult: DeletionResult?
+    public var pendingSelectionURL: URL?
+}
+
+public struct CleanupState: Equatable, Sendable {
+    public enum Phase { case idle, scanning, scanned, cleaning, completed, error(String) }
+    public var phase: Phase
+    public var items: [CleanupEngine.CleanupItem]
+    public var cleanResult: CleanupResult?
+    public var totalSize: Int64 { ... }
+    public var selectedSize: Int64 { ... }
+    public var selectedItems: [CleanupEngine.CleanupItem] { ... }
 }
 ```
 
-[NEW] `Sources/SwiftSweepCore/State/StateMutation.swift`
+[NEW] `Sources/SwiftSweepCore/State/AppAction.swift`
 ```swift
-public enum AppAction {
+public enum AppAction: Sendable {
+    case navigation(NavigationAction)
     case uninstall(UninstallAction)
     case cleanup(CleanupAction)
-    // ...
 }
 
-public enum UninstallAction {
+public enum NavigationAction: Sendable {
+    case requestUninstall(URL?)
+    case clearUninstallRequest
+}
+
+public enum UninstallAction: Sendable {
     case startScan
-    case scanCompleted([InstalledApp])
+    case scanCompleted([UninstallEngine.InstalledApp])
+    case setPendingSelection(URL)
     case selectApp(UUID)
-    case loadResidualsCompleted([ResidualFile])
+    case loadResidualsCompleted([UninstallEngine.ResidualFile])
+    case prepareUninstall(UninstallEngine.InstalledApp)
+    case planCreated(DeletionPlan)
+    case cancelUninstall
+    case confirmUninstall
     case startDelete
-    case deleteCompleted(Result<Void, Error>)
+    case deleteCompleted(Result<DeletionResult, Error>)
+    case reset
+}
+
+public enum CleanupAction: Sendable {
+    case startScan
+    case scanCompleted([CleanupEngine.CleanupItem])
+    case scanFailed(String)
+    case toggleItem(UUID)
+    case selectAll
+    case deselectAll
+    case confirmClean
+    case cancelClean
+    case startClean
+    case cleanCompleted(CleanupResult)
+    case reset
 }
 ```
 
 ---
 
 ## Phase 2: Create Store & Reducer / 第二阶段：创建 Store 与 Reducer
-**Objective / 目标**: Centralize state mutations. / 集中状态变更逻辑。
+**Objective / 目标**: Centralize state mutations. / 集中状态变更逻辑。  
+**Status / 状态**: Implemented. / 已实现。
 
 [NEW] `Sources/SwiftSweepCore/State/AppStore.swift`
 ```swift
 @MainActor
 public final class AppStore: ObservableObject {
+    public static let shared = AppStore()
     @Published public private(set) var state: AppState
-    private let scheduler: ConcurrentScheduler
-    
-    public init(initial: AppState = .init(), scheduler: ConcurrentScheduler = .shared) {
-        self.state = initial
-        self.scheduler = scheduler
+
+    public typealias EffectHandler = (AppAction, AppStore) async -> Void
+    private var effectHandler: EffectHandler?
+
+    public func setEffectHandler(_ handler: @escaping EffectHandler) {
+        effectHandler = handler
     }
-    
+
     public func dispatch(_ action: AppAction) {
-        // 1. Reduce
-        state = reduce(state, action)
-        // 2. Side effects (async) handled by Middleware
-        Task { await runEffects(action) }
+        state = appReducer(state, action)
+        Task { await effectHandler?(action, self) }
     }
 }
 ```
 
 [NEW] `Sources/SwiftSweepCore/State/Reducer.swift`
 ```swift
-func reduce(_ state: AppState, _ action: AppAction) -> AppState {
+public func appReducer(_ state: AppState, _ action: AppAction) -> AppState {
     var newState = state
     switch action {
-    case .uninstall(let a):
-        newState.uninstall = uninstallReducer(state.uninstall, a)
-    // ...
+    case .navigation(let a): newState.navigation = navigationReducer(state.navigation, a)
+    case .uninstall(let a): newState.uninstall = uninstallReducer(state.uninstall, a)
+    case .cleanup(let a): newState.cleanup = cleanupReducer(state.cleanup, a)
     }
     return newState
 }
@@ -103,28 +159,50 @@ func reduce(_ state: AppState, _ action: AppAction) -> AppState {
 ---
 
 ## Phase 3: Refactor UI to Pure Rendering / 第三阶段：UI 纯化
-**Objective / 目标**: Remove Task {} from Views, subscribe to Store only. / 从 View 移除 Task {}，仅订阅 Store。
+**Objective / 目标**: Remove Task {} from Views, subscribe to Store only. / 从 View 移除 Task {}，仅订阅 Store。  
+**Status / 状态**: Partial (Uninstall + Cleanup complete). / 部分完成（卸载 + 清理已完成）。
 
 [MODIFY] `Sources/SwiftSweepUI/UninstallView.swift`  
 Before: `Button { Task { await viewModel.scanApps() } }`  
 After: `Button { store.dispatch(.uninstall(.startScan)) }`
 
+[MODIFY] `Sources/SwiftSweepUI/CleanView.swift`  
+Before: `viewModel.startScan()`  
+After: `store.dispatch(.cleanup(.startScan))`
+
 [MODIFY] `Sources/SwiftSweepUI/SwiftSweepApp.swift`  
-Inject AppStore as `@EnvironmentObject`. / 注入 AppStore 作为 `@EnvironmentObject`。
+Inject `AppStore` as `@EnvironmentObject`. / 注入 `AppStore`。
 
 ---
 
 ## Phase 4: Centralize Effects / 第四阶段：副作用集中化
-**Objective / 目标**: Move async work to Effect Handlers. / 将异步逻辑移至 Effect Handler。
+**Objective / 目标**: Move async work to Effect Handlers. / 将异步逻辑移至 Effect Handler。  
+**Status / 状态**: Partial (Cleanup uses scheduler; Uninstall still uses Task.detached). / 部分完成（清理使用调度器，卸载仍使用 Task.detached）。
 
 [NEW] `Sources/SwiftSweepCore/State/Effects/UninstallEffects.swift`
 ```swift
-func runUninstallEffects(_ action: UninstallAction, store: AppStore) async {
-    switch action {
+public func uninstallEffects(_ action: AppAction, _ store: AppStore) async {
+    guard case .uninstall(let uninstallAction) = action else { return }
+    switch uninstallAction {
     case .startScan:
-        let apps = try await UninstallEngine.shared.scanInstalledApps()
-        await MainActor.run { store.dispatch(.uninstall(.scanCompleted(apps))) }
+        // Task.detached -> scan
+        store.dispatch(.uninstall(.scanCompleted(apps)))
     // ...
+    default: break
+    }
+}
+```
+
+[NEW] `Sources/SwiftSweepCore/State/Effects/CleanupEffects.swift`
+```swift
+public func cleanupEffects(_ action: AppAction, _ store: AppStore) async {
+    guard case .cleanup(let cleanupAction) = action else { return }
+    switch cleanupAction {
+    case .startScan:
+        // ConcurrentScheduler -> scan
+        store.dispatch(.cleanup(.scanCompleted(items)))
+    // ...
+    default: break
     }
 }
 ```
@@ -134,8 +212,8 @@ func runUninstallEffects(_ action: UninstallAction, store: AppStore) async {
 ## Verification Plan / 验证计划
 
 ### Automated Tests / 自动化测试
-- Unit test `reduce()` with mock actions. / 使用模拟 action 单测 `reduce()`。
-- Integration test `AppStore.dispatch()` with mock Scheduler. / 使用 mock Scheduler 做 `AppStore.dispatch()` 集成测试。
+- Unit test reducers with mock actions. / 使用模拟 action 单测 reducers。
+- Integration test `AppStore.dispatch()` with mock effects. / 使用 mock effects 做 `AppStore.dispatch()` 集成测试。
 
 ### Manual Verification / 手动验证
 - Verify UI reflects state changes correctly. / 验证 UI 正确反映状态变化。  
@@ -155,57 +233,42 @@ func runUninstallEffects(_ action: UninstallAction, store: AppStore) async {
 **Objective / 目标**: Address architectural gaps and ensure strict adherence to TS_008 (Findings Remediation). / 解决架构缺陷，确保严格遵守 TS_008（缺陷修复）。
 
 1. **Scheduler Integration / 调度器集成**  
-   Finding: Scheduler layer isn’t actually used; effects still spawn Task.detached directly. / 发现：调度层未被实际使用，effects 仍直接创建 Task.detached。  
+   Finding: Scheduler layer isn’t consistently used; Uninstall effects still spawn Task.detached. / 发现：调度层未统一使用，卸载 effects 仍创建 Task.detached。  
    Plan:  
-   - Update UninstallEffects to use `ConcurrentScheduler.shared.schedule` instead of `Task.detached`. / 用 `ConcurrentScheduler.shared.schedule` 替换 `Task.detached`。  
-   - Update AppStore to properly utilize the scheduler for effect coordination if needed. / 必要时让 AppStore 使用调度器协调 effects。  
+   - Use `ConcurrentScheduler.shared.schedule` in UninstallEffects. / 在卸载 effects 中使用调度器。  
+   - Define cancellation/timeout mapping to actions. / 明确取消/超时对应 action。  
 
 2. **App Identity & Stability / 应用标识与稳定性**  
-   Finding: App identity (UUID) is regenerated on every scan, breaking selection stability. / 发现：应用 ID 每次扫描重建，导致选择不稳定。  
+   Finding: App identity may be regenerated on each scan. / 发现：应用标识可能随扫描重建。  
    Plan:  
-   - Modify `InstalledApp` to derive id from bundleID + path hash. / 基于 bundleID + path hash 生成稳定 id。  
-   - Ensure `UninstallEngine` returns stable IDs. / 确保 `UninstallEngine` 返回稳定 id。  
+   - Derive stable ID from bundleID + path (deterministic hash). / 基于 bundleID + path 生成稳定 ID。  
 
 3. **State Integrity (Race Conditions) / 状态完整性（竞争条件）**  
-   Finding: Residuals updates can race selection. / 发现：残留结果更新与选择存在竞态。  
+   Finding: Residuals updates can race selection. / 发现：残留更新与选择存在竞态。  
    Plan:  
-   - In UninstallEffects, check `store.state.uninstall.selectedAppID` matches the request before dispatching `loadResidualsCompleted`. / 在派发 `loadResidualsCompleted` 前校验 selectedAppID。  
+   - Verify `selectedAppID` before dispatching residual updates. / 派发残留更新前校验 selectedAppID。  
 
 4. **Navigation Refactoring / 导航重构**  
-   Finding: NavigationState is a singleton outside AppState. / 发现：导航状态是 AppState 之外的单例。  
-   Plan:  
-   - Move NavigationState properties into AppState (e.g., `AppState.navigation`). / 将导航状态并入 AppState。  
-   - Eliminate `NavigationState.shared` singleton. / 移除 `NavigationState.shared` 单例。  
-   - Update MainApplicationsView and SwiftSweepApp to use `store.dispatch(.navigation(.requestUninstall(...)))`. / 更新为通过 store 派发导航 action。  
+   Status: Implemented (AppState + NavigationAction). / 状态：已实现（AppState + NavigationAction）。  
 
 5. **Preselection & UX / 预选与体验**  
-   Finding: Preselection fails if scan isn't done; Safety toggles missing. / 发现：未扫描完成时预选失败；安全开关缺失。  
-   Plan:  
-   - Implement “Pending Selection” state in UninstallState. / 在 UninstallState 中加入“待选中”状态。  
-   - Restore PathValidator checks for Apple Apps settings. / 恢复 Apple 应用卸载设置的校验。  
-   - Ensure phase = .error displays alerts in UninstallView. / 确保 `.error` 在 UI 中弹出提示。  
+   Status: Implemented (pendingSelectionURL). / 状态：已实现（pendingSelectionURL）。  
+   Remaining: Restore Apple App safety gating and error alerts in UninstallView. / 待补齐：Apple 应用卸载安全校验与错误提示。  
 
 ---
 
 ## Phase 5: Cleanup Feature Refactoring / 第五阶段：清理功能重构
-**Objective / 目标**: Apply UDF to Cleanup Feature. / 将 UDF 架构应用于清理功能。
+**Objective / 目标**: Apply UDF to Cleanup Feature. / 将 UDF 架构应用于清理功能。  
+**Status / 状态**: Partial (UI + Effects implemented; engine integration pending). / 部分完成（UI + Effects 已实现，执行引擎整合待完善）。
 
-### Work Breakdown / 工作拆解
-**State & Actions / 状态与行为**  
-- Enhance CleanupState (already in AppState) if needed. / 视需要增强 CleanupState。  
-- Verify CleanupAction covers all use cases (scan, toggle, clean). / 校验 CleanupAction 覆盖扫描、勾选、清理等场景。  
+### Implemented / 已实现
+- `CleanupState` includes `error(String)` + `cleanResult` and computed totals. / `CleanupState` 已包含错误与清理结果。  
+- `CleanupAction` supports confirm/cancel/selectAll/deselectAll/scanFailed. / `CleanupAction` 已覆盖确认/取消/全选/失败等。  
+- `CleanView` uses `AppStore` and confirmation sheet. / `CleanView` 已改为使用 Store。  
+- `CleanupEffects` handles scan via scheduler and delete flow. / `CleanupEffects` 使用调度器扫描并执行清理。  
 
-**Effects / 副作用**  
-- Create `Sources/SwiftSweepCore/State/Effects/CleanupEffects.swift`. / 新增 CleanupEffects。  
-- Implement effects for startScan (calling CleanupEngine). / 实现 startScan 的 effect（调用 CleanupEngine）。  
-- Implement effects for startClean (executing deletion). / 实现 startClean 的 effect（执行清理）。  
-
-**UI Refactoring / UI 重构**  
-- Refactor `CleanView.swift` to use AppStore. / 将 `CleanView.swift` 改为使用 AppStore。  
-- Replace CleanViewModel (if exists) or direct Engine calls. / 替换 CleanViewModel（如存在）或直接引擎调用。  
-
-**Reducer / Reducer**  
-- Ensure cleanupReducer correctly handles all actions and updates state. / 确保 cleanupReducer 正确处理 action 并更新状态。  
+### Remaining / 待完成
+- Move deletion logic into CleanupEngine (for reuse + auditing). / 将删除逻辑移回 CleanupEngine（便于复用与审计）。  
 
 ---
 

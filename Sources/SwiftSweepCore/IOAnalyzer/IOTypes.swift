@@ -21,19 +21,22 @@ public struct IOEvent: Sendable {
   public let path: String  // 脱敏后的路径
   public let bytesTransferred: Int64
   public let durationNanos: UInt64
+  public let pid: Int?  // 进程 ID（系统追踪模式）
 
   public init(
     timestamp: UInt64 = mach_absolute_time(),
     operation: IOOperation,
     path: String,
     bytesTransferred: Int64 = 0,
-    durationNanos: UInt64 = 0
+    durationNanos: UInt64 = 0,
+    pid: Int? = nil
   ) {
     self.timestamp = timestamp
     self.operation = operation
     self.path = path
     self.bytesTransferred = bytesTransferred
     self.durationNanos = durationNanos
+    self.pid = pid
   }
 
   public static let empty = IOEvent(
@@ -41,7 +44,8 @@ public struct IOEvent: Sendable {
     operation: .read,
     path: "",
     bytesTransferred: 0,
-    durationNanos: 0
+    durationNanos: 0,
+    pid: nil
   )
 }
 

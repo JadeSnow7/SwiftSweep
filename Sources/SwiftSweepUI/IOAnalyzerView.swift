@@ -585,7 +585,7 @@ public struct IOAnalyzerView: View {
     peakWriteSpeed = 0
 
     Task {
-      await IOAnalyzer.shared.startAnalysis(aggregationInterval: 1.0) { slice in
+      try? await IOAnalyzer.shared.startAnalysis(aggregationInterval: 1.0) { slice in
         Task { @MainActor in
           timeSlices.append(slice)
           if timeSlices.count > 120 {

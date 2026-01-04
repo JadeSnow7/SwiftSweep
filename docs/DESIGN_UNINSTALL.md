@@ -123,6 +123,29 @@ flowchart TB
 | `ActionExecutor` | 执行删除，降级到 Helper |
 | `Helper` | 以 root 权限删除 /Library 路径 |
 
+### 5.1 UDF 接入（当前实现）
+
+卸载功能已接入 UDF 分层：UI 不直接触发异步任务，而是通过 Store 派发 Action，Effects 负责调用引擎并回写状态。
+
+```mermaid
+flowchart LR
+    UI["UninstallView"] --> Store["AppStore"]
+    Store --> Reducer["uninstallReducer"]
+    Reducer --> State["UninstallState"]
+    Store --> Effects["UninstallEffects"]
+    Effects --> Engine["UninstallEngine"]
+    Engine --> Helper["HelperClient (XPC)"]
+    Effects --> Store
+```
+
+**状态与动作（节选）**
+- `UninstallState`: `apps`, `selectedAppID`, `residuals`, `deletionPlan`, `deletionResult`, `pendingSelectionURL`。
+- `UninstallAction`: `startScan`, `scanCompleted`, `setPendingSelection`, `selectApp`, `prepareUninstall`, `planCreated`, `startDelete`, `deleteCompleted`。
+
+**现状说明**
+- 扫描/残留加载仍使用 `Task.detached`，后续将接入 `ConcurrentScheduler` 统一调度。
+- Apple App 卸载安全校验仍需要在 UDF 流中恢复（路径校验与设置 gating）。
+
 ---
 
 ## 6. 关键设计点（Key Design Decisions）

@@ -9,6 +9,8 @@
 ### 核心架构
 - [TS_001: 核心架构与并发模型](tech_specs/TS_001_CORE_ARCHITECTURE.md)
   - 涉及 Actor 调度器、I/O 追踪、无锁并发设计。
+- [TS_008: 解耦架构规范 (UDF)](tech_specs/TS_008_DECOUPLED_ARCHITECTURE.md)
+  - 分层规范：Render/State/Scheduler/Execution。
 
 ### 业务引擎
 - [TS_003: 多媒体分析引擎](tech_specs/TS_003_MEDIA_ENGINE.md)
@@ -31,5 +33,8 @@
 ## 🗺️ 其他文档
 
 - [User Manual](../README.md): 用户功能手册与安装指南。
+- [System Design](DESIGN_SYSTEM.md): 系统总体架构与模块关系。
+- [Architecture Refactoring Plan](ARCHITECTURE_REFACTORING_PLAN.md): UDF 架构迁移计划与现状。
+- [Compliance Report](COMPLIANCE_REPORT.md): TS_008 合规审计与差距分析。
 - [Plugin Development](PLUGIN_DEVELOPMENT.md): 插件开发指南。
 - [Feature Roadmap](FEATURE_ROADMAP.md): 功能开发路线图。

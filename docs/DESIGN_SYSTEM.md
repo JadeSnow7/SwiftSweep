@@ -78,6 +78,35 @@ flowchart TB
 
 ---
 
+## 2.5 当前 UDF 分层（落地状态）
+
+当前 UDF（单向数据流）已在 **卸载** 与 **清理** 功能落地，其它功能仍在迁移中。  
+核心链路：UI → Store → Reducer → AppState → Effects → Engines → Action 回流。
+
+```mermaid
+flowchart TB
+    UI["SwiftSweepUI (Views)"]
+    Store["AppStore"]
+    Reducer["appReducer"]
+    State["AppState"]
+    Effects["UninstallEffects / CleanupEffects"]
+    Engines["UninstallEngine / CleanupEngine"]
+
+    UI --> Store --> Reducer --> State
+    Store --> Effects --> Engines
+    Effects --> Store
+```
+
+**已落地模块（部分示例）**
+- `AppState` / `AppAction` / `AppStore` / `Reducer` 已归入 `SwiftSweepCore/State`。
+- `UninstallView` 与 `CleanView` 通过 `@EnvironmentObject AppStore` 派发 Action。
+- `uninstallEffects` 与 `cleanupEffects` 作为副作用入口（清理扫描使用 `ConcurrentScheduler`）。
+
+**仍在迁移**
+- Insights / Status / Media / Packages 等页面仍使用局部状态或 `Task {}`。
+
+---
+
 ## 3. 模块依赖关系
 
 ```mermaid

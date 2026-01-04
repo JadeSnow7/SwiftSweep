@@ -71,6 +71,7 @@ targets:
         product: SwiftSweepAppInventory
       - package: Logging
         product: Logging
+      - sdk: libEndpointSecurity.tbd
     postCompileScripts:
       - name: Copy Helper LaunchDaemon plist
         script: |
