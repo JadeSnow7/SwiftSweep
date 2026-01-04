@@ -170,6 +170,8 @@
 		A18CED3BDB8A67BE998DCC67 /* PathNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3298AE85D27A6C3754A6C36D /* PathNormalizer.swift */; };
 		A24594257E72552F88ECD6BF /* BrowserCacheRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65B36142B70F448F3601681 /* BrowserCacheRule.swift */; };
 		A30354D9D76345F72DEF3F3F /* PrivilegedDeleting.swift in Sources */ = {isa = PBXBuildFile; fileRef = D768177BC39540073011FEC3 /* PrivilegedDeleting.swift */; };
+		A3969ABE2DA54924122C7BB8 /* FSEventsTracer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A4B40904269858EB1AD222 /* FSEventsTracer.swift */; };
+		A6418288F0B7ED9F53DFD915 /* FSEventsTracer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A4B40904269858EB1AD222 /* FSEventsTracer.swift */; };
 		A64DD46819472FC7C3926AE0 /* LargeCacheRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADCAC4E4AFB9DEF4ABAEDBE /* LargeCacheRule.swift */; };
 		A7D86D10C0B8D2D8CDE9E3AC /* ESSystemTracer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31752336DDCE0B5BA70C6EC6 /* ESSystemTracer.swift */; };
 		AA99B354E4569EF3CE708A4B /* Reducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D640006E90BBFAF5425CAC /* Reducer.swift */; };
@@ -381,6 +383,7 @@
 		ECE3EF05AF824AC7F787C3E0 /* PulseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseView.swift; sourceTree = "<group>"; };
 		ECF4605B3CD6D4056967E0B2 /* swiftsweep */ = {isa = PBXFileReference; includeInIndex = 0; path = swiftsweep; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED0E1B4392753994B17E45A3 /* AnalyzeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzeView.swift; sourceTree = "<group>"; };
+		F2A4B40904269858EB1AD222 /* FSEventsTracer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FSEventsTracer.swift; sourceTree = "<group>"; };
 		F386ABB60AC3309AEB7C8666 /* SysAIBoxHealthChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SysAIBoxHealthChecker.swift; sourceTree = "<group>"; };
 		F3F2C59FA1EECA06A07A0C76 /* PipMetadataProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipMetadataProvider.swift; sourceTree = "<group>"; };
 		F4C9A1AF58E67FB427E109CB /* ConfettiView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiView.swift; sourceTree = "<group>"; };
@@ -807,6 +810,7 @@
 			children = (
 				294F638D603C4E88402F23C9 /* ESPermissionManager.swift */,
 				31752336DDCE0B5BA70C6EC6 /* ESSystemTracer.swift */,
+				F2A4B40904269858EB1AD222 /* FSEventsTracer.swift */,
 				A18F9487382EF474608BF68C /* IOAggregator.swift */,
 				7B50B5F947753542394C2582 /* IOAnalyzer.swift */,
 				E8314B1EB70F264DF4B52F44 /* IOEventBuffer.swift */,
@@ -1085,6 +1089,7 @@
 				D091F8961814D6A0FAEE7DFB /* ESPermissionManager.swift in Sources */,
 				A7D86D10C0B8D2D8CDE9E3AC /* ESSystemTracer.swift in Sources */,
 				ECCBDB18D714FAC924F3DD2E /* EcosystemRegistry.swift in Sources */,
+				A3969ABE2DA54924122C7BB8 /* FSEventsTracer.swift in Sources */,
 				98F63F3DC95CAE6D7F47871D /* GemProvider.swift in Sources */,
 				7726DDE3D42F6D0FD82656A9 /* GitPackFixer.swift in Sources */,
 				099DEBE1C4FFCCC7A4E4AAFB /* GitRepo.swift in Sources */,
@@ -1191,6 +1196,7 @@
 				56719F1284C3F292909C99A4 /* ESPermissionManager.swift in Sources */,
 				B97276B6616F48F494885330 /* ESSystemTracer.swift in Sources */,
 				CA97D481D45124088D4C5EF4 /* EcosystemRegistry.swift in Sources */,
+				A6418288F0B7ED9F53DFD915 /* FSEventsTracer.swift in Sources */,
 				D58D90BD611E8E4838820B9D /* FileTreeView.swift in Sources */,
 				2AB1E6DB20812586C76B6906 /* GalaxyModels.swift in Sources */,
 				1178B19CD2AE407887B24AFC /* GalaxyView.swift in Sources */,

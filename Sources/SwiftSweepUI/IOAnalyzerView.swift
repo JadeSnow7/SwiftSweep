@@ -23,6 +23,7 @@ public struct IOAnalyzerView: View {
   @State private var tracerMode: IOAnalyzer.TracerMode = .selfOnly
   @State private var showPermissionSheet = false
   @State private var permissionStatus: ESPermissionManager.PermissionStatus = .notDetermined
+  @State private var watchPaths: [String] = ["/Volumes"]  // Default to external volumes
 
   public init() {}
 
@@ -120,7 +121,7 @@ public struct IOAnalyzerView: View {
                     .scaleEffect(1.5)
                     .opacity(0.6)
                 }
-              Text(tracerMode == .systemWide ? "System-wide" : "App Only")
+              Text(tracerMode.displayName)
                 .font(.caption.bold())
                 .foregroundColor(.red)
             }
@@ -139,11 +140,13 @@ public struct IOAnalyzerView: View {
         Picker("Mode", selection: $tracerMode) {
           Label("App Only", systemImage: "app.fill")
             .tag(IOAnalyzer.TracerMode.selfOnly)
-          Label("System-wide", systemImage: "globe")
+          Label("Directories", systemImage: "folder.badge.gearshape")
+            .tag(IOAnalyzer.TracerMode.fsEvents)
+          Label("System", systemImage: "globe")
             .tag(IOAnalyzer.TracerMode.systemWide)
         }
         .pickerStyle(.segmented)
-        .frame(width: 200)
+        .frame(width: 280)
         .disabled(isTracing)
         .onChange(of: tracerMode) { newMode in
           if newMode == .systemWide {
@@ -630,7 +633,8 @@ public struct IOAnalyzerView: View {
       do {
         try await IOAnalyzer.shared.startAnalysis(
           mode: tracerMode,
-          aggregationInterval: 1.0
+          aggregationInterval: 1.0,
+          watchPaths: watchPaths  // For fsEvents mode
         ) { slice in
           Task { @MainActor in
             timeSlices.append(slice)

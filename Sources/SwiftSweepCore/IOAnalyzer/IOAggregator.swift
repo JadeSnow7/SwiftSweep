@@ -11,6 +11,7 @@ public actor IOAggregator {
   public enum EventSource: Sendable {
     case selfTracer(IOSelfTracer)
     case systemTracer(ESSystemTracer)
+    case fsEventsTracer(FSEventsTracer)
   }
 
   private var timeSlices: [IOTimeSlice] = []
@@ -44,6 +45,8 @@ public actor IOAggregator {
         case .selfTracer(let tracer):
           events = await tracer.drainEvents(maxCount: 5000)
         case .systemTracer(let tracer):
+          events = await tracer.drainEvents(maxCount: 5000)
+        case .fsEventsTracer(let tracer):
           events = await tracer.drainEvents(maxCount: 5000)
         }
 
