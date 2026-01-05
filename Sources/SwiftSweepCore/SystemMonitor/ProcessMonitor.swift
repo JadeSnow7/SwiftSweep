@@ -39,6 +39,26 @@ public final class ProcessMonitor: @unchecked Sendable {
 
   private init() {}
 
+  /// 结束指定进程
+  /// - Parameter pid: 进程 ID
+  /// - Throws: 如果失败抛出错误
+  public func killProcess(_ pid: pid_t) throws {
+    // 尝试发送 SIGTERM
+    if kill(pid, SIGTERM) != 0 {
+      // 检查错误
+      let error = errno
+      if error == ESRCH {
+        // 进程已不存在，视为成功
+        return
+      }
+      throw NSError(
+        domain: NSPOSIXErrorDomain,
+        code: Int(error),
+        userInfo: [NSLocalizedDescriptionKey: String(cString: strerror(error))]
+      )
+    }
+  }
+
   // 缓存上一次的 CPU 时间数据：PID -> (UserTime + SystemTime) in nanoseconds
   private var lastCPUTimes: [pid_t: UInt64] = [:]
   private var lastSampleTime: TimeInterval = 0

@@ -1,6 +1,14 @@
 # Changelog
 
 All notable changes to SwiftSweep will be documented in this file.
+## [0.5.1] - 2026-01-05
+
+### Added
+- **Kill Process**: Force quit processes from the process list with confirmation dialog.
+- Hover over a process row to reveal the quit button.
+
+---
+
 ## [0.5.0] - 2026-01-05
 
 ### Added

@@ -66,6 +66,25 @@ public struct ProcessListSheet: View {
     .onDisappear {
       viewModel.stopAutoRefresh()
     }
+    .alert(isPresented: $viewModel.showConfirmAlert) {
+      Alert(
+        title: Text("Force Quit Process?"),
+        message: Text(
+          "Are you sure you want to quit '\(viewModel.processToKill?.name ?? "")' (PID: \(viewModel.processToKill?.id ?? 0))? Unsaved data may be lost."
+        ),
+        primaryButton: .destructive(Text("Force Quit")) {
+          viewModel.executeKill()
+        },
+        secondaryButton: .cancel()
+      )
+    }
+    .alert(isPresented: $viewModel.showedErrorAlert) {
+      Alert(
+        title: Text("Failed to Quit Process"),
+        message: Text(viewModel.error?.localizedDescription ?? "Unknown error"),
+        dismissButton: .default(Text("OK"))
+      )
+    }
   }
 
   // MARK: - Subviews
@@ -159,7 +178,9 @@ public struct ProcessListSheet: View {
 
         // Process Rows
         ForEach(viewModel.processes) { process in
-          ProcessRow(process: process, metricType: metricType)
+          ProcessRow(process: process, metricType: metricType) {
+            viewModel.confirmKill(process)
+          }
           Divider()
         }
       }
@@ -197,6 +218,7 @@ public struct ProcessListSheet: View {
 struct ProcessRow: View {
   let process: SystemProcessInfo
   let metricType: ProcessMetricType
+  let onKill: () -> Void
 
   @State private var isHovered = false
 
@@ -239,6 +261,19 @@ struct ProcessRow: View {
         .font(.system(.body, design: .monospaced))
         .foregroundColor(metricType == .memory ? memoryColor(process.memoryUsage) : .primary)
         .frame(width: 80, alignment: .trailing)
+
+      // Kill Button (Hover only)
+      if isHovered {
+        Button(action: onKill) {
+          Image(systemName: "xmark.circle.fill")
+            .foregroundColor(.secondary)
+        }
+        .buttonStyle(.borderless)
+        .frame(width: 20, alignment: .center)
+      } else {
+        Spacer()
+          .frame(width: 20)
+      }
     }
     .padding(.horizontal)
     .padding(.vertical, 8)
@@ -283,11 +318,44 @@ class ProcessListViewModel: ObservableObject {
   @Published var isLoading = false
   @Published var sortKey: ProcessSortKey = .cpu
 
+  @Published var error: Error?
+  @Published var showedErrorAlert = false
+
+  @Published var processToKill: SystemProcessInfo?
+  @Published var showConfirmAlert = false
+
   private var timer: Timer?
 
   func load(sortBy: ProcessSortKey) {
     self.sortKey = sortBy
     refresh()
+  }
+
+  func confirmKill(_ process: SystemProcessInfo) {
+    processToKill = process
+    showConfirmAlert = true
+  }
+
+  func executeKill() {
+    guard let process = processToKill else { return }
+
+    Task {
+      do {
+        try ProcessMonitor.shared.killProcess(process.id)
+        // 成功后延迟稍许刷新
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        refresh()
+      } catch {
+        await MainActor.run {
+          self.error = error
+          self.showedErrorAlert = true
+        }
+      }
+
+      await MainActor.run {
+        self.processToKill = nil
+      }
+    }
   }
 
   func startAutoRefresh() {
