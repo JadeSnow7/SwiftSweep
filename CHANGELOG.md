@@ -1,6 +1,18 @@
 # Changelog
 
 All notable changes to SwiftSweep will be documented in this file.
+## [0.5.0] - 2026-01-05
+
+### Added
+- **Process Monitor Details**: Click on CPU or Memory cards in Status view to see detailed process list.
+- **Process Info**: Real-time CPU usage (delta-based), Memory usage, PID, and User info.
+- **Auto-refresh**: Process list automatically refreshes every 2 seconds.
+- **Localized UI**: Complete English and Chinese (Simplified) support for process monitoring.
+
+### Fixed
+- **CPU Calculation**: Fixed an issue where CPU usage was incorrectly reported as 100% (now uses differential sampling).
+- **UI Improvements**: Fixed layout issues in process list header and column widths.
+
 
 ## [0.3.0] - 2026-01-01
 

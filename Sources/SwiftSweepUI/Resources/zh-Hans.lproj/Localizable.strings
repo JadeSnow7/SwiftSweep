@@ -94,3 +94,15 @@
 "common.delete" = "删除";
 "common.open" = "打开";
 "common.openInFinder" = "在访达中显示";
+
+/* Process List */
+"process.list.title.cpu" = "各进程 CPU 使用情况";
+"process.list.title.memory" = "各进程内存使用情况";
+"process.loading" = "正在加载进程...";
+"process.empty" = "未找到进程";
+"process.column.name" = "进程名称";
+"process.column.pid" = "PID";
+"process.column.user" = "用户";
+"process.column.cpu" = "CPU %";
+"process.column.memory" = "内存";
+

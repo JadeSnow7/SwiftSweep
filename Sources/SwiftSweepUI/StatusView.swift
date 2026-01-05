@@ -6,6 +6,7 @@ import SwiftUI
 
 struct StatusView: View {
   @StateObject private var monitor = StatusMonitorViewModel()
+  @State private var showProcessSheet: ProcessMetricType?
 
   var body: some View {
     ScrollView {
@@ -34,7 +35,7 @@ struct StatusView: View {
 
         // Metrics Cards
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
-          // CPU Card
+          // CPU Card - Clickable
           MetricCard(
             title: "CPU",
             value: String(format: "%.1f%%", monitor.metrics.cpuUsage),
@@ -43,8 +44,10 @@ struct StatusView: View {
             color: colorForUsage(monitor.metrics.cpuUsage / 100),
             progress: monitor.metrics.cpuUsage / 100
           )
+          .onTapGesture { showProcessSheet = .cpu }
+          .help("Click to view process CPU usage")
 
-          // Memory Card
+          // Memory Card - Clickable
           MetricCard(
             title: "Memory",
             value: formatBytes(monitor.metrics.memoryUsed),
@@ -53,6 +56,8 @@ struct StatusView: View {
             color: colorForUsage(monitor.metrics.memoryUsage),
             progress: monitor.metrics.memoryUsage
           )
+          .onTapGesture { showProcessSheet = .memory }
+          .help("Click to view process memory usage")
 
           // Disk Card
           MetricCard(
@@ -106,6 +111,9 @@ struct StatusView: View {
     }
     .onDisappear {
       monitor.stopMonitoring()
+    }
+    .sheet(item: $showProcessSheet) { metricType in
+      ProcessListSheet(metricType: metricType)
     }
   }
 

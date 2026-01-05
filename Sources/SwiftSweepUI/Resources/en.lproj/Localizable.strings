@@ -94,3 +94,15 @@
 "common.delete" = "Delete";
 "common.open" = "Open";
 "common.openInFinder" = "Show in Finder";
+
+/* Process List */
+"process.list.title.cpu" = "CPU Usage by Process";
+"process.list.title.memory" = "Memory Usage by Process";
+"process.loading" = "Loading processes...";
+"process.empty" = "No processes found";
+"process.column.name" = "Process Name";
+"process.column.pid" = "PID";
+"process.column.user" = "User";
+"process.column.cpu" = "CPU %";
+"process.column.memory" = "Memory";
+

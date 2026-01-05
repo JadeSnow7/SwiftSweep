@@ -69,6 +69,7 @@
 		4A83E79B571601A26C886164 /* RuleSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDA0A91838A4AA366C56EB79 /* RuleSettings.swift */; };
 		4AFB54F4E52EEE4D855F92A6 /* SlideInModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28467C6AB1698BC9FB3D4E25 /* SlideInModifier.swift */; };
 		4E8360693904CA77150A3471 /* PluginContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BF8D8E38E8BB409732A11F /* PluginContext.swift */; };
+		4F96B37F4E2A60787BEC81D9 /* ProcessMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24BE9BE7C3F4F7AAAE379BE0 /* ProcessMonitor.swift */; };
 		50039C9E4F28DB5084FA6865 /* RecommendationRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D92F3811846DEC331C55600 /* RecommendationRule.swift */; };
 		51832FA58CDEC6636F2A01A2 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F41B876EABFB0C3E386787 /* AppStore.swift */; };
 		527E733AC4764DE5C91DA8E7 /* DeviceAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75AB21F27A638626DF0ACD11 /* DeviceAuthManager.swift */; };
@@ -219,6 +220,7 @@
 		DE95A2F89B86476EBBC54CAF /* SuccessCheckmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = F925D716AFC1A0A7BA61DB58 /* SuccessCheckmark.swift */; };
 		E0CF524845C77E03CEE089FB /* PackageSizeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE46F5514AF4A95D0CE85A0 /* PackageSizeCalculator.swift */; };
 		E117650714D03FEADBEEE3C7 /* GemProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5AA81A68E30A722DE0AC190 /* GemProvider.swift */; };
+		E1EE20F6CF9033CFF47DD3C0 /* ProcessMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24BE9BE7C3F4F7AAAE379BE0 /* ProcessMonitor.swift */; };
 		E325FBEAE9064E3B87FD91C5 /* Recommendation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 568DBC900A688E1C6F8682D1 /* Recommendation.swift */; };
 		E65F958BD4FE35AE1F111CA7 /* CleanupEffects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AB46ED086442B93DC8AE619 /* CleanupEffects.swift */; };
 		E809A527809C0657E3D7B306 /* GitPackFixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6252C119655CFBC0EDE09149 /* GitPackFixer.swift */; };
@@ -231,6 +233,7 @@
 		F16D1C2242079AA6D82D8BB7 /* OldDownloadsRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8135AB1BD261E7011231C5 /* OldDownloadsRule.swift */; };
 		F3979A3F34C8551333274433 /* RecommendationRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D92F3811846DEC331C55600 /* RecommendationRule.swift */; };
 		F433E0B7AE3AD9368D2DB04A /* IOEventBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8314B1EB70F264DF4B52F44 /* IOEventBuffer.swift */; };
+		F48593236E864B69AB7A3AC9 /* ProcessListSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98831B61E0A4AF22467519D0 /* ProcessListSheet.swift */; };
 		F65B162291160FACBC36141C /* HelperErrorCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E25303826EB5E937D787FE /* HelperErrorCodes.swift */; };
 		F66B63C36A4240015E6F516B /* OptimizationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2B067E8A821D69C6D3DFCF /* OptimizationEngine.swift */; };
 		F7C182A4E4D3E1B620C1443B /* PluginSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA49D36ED4F70E1541FBCBA0 /* PluginSettingsView.swift */; };
@@ -275,6 +278,7 @@
 		223BA2A6B3A4FA8061C0D9DF /* libEndpointSecurity.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libEndpointSecurity.tbd; path = usr/lib/libEndpointSecurity.tbd; sourceTree = SDKROOT; };
 		2396C4875731341B8DDF05B6 /* UnusedAppsRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnusedAppsRule.swift; sourceTree = "<group>"; };
 		24095CAF50FD31E0F277F138 /* MainApplicationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainApplicationsView.swift; sourceTree = "<group>"; };
+		24BE9BE7C3F4F7AAAE379BE0 /* ProcessMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessMonitor.swift; sourceTree = "<group>"; };
 		24CAA1D5DC33E39F85557AB2 /* MediaScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaScanner.swift; sourceTree = "<group>"; };
 		28467C6AB1698BC9FB3D4E25 /* SlideInModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlideInModifier.swift; sourceTree = "<group>"; };
 		28BFA62383E7EAB529579A04 /* PackageScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageScanner.swift; sourceTree = "<group>"; };
@@ -338,6 +342,7 @@
 		8F7F6CD34628A7A8C9100A92 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		95700010320499B774A837C7 /* PluginStoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginStoreView.swift; sourceTree = "<group>"; };
 		959BC91E5EAD342E34E3F175 /* NLCommandParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NLCommandParser.swift; sourceTree = "<group>"; };
+		98831B61E0A4AF22467519D0 /* ProcessListSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessListSheet.swift; sourceTree = "<group>"; };
 		9A7E55D13E7925AED747255A /* OptimizeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizeView.swift; sourceTree = "<group>"; };
 		9F539166B61D2A4E990D78C1 /* DirectorySizeCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectorySizeCache.swift; sourceTree = "<group>"; };
 		A18F9487382EF474608BF68C /* IOAggregator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOAggregator.swift; sourceTree = "<group>"; };
@@ -580,6 +585,7 @@
 		5FBF9A7F7D0F52B7ED09BD1B /* SystemMonitor */ = {
 			isa = PBXGroup;
 			children = (
+				24BE9BE7C3F4F7AAAE379BE0 /* ProcessMonitor.swift */,
 				3806F4C5F0D603942F5F1B40 /* SystemMonitor.swift */,
 			);
 			path = SystemMonitor;
@@ -782,6 +788,7 @@
 		C9759DD4D4F92BF2300AA624 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				98831B61E0A4AF22467519D0 /* ProcessListSheet.swift */,
 				A13943A96D8FEA44DA46C199 /* Animation */,
 				91219D710DD70EA4AEC52432 /* DataGrid */,
 				B0DC5583C02DEC999F279890 /* Layout */,
@@ -1132,6 +1139,7 @@
 				5CBE7041BD61783A4FF41633 /* PluginManager.swift in Sources */,
 				C12F1DA39A9DA0F2CDB0F395 /* PluginStoreManager.swift in Sources */,
 				A30354D9D76345F72DEF3F3F /* PrivilegedDeleting.swift in Sources */,
+				4F96B37F4E2A60787BEC81D9 /* ProcessMonitor.swift in Sources */,
 				95BDB885D1F6154DD0F77544 /* ProcessRunner.swift in Sources */,
 				899EA4FE2B66B40EA90461B5 /* Recommendation.swift in Sources */,
 				D3CC47D7A639E93938643F97 /* RecommendationContext.swift in Sources */,
@@ -1256,6 +1264,8 @@
 				8DE84C4D2FA1ECB4A4771A1A /* PluginStoreManager.swift in Sources */,
 				921A7B2037B590706758F59D /* PluginStoreView.swift in Sources */,
 				7459619C93E0B418EFCF4DBC /* PrivilegedDeleting.swift in Sources */,
+				F48593236E864B69AB7A3AC9 /* ProcessListSheet.swift in Sources */,
+				E1EE20F6CF9033CFF47DD3C0 /* ProcessMonitor.swift in Sources */,
 				99A80C4B8B6CBD1CE5877953 /* ProcessRunner.swift in Sources */,
 				69BB4C393DC969A7B909B162 /* PulseView.swift in Sources */,
 				E325FBEAE9064E3B87FD91C5 /* Recommendation.swift in Sources */,
