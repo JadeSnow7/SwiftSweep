@@ -10,13 +10,26 @@ import SwiftUI
 public enum ProcessMetricType: String, Identifiable, CaseIterable {
   case cpu = "CPU"
   case memory = "Memory"
+  case network = "Network"
+  case io = "I/O"
 
   public var id: String { rawValue }
+
+  var titleKey: String {
+    switch self {
+    case .cpu: return "process.list.title.cpu"
+    case .memory: return "process.list.title.memory"
+    case .network: return "process.list.title.network"
+    case .io: return "process.list.title.io"
+    }
+  }
 
   var icon: String {
     switch self {
     case .cpu: return "cpu"
     case .memory: return "memorychip"
+    case .network: return "network"
+    case .io: return "arrow.up.arrow.down.circle"
     }
   }
 
@@ -24,6 +37,8 @@ public enum ProcessMetricType: String, Identifiable, CaseIterable {
     switch self {
     case .cpu: return .cpu
     case .memory: return .memory
+    case .network: return .network
+    case .io: return .io
     }
   }
 }
@@ -36,6 +51,7 @@ public struct ProcessListSheet: View {
 
   @StateObject private var viewModel = ProcessListViewModel()
   @Environment(\.dismiss) private var dismiss
+  @State private var selectedProcess: SystemProcessInfo?  // For detail drawer
 
   public init(metricType: ProcessMetricType) {
     self.metricType = metricType
@@ -57,8 +73,8 @@ public struct ProcessListSheet: View {
         processTable
       }
     }
-    .frame(minWidth: 500, minHeight: 400)
-    .frame(maxWidth: 700, maxHeight: 600)
+    .frame(minWidth: 650, minHeight: 400)
+    .frame(maxWidth: 900, maxHeight: 600)
     .onAppear {
       viewModel.load(sortBy: metricType.sortKey)
       viewModel.startAutoRefresh()
@@ -85,6 +101,31 @@ public struct ProcessListSheet: View {
         dismissButton: .default(Text("OK"))
       )
     }
+    .overlay(alignment: .trailing) {
+      // Detail Drawer Overlay
+      if let process = selectedProcess {
+        Color.black.opacity(0.3)
+          .ignoresSafeArea()
+          .onTapGesture {
+            selectedProcess = nil
+          }
+
+        ProcessDetailDrawer(
+          process: process,
+          history: viewModel.getHistory(for: process.id),
+          onKill: {
+            viewModel.confirmKill(process)
+            selectedProcess = nil
+          },
+          onClose: {
+            selectedProcess = nil
+          }
+        )
+        .transition(.move(edge: .trailing))
+        .zIndex(1)
+      }
+    }
+    .animation(.easeInOut(duration: 0.25), value: selectedProcess != nil)
   }
 
   // MARK: - Subviews
@@ -98,7 +139,7 @@ public struct ProcessListSheet: View {
             .foregroundColor(.accentColor)
 
           // 使用 LocalizedStringKey 确保动态字符串能被本地化
-          Text(LocalizedStringKey("process.list.title.\(metricType.rawValue.lowercased())"))
+          Text(LocalizedStringKey(metricType.titleKey))
             .font(.headline)
         }
 
@@ -181,6 +222,10 @@ public struct ProcessListSheet: View {
           ProcessRow(process: process, metricType: metricType) {
             viewModel.confirmKill(process)
           }
+          .contentShape(Rectangle())
+          .onTapGesture {
+            selectedProcess = process
+          }
           Divider()
         }
       }
@@ -203,6 +248,12 @@ public struct ProcessListSheet: View {
 
       Text("process.column.memory")
         .frame(width: 80, alignment: .trailing)
+
+      Text("process.column.network")
+        .frame(width: 120, alignment: .trailing)
+
+      Text("process.column.io")
+        .frame(width: 120, alignment: .trailing)
     }
     .font(.caption)
     .foregroundColor(.secondary)
@@ -262,6 +313,20 @@ struct ProcessRow: View {
         .foregroundColor(metricType == .memory ? memoryColor(process.memoryUsage) : .primary)
         .frame(width: 80, alignment: .trailing)
 
+      // Network
+      Text(formatNetwork(process.networkBytesIn, process.networkBytesOut))
+        .font(.system(.body, design: .monospaced))
+        .foregroundColor(metricType == .network ? .accentColor : .primary)
+        .lineLimit(1)
+        .frame(width: 120, alignment: .trailing)
+
+      // Disk I/O (show rates, not cumulative totals)
+      Text(formatDiskIORate(process.diskReadRate, process.diskWriteRate))
+        .font(.system(.body, design: .monospaced))
+        .foregroundColor(metricType == .io ? .accentColor : .primary)
+        .lineLimit(1)
+        .frame(width: 120, alignment: .trailing)
+
       // Kill Button (Hover only)
       if isHovered {
         Button(action: onKill) {
@@ -308,6 +373,63 @@ struct ProcessRow: View {
     }
     return String(format: "%.1f MB", mb)
   }
+
+  private func formatNetwork(_ bytesIn: Int64, _ bytesOut: Int64) -> String {
+    let inbound = formatCompactBytes(bytesIn)
+    let outbound = formatCompactBytes(bytesOut)
+    return "Rx \(inbound) / Tx \(outbound)"
+  }
+
+  private func formatDiskIO(_ readBytes: Int64, _ writeBytes: Int64) -> String {
+    let readText = formatCompactBytes(readBytes)
+    let writeText = formatCompactBytes(writeBytes)
+    return "R \(readText) / W \(writeText)"
+  }
+
+  private func formatDiskIORate(_ readRate: Double, _ writeRate: Double) -> String {
+    // Show "–" when no I/O activity
+    if readRate < 1 && writeRate < 1 {
+      return "–"
+    }
+    let readText = formatSpeed(readRate)
+    let writeText = formatSpeed(writeRate)
+    return "↓\(readText) ↑\(writeText)"
+  }
+
+  private func formatSpeed(_ bytesPerSec: Double) -> String {
+    if bytesPerSec < 1 {
+      return "0"
+    }
+    let kb = bytesPerSec / 1024
+    if kb < 1 {
+      return String(format: "%.0fB/s", bytesPerSec)
+    }
+    let mb = kb / 1024
+    if mb < 1 {
+      return String(format: "%.0fK/s", kb)
+    }
+    let gb = mb / 1024
+    if gb < 1 {
+      return String(format: "%.1fM/s", mb)
+    }
+    return String(format: "%.1fG/s", gb)
+  }
+
+  private func formatCompactBytes(_ bytes: Int64) -> String {
+    let kb = Double(bytes) / 1024
+    if kb < 1 {
+      return "0K"
+    }
+    let mb = kb / 1024
+    if mb < 1 {
+      return String(format: "%.0fK", kb)
+    }
+    let gb = mb / 1024
+    if gb < 1 {
+      return String(format: "%.1fM", mb)
+    }
+    return String(format: "%.1fG", gb)
+  }
 }
 
 // MARK: - View Model
@@ -325,6 +447,10 @@ class ProcessListViewModel: ObservableObject {
   @Published var showConfirmAlert = false
 
   private var timer: Timer?
+
+  // Process history: PID -> [最近 5 次快照]
+  private var processHistory: [pid_t: [ProcessSnapshot]] = [:]
+  private let maxHistoryCount = 5
 
   func load(sortBy: ProcessSortKey) {
     self.sortKey = sortBy
@@ -382,7 +508,29 @@ class ProcessListViewModel: ObservableObject {
       let result = await ProcessMonitor.shared.getProcesses(sortBy: sortKey, limit: 30)
       self.processes = result
       self.isLoading = false
+
+      // Update history for each process
+      for process in result {
+        updateHistory(for: process)
+      }
     }
+  }
+
+  func getHistory(for pid: pid_t) -> [ProcessSnapshot] {
+    return processHistory[pid] ?? []
+  }
+
+  private func updateHistory(for process: SystemProcessInfo) {
+    let snapshot = ProcessSnapshot(from: process)
+    var history = processHistory[process.id] ?? []
+    history.append(snapshot)
+
+    // Keep only last N snapshots
+    if history.count > maxHistoryCount {
+      history.removeFirst(history.count - maxHistoryCount)
+    }
+
+    processHistory[process.id] = history
   }
 }
 

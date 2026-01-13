@@ -1,6 +1,34 @@
 # Changelog
 
 All notable changes to SwiftSweep will be documented in this file.
+
+## [0.6.0] - 2026-01-14
+
+### Added
+- **Per-Process I/O Tracking**: Real-time disk read/write rates (bytes/sec) for each process
+  - Delta-based calculation for accurate throughput measurement
+  - Display format: `↓50M/s ↑10M/s` or `–` when idle
+  - Sort processes by I/O activity to identify disk-heavy operations
+- **Process Detail Drawer**: Click any process row to view detailed metrics
+  - Metrics grid showing CPU, Memory, Disk Read/Write rates
+  - CPU usage sparkline chart (last 5 samples) for trend visualization
+  - Quick actions: Force Quit (functional), Pause/Limit (placeholders)
+  - Smooth slide-in animation with backdrop overlay
+- **Process History Tracking**: Automatic recording of last 5 snapshots per process
+- **Enhanced Process List**: Network and I/O columns now visible in all process views
+
+### Changed
+- **I/O Sorting**: Changed from cumulative totals to real-time rates for more meaningful sorting
+- **ProcessMonitor**: Extended with I/O counter caching for delta calculation
+
+### Fixed
+- **Git Repository Size**: Fixed issue where Git repositories showed 0 bytes in Disk Analyzer
+  - Now correctly scans repository contents while excluding `.git` directory
+- **FSEvents Deprecation**: Replaced deprecated `FSEventStreamScheduleWithRunLoop` with `FSEventStreamSetDispatchQueue`
+- **Swift 6 Compatibility**: Fixed Sendable capture warnings in FSEventsTracer
+
+---
+
 ## [0.5.1] - 2026-01-05
 
 ### Added

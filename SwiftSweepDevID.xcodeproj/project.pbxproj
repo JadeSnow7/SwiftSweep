@@ -43,6 +43,7 @@
 		2AB1E6DB20812586C76B6906 /* GalaxyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BD5F65C33A7B9A6E4C558E5 /* GalaxyModels.swift */; };
 		2CA055B63E457740B2DA132F /* GraphLayoutEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761F86E17589D6046FF1C68E /* GraphLayoutEngine.swift */; };
 		2D9E5335BD3090DFBC8109E5 /* SMJobBlessClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E82006A607E5210A3AA07 /* SMJobBlessClient.swift */; };
+		2DA2B17278E2BE4BDFF25E06 /* BuildArtifactsRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C718B672264E031AB442EE7 /* BuildArtifactsRule.swift */; };
 		302C4D33136607A74E81519F /* CleanupEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6068C461B90B43A44F60CD /* CleanupEngine.swift */; };
 		30E88DC5095BE6F14092F480 /* PathNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3298AE85D27A6C3754A6C36D /* PathNormalizer.swift */; };
 		32AB2640821CD6974C1D0034 /* PipProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595B8CFC4E24FAB8F309060F /* PipProvider.swift */; };
@@ -168,6 +169,7 @@
 		9C7B3D124D10B52FBF3F34A2 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = BB9BB5C32CA4EC58C1BFE0F1 /* Localizable.strings */; };
 		9C931E892BCB76787B07C79E /* SysAIBoxConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 860A208E77731135B13EFF72 /* SysAIBoxConfigStore.swift */; };
 		9E324DADC4CF6AB952D86B3F /* NpmProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD3AEE910539103740AF661D /* NpmProvider.swift */; };
+		A078B594546CF962CE1EB050 /* BuildArtifactsRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C718B672264E031AB442EE7 /* BuildArtifactsRule.swift */; };
 		A18CED3BDB8A67BE998DCC67 /* PathNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3298AE85D27A6C3754A6C36D /* PathNormalizer.swift */; };
 		A24594257E72552F88ECD6BF /* BrowserCacheRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65B36142B70F448F3601681 /* BrowserCacheRule.swift */; };
 		A30354D9D76345F72DEF3F3F /* PrivilegedDeleting.swift in Sources */ = {isa = PBXBuildFile; fileRef = D768177BC39540073011FEC3 /* PrivilegedDeleting.swift */; };
@@ -338,6 +340,7 @@
 		883885DCB2FE72945E6A49A4 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		8B79C115AFE24A367AD0C1DC /* SimilarityDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarityDetector.swift; sourceTree = "<group>"; };
 		8C41740C17ED53D8FF4E9E42 /* PackageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageProvider.swift; sourceTree = "<group>"; };
+		8C718B672264E031AB442EE7 /* BuildArtifactsRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildArtifactsRule.swift; sourceTree = "<group>"; };
 		8D640DD41E8DA01CAC252F67 /* ShakeModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShakeModifier.swift; sourceTree = "<group>"; };
 		8F7F6CD34628A7A8C9100A92 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		95700010320499B774A837C7 /* PluginStoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginStoreView.swift; sourceTree = "<group>"; };
@@ -773,6 +776,7 @@
 			isa = PBXGroup;
 			children = (
 				E65B36142B70F448F3601681 /* BrowserCacheRule.swift */,
+				8C718B672264E031AB442EE7 /* BuildArtifactsRule.swift */,
 				E7A6A64472255CD6EF1D73B6 /* DeveloperCacheRule.swift */,
 				0ADCAC4E4AFB9DEF4ABAEDBE /* LargeCacheRule.swift */,
 				C83614B56481CF8F4FC78E00 /* LowDiskSpaceRule.swift */,
@@ -1084,6 +1088,7 @@
 				648A79340E18741ED5A31344 /* AppStore.swift in Sources */,
 				95AA49B6018C01D4F7668231 /* BrewJsonProvider.swift in Sources */,
 				8B1EDCF1E8FA78FFCED17C7A /* BrowserCacheRule.swift in Sources */,
+				2DA2B17278E2BE4BDFF25E06 /* BuildArtifactsRule.swift in Sources */,
 				36966CA7E54FA13AC0C7C176 /* CleanupAllowlist.swift in Sources */,
 				B3170CB190F352409ACB3792 /* CleanupEffects.swift in Sources */,
 				7C4A439ABF884667ABE7169B /* CleanupEngine.swift in Sources */,
@@ -1186,6 +1191,7 @@
 				51832FA58CDEC6636F2A01A2 /* AppStore.swift in Sources */,
 				080CEEBF3ECFD7C9124777B6 /* BrewJsonProvider.swift in Sources */,
 				A24594257E72552F88ECD6BF /* BrowserCacheRule.swift in Sources */,
+				A078B594546CF962CE1EB050 /* BuildArtifactsRule.swift in Sources */,
 				95E882A88B9468FC4D770D2A /* CapCutPlugin.swift in Sources */,
 				22DB78584BD371BAD66B01BA /* CleanView.swift in Sources */,
 				7D17C0259ECBE188B1E5C391 /* CleanupAllowlist.swift in Sources */,

@@ -9,13 +9,37 @@ public struct SystemProcessInfo: Identifiable, Sendable, Hashable {
   public let name: String
   public let cpuUsage: Double  // 百分比 (0-100)
   public let memoryUsage: Int64  // 字节
+  public let networkBytesIn: Int64
+  public let networkBytesOut: Int64
+  public let diskReads: Int64  // 累计读取字节
+  public let diskWrites: Int64  // 累计写入字节
+  public let diskReadRate: Double  // 读取速率 (bytes/sec)
+  public let diskWriteRate: Double  // 写入速率 (bytes/sec)
   public let user: String
 
-  public init(id: pid_t, name: String, cpuUsage: Double, memoryUsage: Int64, user: String) {
+  public init(
+    id: pid_t,
+    name: String,
+    cpuUsage: Double,
+    memoryUsage: Int64,
+    networkBytesIn: Int64 = 0,
+    networkBytesOut: Int64 = 0,
+    diskReads: Int64 = 0,
+    diskWrites: Int64 = 0,
+    diskReadRate: Double = 0,
+    diskWriteRate: Double = 0,
+    user: String
+  ) {
     self.id = id
     self.name = name
     self.cpuUsage = cpuUsage
     self.memoryUsage = memoryUsage
+    self.networkBytesIn = networkBytesIn
+    self.networkBytesOut = networkBytesOut
+    self.diskReads = diskReads
+    self.diskWrites = diskWrites
+    self.diskReadRate = diskReadRate
+    self.diskWriteRate = diskWriteRate
     self.user = user
   }
 }
@@ -25,6 +49,8 @@ public struct SystemProcessInfo: Identifiable, Sendable, Hashable {
 public enum ProcessSortKey: String, CaseIterable, Sendable {
   case cpu = "CPU"
   case memory = "Memory"
+  case network = "Network"
+  case io = "I/O"
   case name = "Name"
 }
 
@@ -61,6 +87,8 @@ public final class ProcessMonitor: @unchecked Sendable {
 
   // 缓存上一次的 CPU 时间数据：PID -> (UserTime + SystemTime) in nanoseconds
   private var lastCPUTimes: [pid_t: UInt64] = [:]
+  // 缓存上一次的 I/O 数据：PID -> (diskReads, diskWrites) in bytes
+  private var lastIOCounters: [pid_t: (reads: Int64, writes: Int64)] = [:]
   private var lastSampleTime: TimeInterval = 0
 
   /// 获取进程列表
@@ -102,6 +130,8 @@ public final class ProcessMonitor: @unchecked Sendable {
 
     // 新的 CPU 时间缓存
     var currentCPUTimes: [pid_t: UInt64] = [:]
+    // 新的 I/O 计数器缓存
+    var currentIOCounters: [pid_t: (reads: Int64, writes: Int64)] = [:]
 
     // 使用 sysctl 获取进程列表
     var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0]
@@ -134,10 +164,14 @@ public final class ProcessMonitor: @unchecked Sendable {
       guard pid >= 0 else { continue }
 
       // 获取当前 CPU 总时间 (ns) 和内存 (bytes)
-      let (totalCPUTime, memory) = getRawResourceUsage(for: pid)
+      let (totalCPUTime, memory, diskReads, diskWrites) = getRawResourceUsage(for: pid)
+      // TODO: Per-process network stats are not available without nettop/Network Extension.
+      let networkBytesIn: Int64 = 0
+      let networkBytesOut: Int64 = 0
 
       // 更新缓存
       currentCPUTimes[pid] = totalCPUTime
+      currentIOCounters[pid] = (reads: diskReads, writes: diskWrites)
 
       // 计算 CPU 使用率
       var cpuUsage: Double = 0.0
@@ -151,6 +185,20 @@ public final class ProcessMonitor: @unchecked Sendable {
         }
       }
 
+      // 计算 I/O 速率 (bytes/sec)
+      var diskReadRate: Double = 0.0
+      var diskWriteRate: Double = 0.0
+      if isValidCPUSample, let lastIO = lastIOCounters[pid] {
+        let readDiff = diskReads - lastIO.reads
+        let writeDiff = diskWrites - lastIO.writes
+        if readDiff > 0 {
+          diskReadRate = Double(readDiff) / timeDiff
+        }
+        if writeDiff > 0 {
+          diskWriteRate = Double(writeDiff) / timeDiff
+        }
+      }
+
       // 获取进程名和用户
       let name = getProcessName(from: proc)
       let user = getUserName(uid: proc.kp_eproc.e_ucred.cr_uid)
@@ -160,6 +208,12 @@ public final class ProcessMonitor: @unchecked Sendable {
         name: name,
         cpuUsage: cpuUsage,  // 这里不再限制 100%，多核可能超过 100%
         memoryUsage: memory,
+        networkBytesIn: networkBytesIn,
+        networkBytesOut: networkBytesOut,
+        diskReads: diskReads,
+        diskWrites: diskWrites,
+        diskReadRate: diskReadRate,
+        diskWriteRate: diskWriteRate,
         user: user
       )
       processes.append(info)
@@ -167,6 +221,7 @@ public final class ProcessMonitor: @unchecked Sendable {
 
     // 更新状态
     lastCPUTimes = currentCPUTimes
+    lastIOCounters = currentIOCounters
     lastSampleTime = currentSampleTime
 
     return processes
@@ -183,7 +238,12 @@ public final class ProcessMonitor: @unchecked Sendable {
   }
 
   /// 获取进程的 原始CPU时间(ns) 和 内存使用(bytes)
-  private func getRawResourceUsage(for pid: pid_t) -> (cpuTime: UInt64, memory: Int64) {
+  private func getRawResourceUsage(for pid: pid_t) -> (
+    cpuTime: UInt64,
+    memory: Int64,
+    diskReads: Int64,
+    diskWrites: Int64
+  ) {
     var rusage = rusage_info_v4()
     let result = withUnsafeMutablePointer(to: &rusage) {
       $0.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { ptr in
@@ -192,13 +252,15 @@ public final class ProcessMonitor: @unchecked Sendable {
     }
 
     guard result == 0 else {
-      return (0, 0)
+      return (0, 0, 0, 0)
     }
 
     let memory = Int64(rusage.ri_phys_footprint)
     let cpuTime = rusage.ri_user_time + rusage.ri_system_time
+    let diskReads = Int64(rusage.ri_diskio_bytesread)
+    let diskWrites = Int64(rusage.ri_diskio_byteswritten)
 
-    return (cpuTime, memory)
+    return (cpuTime, memory, diskReads, diskWrites)
   }
 
   /// 获取用户名
@@ -218,6 +280,15 @@ public final class ProcessMonitor: @unchecked Sendable {
       return processes.sorted { $0.cpuUsage > $1.cpuUsage }
     case .memory:
       return processes.sorted { $0.memoryUsage > $1.memoryUsage }
+    case .network:
+      return processes.sorted {
+        ($0.networkBytesIn + $0.networkBytesOut) > ($1.networkBytesIn + $1.networkBytesOut)
+      }
+    case .io:
+      // Sort by I/O rate (bytes/sec) for real-time activity
+      return processes.sorted {
+        ($0.diskReadRate + $0.diskWriteRate) > ($1.diskReadRate + $1.diskWriteRate)
+      }
     case .name:
       return processes.sorted {
         $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending

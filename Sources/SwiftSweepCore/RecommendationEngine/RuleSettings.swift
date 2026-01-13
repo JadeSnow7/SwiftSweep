@@ -40,6 +40,7 @@ public final class RuleSettings: @unchecked Sendable {
     "browser_cache",
     "trash_reminder",
     "mail_attachments",
+    "build_artifacts",
   ]
 
   /// Rule category mappings
@@ -53,6 +54,7 @@ public final class RuleSettings: @unchecked Sendable {
     "browser_cache": .privacy,
     "trash_reminder": .storage,
     "mail_attachments": .privacy,
+    "build_artifacts": .storage,
   ]
 
   /// Default thresholds for rules
@@ -198,6 +200,7 @@ extension RuleSettings {
     case "browser_cache": return "浏览器缓存"
     case "trash_reminder": return "废纸篓提醒"
     case "mail_attachments": return "邮件附件"
+    case "build_artifacts": return "构建产物"
     default: return ruleID
     }
   }
@@ -214,6 +217,7 @@ extension RuleSettings {
     case "browser_cache": return "检测Safari、Chrome等浏览器缓存"
     case "trash_reminder": return "废纸篓超过阈值时提醒清空"
     case "mail_attachments": return "检测并清理邮件附件缓存"
+    case "build_artifacts": return "检测项目构建产物如.build、node_modules、dist等"
     default: return ""
     }
   }

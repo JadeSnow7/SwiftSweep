@@ -284,6 +284,7 @@ public final class RecommendationEngine: @unchecked Sendable {
     register(rule: BrowserCacheRule())
     register(rule: TrashReminderRule())
     register(rule: MailAttachmentsRule())
+    register(rule: BuildArtifactsRule())
   }
 
   /// Async, cancellable Downloads directory scan

@@ -143,7 +143,7 @@ struct ContentView: View {
       Group {
         switch selection {
         case .status:
-          StatusView()
+          StatusView(selection: $selection)
         case .insights:
           InsightsView()
         case .clean:

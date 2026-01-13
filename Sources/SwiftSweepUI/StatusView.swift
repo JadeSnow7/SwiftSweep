@@ -5,6 +5,7 @@ import SwiftUI
 #endif
 
 struct StatusView: View {
+  @Binding var selection: ContentView.NavigationItem?
   @StateObject private var monitor = StatusMonitorViewModel()
   @State private var showProcessSheet: ProcessMetricType?
 
@@ -68,6 +69,8 @@ struct StatusView: View {
             color: colorForUsage(monitor.metrics.diskUsage),
             progress: monitor.metrics.diskUsage
           )
+          .onTapGesture { selection = .analyze }
+          .help("Click to open Disk Analyzer")
 
           // Network Card (New!)
           MetricCard(
@@ -100,6 +103,8 @@ struct StatusView: View {
             color: ioColor(monitor.ioReadRate + monitor.ioWriteRate),
             progress: 0
           )
+          .onTapGesture { selection = .ioAnalyzer }
+          .help("Click to open I/O Analyzer")
         }
 
         Spacer()

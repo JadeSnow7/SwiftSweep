@@ -13,6 +13,7 @@ public actor FSEventsTracer {
   private var isActive = false
   private var tracingStartTime: Date?
   private var watchedPaths: [String] = []
+  private let dispatchQueue = DispatchQueue(label: "com.swiftsweep.fsevents", qos: .utility)
 
   /// 事件统计
   private var eventCounts: [String: Int] = [:]
@@ -69,11 +70,7 @@ public actor FSEventsTracer {
         return false
       }
 
-      FSEventStreamScheduleWithRunLoop(
-        stream,
-        CFRunLoopGetMain(),
-        CFRunLoopMode.defaultMode.rawValue
-      )
+      FSEventStreamSetDispatchQueue(stream, DispatchQueue.main)
 
       FSEventStreamStart(stream)
 
@@ -100,10 +97,14 @@ public actor FSEventsTracer {
   public func stopTracing() async {
     guard isActive, let stream = stream else { return }
 
+    // nonisolated(unsafe) 用于在 @Sendable 闭包中捕获 FSEventStreamRef
+    // FSEventStreamRef 是线程安全的 C 类型，此处捕获是安全的
+    nonisolated(unsafe) let capturedStream = stream
+
     await MainActor.run {
-      FSEventStreamStop(stream)
-      FSEventStreamInvalidate(stream)
-      FSEventStreamRelease(stream)
+      FSEventStreamStop(capturedStream)
+      FSEventStreamInvalidate(capturedStream)
+      FSEventStreamRelease(capturedStream)
     }
 
     self.stream = nil

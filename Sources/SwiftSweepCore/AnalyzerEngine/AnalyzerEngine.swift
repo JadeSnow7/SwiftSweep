@@ -334,11 +334,25 @@ public final class AnalyzerEngine: @unchecked Sendable {
           }
         }
 
-        // 创建 Git 仓库节点（不递归进入）
-        return FileNode(
+        // 创建 Git 仓库节点（仍需递归扫描以计算体积）
+        let gitRepoNode = FileNode(
           name: name, path: nodePath, isDirectory: true,
           isGitRepo: true, gitDir: resolvedGitDir
         )
+
+        // 递归扫描 Git 仓库内容（.git 目录已在 skipDirs 中排除）
+        if let contents = try? fileManager.contentsOfDirectory(
+          at: url, includingPropertiesForKeys: resourceKeys,
+          options: skipHidden ? [.skipsHiddenFiles] : [])
+        {
+          for childURL in contents {
+            if Task.isCancelled { break }
+            let childNode = scanDirectory(childURL)
+            gitRepoNode.addChild(childNode)
+          }
+        }
+
+        return gitRepoNode
       }
 
       // Not a Git repo - create normal directory node

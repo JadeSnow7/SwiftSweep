@@ -98,6 +98,8 @@
 /* Process List */
 "process.list.title.cpu" = "CPU Usage by Process";
 "process.list.title.memory" = "Memory Usage by Process";
+"process.list.title.network" = "Network Usage by Process";
+"process.list.title.io" = "Disk I/O by Process";
 "process.loading" = "Loading processes...";
 "process.empty" = "No processes found";
 "process.column.name" = "Process Name";
@@ -105,4 +107,5 @@
 "process.column.user" = "User";
 "process.column.cpu" = "CPU %";
 "process.column.memory" = "Memory";
-
+"process.column.network" = "Network";
+"process.column.io" = "Disk I/O";
