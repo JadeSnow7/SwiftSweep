@@ -120,6 +120,20 @@ swift run swiftsweep --help
 
 ---
 
+## 🧪 测试
+
+```bash
+# 标准测试流程
+./ci_scripts/local_test.sh
+
+# 仅运行单元测试
+swift test
+```
+
+更多测试说明见 `docs/TESTING.md`。
+
+---
+
 ## 📦 项目结构
 
 ```

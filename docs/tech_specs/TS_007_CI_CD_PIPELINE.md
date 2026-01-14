@@ -119,7 +119,7 @@ flowchart LR
 ## 9. 风险与权衡（Risks & Trade-offs）
 
 -   **脚本调试困难**：Xcode Cloud 无法 SSH 登录调试。
-    -   *应对*：在本地模拟 CI 环境运行脚本 (`ci_scripts/local_test.sh`)。
+    -   *应对*：在本地使用 `ci_scripts/local_test.sh` 跑标准测试流程，需要时加 `--with-xcodegen` 生成工程。
 -   **配额限制**：每月由 25 小时免费构建时间。
     -   *应对*：仅对 main 分支和 PR 开启构建，feature 分支需手动触发。
 

@@ -34,6 +34,7 @@
 
 - [User Manual](../README.md): 用户功能手册与安装指南。
 - [System Design](DESIGN_SYSTEM.md): 系统总体架构与模块关系。
+- [Testing Guide](TESTING.md): 标准测试流程与本地验证。
 - [Architecture Refactoring Plan](ARCHITECTURE_REFACTORING_PLAN.md): UDF 架构迁移计划与现状。
 - [Compliance Report](COMPLIANCE_REPORT.md): TS_008 合规审计与差距分析。
 - [Plugin Development](PLUGIN_DEVELOPMENT.md): 插件开发指南。

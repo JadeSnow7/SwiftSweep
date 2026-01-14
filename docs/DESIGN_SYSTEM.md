@@ -253,9 +253,12 @@ swift build
 # 运行测试
 swift test
 
+# 标准测试流程（本地）
+./ci_scripts/local_test.sh
+
 # 生成 Xcode 项目
 xcodegen generate
-open SwiftSweep.xcodeproj
+open SwiftSweepDevID.xcodeproj
 ```
 
 ---
