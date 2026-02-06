@@ -12,6 +12,9 @@
   <img src="https://img.shields.io/badge/Platform-macOS%2013+-blue?style=flat-square" alt="Platform" />
   <img src="https://img.shields.io/badge/Swift-5.9+-orange?style=flat-square" alt="Swift" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License" />
+  <br/>
+  <img src="https://github.com/JadeSnow7/SwiftSweep/workflows/PR%20Tests/badge.svg" alt="PR Tests" />
+  <img src="https://github.com/JadeSnow7/SwiftSweep/workflows/CodeQL%20Security%20Analysis/badge.svg" alt="CodeQL" />
 </p>
 
 ---

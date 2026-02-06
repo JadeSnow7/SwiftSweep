@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/JadeSnow7/SwiftSweep/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 📚 Documentation
+    url: https://github.com/JadeSnow7/SwiftSweep/tree/main/docs
+    about: Read the documentation for help and guides
+  - name: 🔒 Security Issue
+    url: https://github.com/JadeSnow7/SwiftSweep/security/advisories/new
+    about: Report a security vulnerability privately
