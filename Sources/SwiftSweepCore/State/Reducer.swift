@@ -226,6 +226,26 @@ public func statusReducer(_ state: StatusState, _ action: StatusAction) -> Statu
     state.networkUpload = metrics.networkUpload
     state.lastUpdated = Date()
 
+  case .fullUpdate(let metrics, let ioReadRate, let ioWriteRate, let peripheralSnapshot):
+    state.cpuUsage = metrics.cpuUsage
+    state.memoryUsage = metrics.memoryUsage
+    state.memoryUsed = metrics.memoryUsed
+    state.memoryTotal = metrics.memoryTotal
+    state.diskUsage = metrics.diskUsage
+    state.diskUsed = metrics.diskUsed
+    state.diskTotal = metrics.diskTotal
+    state.batteryLevel = metrics.batteryLevel
+    state.networkDownload = metrics.networkDownload
+    state.networkUpload = metrics.networkUpload
+    state.ioReadRate = ioReadRate
+    state.ioWriteRate = ioWriteRate
+    state.peripheralSnapshot = peripheralSnapshot
+    state.lastUpdated = Date()
+
+  case .ioRatesUpdated(let readRate, let writeRate):
+    state.ioReadRate = readRate
+    state.ioWriteRate = writeRate
+
   case .metricsFailed(let error):
     state.phase = .error(error)
 

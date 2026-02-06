@@ -14,6 +14,8 @@ struct SwiftSweep: ParsableCommand {
       Analyze.self,
       Optimize.self,
       Status.self,
+      Peripherals.self,
+      Diagnostics.self,
       Uninstall.self,
       Insights.self,
     ],
@@ -411,6 +413,138 @@ struct Status: ParsableCommand {
         "  Disk:    \(String(format: "%.2f", Double(m.diskUsed) / 1_073_741_824)) / \(String(format: "%.2f", Double(m.diskTotal) / 1_073_741_824)) GB (\(String(format: "%.1f", m.diskUsage * 100))%)"
       )
       print("  Battery: \(String(format: "%.0f", m.batteryLevel))%")
+    }
+  }
+}
+
+struct Peripherals: ParsableCommand {
+  static let configuration = CommandConfiguration(
+    abstract: "Inspect connected displays and input devices"
+  )
+
+  @Flag(name: .long, help: "Output as JSON")
+  var json = false
+
+  @Flag(name: .long, help: "Include sensitive identifiers")
+  var sensitive = false
+
+  mutating func run() throws {
+    let semaphore = DispatchSemaphore(value: 0)
+    var snapshot = PeripheralSnapshot()
+    let includeSensitive = sensitive
+
+    Task {
+      snapshot = await PeripheralInspector.shared.getSnapshot(includeSensitive: includeSensitive)
+      semaphore.signal()
+    }
+
+    semaphore.wait()
+
+    if json {
+      printJSON(snapshot)
+    } else {
+      printFormatted(snapshot)
+    }
+  }
+
+  private func printFormatted(_ snapshot: PeripheralSnapshot) {
+    print("Peripherals:")
+    print("  Displays: \(snapshot.displays.count)")
+    if snapshot.displays.isEmpty {
+      print("    - No display information available")
+    } else {
+      for display in snapshot.displays {
+        let name = display.name ?? "Unknown Display"
+        let builtIn = display.isBuiltin == true ? "Built-in" : "External"
+        let resolution = [display.pixelsWidth, display.pixelsHeight]
+          .compactMap { $0 }
+        let resolutionText =
+          resolution.count == 2 ? "\(resolution[0])x\(resolution[1])" : "N/A"
+        print("    - \(name) [\(builtIn), \(resolutionText)]")
+      }
+    }
+
+    print("  Input Devices: \(snapshot.inputDevices.count)")
+    if snapshot.inputDevices.isEmpty {
+      print("    - No input device information available")
+    } else {
+      for device in snapshot.inputDevices {
+        let name = device.name ?? "Unknown Device"
+        let transport = device.transport ?? "Unknown transport"
+        print("    - \(name) [\(device.kind.rawValue), \(transport)]")
+      }
+    }
+  }
+
+  private func printJSON(_ snapshot: PeripheralSnapshot) {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    do {
+      let data = try encoder.encode(PeripheralSnapshotJSONDTO(snapshot: snapshot))
+      if let text = String(data: data, encoding: .utf8) {
+        print(text)
+      }
+    } catch {
+      print("{\"error\": \"Failed to encode peripherals: \(error.localizedDescription)\"}")
+    }
+  }
+}
+
+struct Diagnostics: ParsableCommand {
+  static let configuration = CommandConfiguration(
+    abstract: "Show Apple Diagnostics startup guide"
+  )
+
+  @Flag(name: .long, help: "Open Apple support article in browser")
+  var openSupport = false
+
+  mutating func run() throws {
+    let guide = DiagnosticsGuideService.shared.getGuide()
+
+    print("Apple Diagnostics Guide:")
+    print("  Architecture: \(displayArchitecture(guide.architecture))")
+    print("")
+    print("Steps:")
+    for (index, step) in guide.steps.enumerated() {
+      print("  \(index + 1). \(step)")
+    }
+
+    if !guide.notes.isEmpty {
+      print("")
+      print("Notes:")
+      for note in guide.notes {
+        print("  - \(note)")
+      }
+    }
+
+    print("")
+    print("Support: \(guide.supportURL.absoluteString)")
+
+    if openSupport {
+      openURL(guide.supportURL)
+    }
+  }
+
+  private func displayArchitecture(_ architecture: MachineArchitecture) -> String {
+    switch architecture {
+    case .appleSilicon: return "Apple Silicon"
+    case .intel: return "Intel"
+    case .unknown: return "Unknown"
+    }
+  }
+
+  private func openURL(_ url: URL) {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+    process.arguments = [url.absoluteString]
+    do {
+      try process.run()
+      process.waitUntilExit()
+      if process.terminationStatus != 0 {
+        print("⚠️ Unable to open browser automatically.")
+      }
+    } catch {
+      print("⚠️ Unable to open browser automatically: \(error.localizedDescription)")
     }
   }
 }

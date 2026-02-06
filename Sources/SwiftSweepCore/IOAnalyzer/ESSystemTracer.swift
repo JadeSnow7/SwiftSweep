@@ -1,5 +1,10 @@
-import EndpointSecurity
 import Foundation
+
+#if canImport(EndpointSecurity) && !SWIFTSWEEP_NO_ENDPOINT_SECURITY
+  import EndpointSecurity
+#endif
+
+#if canImport(EndpointSecurity) && !SWIFTSWEEP_NO_ENDPOINT_SECURITY
 
 // MARK: - Endpoint Security System Tracer
 
@@ -255,6 +260,7 @@ public enum ESTracerError: Error, LocalizedError {
   case clientCreationFailed(es_new_client_result_t)
   case subscribeFailed(es_return_t)
   case notAuthorized
+  case notAvailable
 
   public var errorDescription: String? {
     switch self {
@@ -264,6 +270,91 @@ public enum ESTracerError: Error, LocalizedError {
       return "Failed to subscribe to events: \(result.rawValue)"
     case .notAuthorized:
       return "Endpoint Security requires Full Disk Access permission"
+    case .notAvailable:
+      return "Endpoint Security is unavailable in this build"
     }
   }
 }
+
+#else
+
+public typealias es_new_client_result_t = Int32
+public typealias es_return_t = Int32
+
+public actor ESSystemTracer {
+  public static let shared = ESSystemTracer()
+
+  public struct FilterConfig: Sendable {
+    public var pathPrefixes: [String] = []
+    public var excludePrefixes: [String] = [
+      "/private/var/folders",
+      "/Library/Caches",
+      "/System",
+    ]
+    public var processNames: [String] = []
+
+    public init() {}
+  }
+
+  private let buffer: IOEventBuffer
+  private var tracingStartTime: Date?
+
+  public init(bufferCapacity: Int = 50_000) {
+    self.buffer = IOEventBuffer(capacity: bufferCapacity)
+  }
+
+  public func startTracing(filter: FilterConfig = FilterConfig()) async throws {
+    _ = filter
+    throw ESTracerError.notAvailable
+  }
+
+  public func stopTracing() async {}
+
+  public func isTracingActive() -> Bool {
+    false
+  }
+
+  public func tracingDuration() -> TimeInterval {
+    guard let start = tracingStartTime else { return 0 }
+    return Date().timeIntervalSince(start)
+  }
+
+  public func drainEvents(maxCount: Int = 1000) async -> [IOEvent] {
+    _ = maxCount
+    return []
+  }
+
+  public func bufferStats() async -> IOEventBuffer.BufferStats {
+    await buffer.stats()
+  }
+
+  public func setSampleRate(_ rate: Double) async {
+    await buffer.setSampleRate(rate)
+  }
+
+  public func clear() async {
+    await buffer.clear()
+  }
+}
+
+public enum ESTracerError: Error, LocalizedError {
+  case clientCreationFailed(es_new_client_result_t)
+  case subscribeFailed(es_return_t)
+  case notAuthorized
+  case notAvailable
+
+  public var errorDescription: String? {
+    switch self {
+    case .clientCreationFailed(let result):
+      return "Failed to create ES client: \(result)"
+    case .subscribeFailed(let result):
+      return "Failed to subscribe to events: \(result)"
+    case .notAuthorized:
+      return "Endpoint Security requires Full Disk Access permission"
+    case .notAvailable:
+      return "Endpoint Security is unavailable in this build"
+    }
+  }
+}
+
+#endif

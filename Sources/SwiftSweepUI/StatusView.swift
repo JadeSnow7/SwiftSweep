@@ -4,10 +4,32 @@ import SwiftUI
   import SwiftSweepCore
 #endif
 
+protocol StatusMetricsProviding: Sendable {
+  func getMetrics() async throws -> SystemMonitor.SystemMetrics
+}
+
+struct LiveStatusMetricsProvider: StatusMetricsProviding {
+  func getMetrics() async throws -> SystemMonitor.SystemMetrics {
+    try await SystemMonitor.shared.getMetrics()
+  }
+}
+
+protocol PeripheralSnapshotProviding: Sendable {
+  func getSnapshot() async -> PeripheralSnapshot
+}
+
+struct LivePeripheralSnapshotProvider: PeripheralSnapshotProviding {
+  func getSnapshot() async -> PeripheralSnapshot {
+    await PeripheralInspector.shared.getSnapshot()
+  }
+}
+
 struct StatusView: View {
   @Binding var selection: ContentView.NavigationItem?
   @StateObject private var monitor = StatusMonitorViewModel()
   @State private var showProcessSheet: ProcessMetricType?
+  @State private var showPeripheralsSheet = false
+  @State private var showDiagnosticsSheet = false
 
   var body: some View {
     ScrollView {
@@ -25,10 +47,20 @@ struct StatusView: View {
 
           Spacer()
 
+          Button(action: { showDiagnosticsSheet = true }) {
+            HStack(spacing: 4) {
+              Image(systemName: "stethoscope")
+              Text(L10n.Status.appleDiagnostics.localized)
+            }
+            .font(.subheadline)
+          }
+          .animatedButton()
+
           Button(action: { monitor.refresh() }) {
             Image(systemName: "arrow.clockwise")
               .font(.title3)
           }
+          .help(L10n.Common.refresh.localized)
           .animatedButton()
           .disabled(monitor.isLoading)
         }
@@ -105,6 +137,18 @@ struct StatusView: View {
           )
           .onTapGesture { selection = .ioAnalyzer }
           .help("Click to open I/O Analyzer")
+
+          MetricCard(
+            title: L10n.Status.peripherals.localized,
+            value: "\(monitor.peripheralSnapshot.displays.count) \(L10n.Status.displays.localized)",
+            subtitle:
+              "\(monitor.peripheralSnapshot.inputDevices.count) \(L10n.Status.inputDevices.localized)",
+            icon: "keyboard",
+            color: .purple,
+            progress: 0
+          )
+          .onTapGesture { showPeripheralsSheet = true }
+          .help("Click to view connected peripherals")
         }
 
         Spacer()
@@ -119,6 +163,12 @@ struct StatusView: View {
     }
     .sheet(item: $showProcessSheet) { metricType in
       ProcessListSheet(metricType: metricType)
+    }
+    .sheet(isPresented: $showPeripheralsSheet) {
+      PeripheralsSheet(snapshot: monitor.peripheralSnapshot)
+    }
+    .sheet(isPresented: $showDiagnosticsSheet) {
+      DiagnosticsGuideSheet(guide: DiagnosticsGuideService.shared.getGuide())
     }
   }
 
@@ -157,15 +207,27 @@ struct StatusView: View {
 @MainActor
 class StatusMonitorViewModel: ObservableObject {
   @Published var metrics = SystemMonitor.SystemMetrics()
+  @Published var peripheralSnapshot = PeripheralSnapshot()
   @Published var isLoading = false
   @Published var ioReadRate: Double = 0  // MB/s
   @Published var ioWriteRate: Double = 0  // MB/s
 
+  private let metricsProvider: any StatusMetricsProviding
+  private let peripheralProvider: any PeripheralSnapshotProviding
   private var timer: Timer?
   private var lastIOSlice: IOTimeSlice?
+  private var isRefreshing = false
+
+  init(
+    metricsProvider: any StatusMetricsProviding = LiveStatusMetricsProvider(),
+    peripheralProvider: any PeripheralSnapshotProviding = LivePeripheralSnapshotProvider()
+  ) {
+    self.metricsProvider = metricsProvider
+    self.peripheralProvider = peripheralProvider
+  }
 
   func startMonitoring() {
-    refresh()
+    refresh(includePeripherals: true)
     // Start IO tracing for this session (self mode, won't throw)
     Task {
       try? await IOAnalyzer.shared.startAnalysis { [weak self] slice in
@@ -177,7 +239,7 @@ class StatusMonitorViewModel: ObservableObject {
     }
     timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
       Task { @MainActor [weak self] in
-        self?.refresh()
+        self?.refresh(includePeripherals: false)
       }
     }
   }
@@ -190,14 +252,34 @@ class StatusMonitorViewModel: ObservableObject {
     }
   }
 
-  func refresh() {
+  func refresh(includePeripherals: Bool = true) {
     Task {
-      do {
-        let newMetrics = try await SystemMonitor.shared.getMetrics()
-        self.metrics = newMetrics
-      } catch {
-        print("Failed to fetch metrics: \(error)")
-      }
+      await performRefresh(includePeripherals: includePeripherals)
+    }
+  }
+
+  func refreshForTesting(includePeripherals: Bool = true) async {
+    await performRefresh(includePeripherals: includePeripherals)
+  }
+
+  private func performRefresh(includePeripherals: Bool) async {
+    guard !isRefreshing else { return }
+    isRefreshing = true
+    isLoading = true
+    defer {
+      isRefreshing = false
+      isLoading = false
+    }
+
+    do {
+      let newMetrics = try await metricsProvider.getMetrics()
+      self.metrics = newMetrics
+    } catch {
+      print("Failed to fetch metrics: \(error)")
+    }
+
+    if includePeripherals {
+      peripheralSnapshot = await peripheralProvider.getSnapshot()
     }
   }
 }

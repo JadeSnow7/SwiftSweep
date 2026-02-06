@@ -1,7 +1,11 @@
 import AppKit
-// Import for es_new_client
-import EndpointSecurity
 import Foundation
+
+#if canImport(EndpointSecurity) && !SWIFTSWEEP_NO_ENDPOINT_SECURITY
+  import EndpointSecurity
+#endif
+
+#if canImport(EndpointSecurity) && !SWIFTSWEEP_NO_ENDPOINT_SECURITY
 
 // MARK: - Endpoint Security Permission Manager
 
@@ -99,3 +103,53 @@ public final class ESPermissionManager: @unchecked Sendable {
     }
   }
 }
+
+#else
+
+public final class ESPermissionManager: @unchecked Sendable {
+  public static let shared = ESPermissionManager()
+
+  public enum PermissionStatus: Sendable {
+    case notDetermined
+    case denied
+    case authorized
+    case restricted
+  }
+
+  private init() {}
+
+  public func checkStatus() -> PermissionStatus {
+    .restricted
+  }
+
+  public var isAuthorized: Bool {
+    false
+  }
+
+  public func openSecurityPreferences() {
+    let url = URL(
+      string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!
+    NSWorkspace.shared.open(url)
+  }
+
+  public func statusDescription(_ status: PermissionStatus) -> (title: String, message: String) {
+    switch status {
+    case .notDetermined:
+      return (
+        "Permission Required",
+        "Full Disk Access permission is needed for system-wide I/O monitoring."
+      )
+    case .denied:
+      return (
+        "Permission Denied",
+        "Please grant Full Disk Access in System Preferences > Security & Privacy > Privacy > Full Disk Access."
+      )
+    case .authorized:
+      return ("Authorized", "System-wide I/O monitoring is available.")
+    case .restricted:
+      return ("Not Available", "Endpoint Security is unavailable in this build.")
+    }
+  }
+}
+
+#endif

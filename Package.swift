@@ -47,8 +47,13 @@ let package = Package(
         "Integration",
         "State",
       ],
+      swiftSettings: [
+        .define("SWIFTSWEEP_NO_ENDPOINT_SECURITY", .when(configuration: .debug))
+      ],
       linkerSettings: [
-        .linkedFramework("EndpointSecurity")
+        .linkedFramework("EndpointSecurity", .when(configuration: .release)),
+        .linkedFramework("IOKit"),
+        .linkedFramework("ApplicationServices")
       ]
     ),
 
@@ -101,7 +106,11 @@ let package = Package(
     // Tests
     .testTarget(
       name: "SwiftSweepTests",
-      dependencies: ["SwiftSweepCore"],
+      dependencies: [
+        "SwiftSweepCore",
+        "SwiftSweepCLI",
+        "SwiftSweepUI",
+      ],
       path: "Tests"
     ),
   ]

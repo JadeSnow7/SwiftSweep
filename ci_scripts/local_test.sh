@@ -42,6 +42,9 @@ swift test
 if [[ "$RUN_CLI_SMOKE" == "1" ]]; then
   echo "Running CLI smoke checks..."
   swift run swiftsweep status
+  swift run swiftsweep peripherals --json
+  swift run swiftsweep peripherals --json --sensitive
+  swift run swiftsweep diagnostics
   swift run swiftsweep clean --dry-run
 fi
 

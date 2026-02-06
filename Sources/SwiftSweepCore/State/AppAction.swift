@@ -64,6 +64,13 @@ public enum StatusAction: Sendable {
   case startMonitoring
   case stopMonitoring
   case metricsUpdated(SystemMonitor.SystemMetrics)
+  case fullUpdate(
+    metrics: SystemMonitor.SystemMetrics,
+    ioReadRate: Double,
+    ioWriteRate: Double,
+    peripheralSnapshot: PeripheralSnapshot
+  )
+  case ioRatesUpdated(readRate: Double, writeRate: Double)
   case metricsFailed(String)
   case showProcessSheet(ProcessMetricType?)
   case showPeripheralsSheet(Bool)

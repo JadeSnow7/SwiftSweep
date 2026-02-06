@@ -26,10 +26,15 @@ Note: tests use SwiftPM and may read system metrics and scan paths, so they can 
 
 ```bash
 swift run swiftsweep status
+swift run swiftsweep peripherals --json
+swift run swiftsweep peripherals --json --sensitive
+swift run swiftsweep diagnostics
 swift run swiftsweep clean --dry-run
 ```
 
-Note: `clean --dry-run` does not delete files.
+Notes:
+- `clean --dry-run` does not delete files.
+- `peripherals --json` should keep fixed keys and use `null` for unavailable optional fields.
 
 ## 4. CleanupEngine E2E fixtures (optional)
 
