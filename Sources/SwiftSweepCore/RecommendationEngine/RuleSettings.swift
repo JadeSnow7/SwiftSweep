@@ -3,7 +3,7 @@ import Foundation
 // MARK: - RuleCategory
 
 /// Categories for grouping recommendation rules
-public enum RuleCategory: String, CaseIterable, Codable {
+public enum RuleCategory: String, Equatable, Sendable, CaseIterable, Codable {
   case storage = "Storage"
   case privacy = "Privacy"
   case performance = "Performance"

@@ -5,15 +5,21 @@ public struct AppState: Equatable, Sendable {
   public var navigation: NavigationState
   public var uninstall: UninstallState
   public var cleanup: CleanupState
+  public var insights: InsightsState
+  public var status: StatusState
 
   public init(
     navigation: NavigationState = .init(),
     uninstall: UninstallState = .init(),
-    cleanup: CleanupState = .init()
+    cleanup: CleanupState = .init(),
+    insights: InsightsState = .init(),
+    status: StatusState = .init()
   ) {
     self.navigation = navigation
     self.uninstall = uninstall
     self.cleanup = cleanup
+    self.insights = insights
+    self.status = status
   }
 }
 
@@ -97,6 +103,73 @@ public struct CleanupResult: Equatable, Sendable {
   public init(successCount: Int, failedCount: Int, freedBytes: Int64) {
     self.successCount = successCount
     self.failedCount = failedCount
+    self.freedBytes = freedBytes
+  }
+}
+
+/// State for Insights Feature
+public struct InsightsState: Equatable, Sendable {
+  public enum Phase: Equatable, Sendable {
+    case idle
+    case loading
+    case loaded
+    case error(String)
+  }
+
+  public var phase: Phase = .idle
+  public var recommendations: [Recommendation] = []
+  public var selectedRecommendation: Recommendation?
+  public var selectedCategory: RuleCategory?
+  public var isCacheHit: Bool = false
+  public var cacheAge: TimeInterval?
+  public var actionInProgress: Bool = false
+  public var actionResult: ActionResult?
+
+  public init() {}
+}
+
+/// State for Status/System Monitor Feature
+public struct StatusState: Equatable, Sendable {
+  public enum Phase: Equatable, Sendable {
+    case idle
+    case monitoring
+    case error(String)
+  }
+
+  public var phase: Phase = .idle
+  public var cpuUsage: Double = 0
+  public var memoryUsage: Double = 0
+  public var memoryUsed: Int64 = 0
+  public var memoryTotal: Int64 = 0
+  public var diskUsage: Double = 0
+  public var diskUsed: Int64 = 0
+  public var diskTotal: Int64 = 0
+  public var batteryLevel: Double = 0
+  public var networkDownload: Double = 0
+  public var networkUpload: Double = 0
+  public var lastUpdated: Date?
+  public var showProcessSheet: ProcessMetricType?
+  public var showPeripheralsSheet: Bool = false
+  public var showDiagnosticsSheet: Bool = false
+
+  public init() {}
+}
+
+/// Process metric type for sheet display
+public enum ProcessMetricType: String, Equatable, Sendable {
+  case cpu
+  case memory
+}
+
+/// Action result for insights
+public struct ActionResult: Equatable, Sendable {
+  public let success: Bool
+  public let message: String
+  public let freedBytes: Int64?
+
+  public init(success: Bool, message: String, freedBytes: Int64? = nil) {
+    self.success = success
+    self.message = message
     self.freedBytes = freedBytes
   }
 }

@@ -10,6 +10,10 @@ public func appReducer(_ state: AppState, _ action: AppAction) -> AppState {
     newState.uninstall = uninstallReducer(state.uninstall, action)
   case .cleanup(let action):
     newState.cleanup = cleanupReducer(state.cleanup, action)
+  case .insights(let action):
+    newState.insights = insightsReducer(state.insights, action)
+  case .status(let action):
+    newState.status = statusReducer(state.status, action)
   }
   return newState
 }
@@ -151,6 +155,92 @@ public func cleanupReducer(_ state: CleanupState, _ action: CleanupAction) -> Cl
     state.phase = .idle
     state.items = []
     state.cleanResult = nil
+  }
+  return state
+}
+
+/// Insights Feature Reducer
+public func insightsReducer(_ state: InsightsState, _ action: InsightsAction) -> InsightsState {
+  var state = state
+  switch action {
+  case .startEvaluation:
+    state.phase = .loading
+    state.actionResult = nil
+
+  case .evaluationCompleted(let recommendations, let isCacheHit, let cacheAge):
+    state.recommendations = recommendations
+    state.phase = .loaded
+    state.isCacheHit = isCacheHit
+    state.cacheAge = cacheAge
+
+  case .evaluationFailed(let error):
+    state.phase = .error(error)
+
+  case .selectRecommendation(let recommendation):
+    state.selectedRecommendation = recommendation
+
+  case .selectCategory(let category):
+    state.selectedCategory = category
+
+  case .executeAction:
+    state.actionInProgress = true
+    state.actionResult = nil
+
+  case .actionCompleted(let result):
+    state.actionInProgress = false
+    state.actionResult = result
+
+  case .actionFailed(let error):
+    state.actionInProgress = false
+    state.actionResult = ActionResult(success: false, message: error)
+
+  case .reset:
+    state.phase = .idle
+    state.recommendations = []
+    state.selectedRecommendation = nil
+    state.actionResult = nil
+  }
+  return state
+}
+
+/// Status/System Monitor Feature Reducer
+public func statusReducer(_ state: StatusState, _ action: StatusAction) -> StatusState {
+  var state = state
+  switch action {
+  case .startMonitoring:
+    state.phase = .monitoring
+
+  case .stopMonitoring:
+    state.phase = .idle
+
+  case .metricsUpdated(let metrics):
+    state.cpuUsage = metrics.cpuUsage
+    state.memoryUsage = metrics.memoryUsage
+    state.memoryUsed = metrics.memoryUsed
+    state.memoryTotal = metrics.memoryTotal
+    state.diskUsage = metrics.diskUsage
+    state.diskUsed = metrics.diskUsed
+    state.diskTotal = metrics.diskTotal
+    state.batteryLevel = metrics.batteryLevel
+    state.networkDownload = metrics.networkDownload
+    state.networkUpload = metrics.networkUpload
+    state.lastUpdated = Date()
+
+  case .metricsFailed(let error):
+    state.phase = .error(error)
+
+  case .showProcessSheet(let type):
+    state.showProcessSheet = type
+
+  case .showPeripheralsSheet(let show):
+    state.showPeripheralsSheet = show
+
+  case .showDiagnosticsSheet(let show):
+    state.showDiagnosticsSheet = show
+
+  case .reset:
+    state.phase = .idle
+    state.lastUpdated = nil
   }
   return state
 }

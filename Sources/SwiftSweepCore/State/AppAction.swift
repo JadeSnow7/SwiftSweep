@@ -5,6 +5,8 @@ public enum AppAction: Sendable {
   case navigation(NavigationAction)
   case uninstall(UninstallAction)
   case cleanup(CleanupAction)
+  case insights(InsightsAction)
+  case status(StatusAction)
 }
 
 /// Actions for Navigation
@@ -41,5 +43,30 @@ public enum CleanupAction: Sendable {
   case cancelClean  // Dismiss confirmation
   case startClean
   case cleanCompleted(CleanupResult)
+  case reset
+}
+
+/// Actions for Insights Feature
+public enum InsightsAction: Sendable {
+  case startEvaluation(forceRefresh: Bool)
+  case evaluationCompleted([Recommendation], isCacheHit: Bool, cacheAge: TimeInterval?)
+  case evaluationFailed(String)
+  case selectRecommendation(Recommendation?)
+  case selectCategory(RuleCategory?)
+  case executeAction(Recommendation, dryRun: Bool)
+  case actionCompleted(ActionResult)
+  case actionFailed(String)
+  case reset
+}
+
+/// Actions for Status/System Monitor Feature
+public enum StatusAction: Sendable {
+  case startMonitoring
+  case stopMonitoring
+  case metricsUpdated(SystemMonitor.SystemMetrics)
+  case metricsFailed(String)
+  case showProcessSheet(ProcessMetricType?)
+  case showPeripheralsSheet(Bool)
+  case showDiagnosticsSheet(Bool)
   case reset
 }
