@@ -26,7 +26,7 @@ struct LivePeripheralSnapshotProvider: PeripheralSnapshotProviding {
 
 struct StatusView: View {
   @Binding var selection: ContentView.NavigationItem?
-  @StateObject private var monitor = StatusMonitorViewModel()
+  @EnvironmentObject var store: AppStore
   @State private var showProcessSheet: ProcessMetricType?
   @State private var showPeripheralsSheet = false
   @State private var showDiagnosticsSheet = false
@@ -56,13 +56,13 @@ struct StatusView: View {
           }
           .animatedButton()
 
-          Button(action: { monitor.refresh() }) {
+          Button(action: { store.dispatch(.status(.startMonitoring)) }) {
             Image(systemName: "arrow.clockwise")
               .font(.title3)
           }
           .help(L10n.Common.refresh.localized)
           .animatedButton()
-          .disabled(monitor.isLoading)
+          .disabled(store.state.status.phase == .monitoring)
         }
         .padding(.bottom)
 
@@ -71,11 +71,11 @@ struct StatusView: View {
           // CPU Card - Clickable
           MetricCard(
             title: "CPU",
-            value: String(format: "%.1f%%", monitor.metrics.cpuUsage),
+            value: String(format: "%.1f%%", store.state.status.cpuUsage),
             subtitle: "Load avg · \(ProcessInfo.processInfo.processorCount) cores",
             icon: "cpu",
-            color: colorForUsage(monitor.metrics.cpuUsage / 100),
-            progress: monitor.metrics.cpuUsage / 100
+            color: colorForUsage(store.state.status.cpuUsage / 100),
+            progress: store.state.status.cpuUsage / 100
           )
           .onTapGesture { showProcessSheet = .cpu }
           .help("Click to view process CPU usage")
@@ -83,11 +83,11 @@ struct StatusView: View {
           // Memory Card - Clickable
           MetricCard(
             title: "Memory",
-            value: formatBytes(monitor.metrics.memoryUsed),
-            subtitle: "\(formatBytes(monitor.metrics.memoryTotal)) total",
+            value: formatBytes(store.state.status.memoryUsed),
+            subtitle: "\(formatBytes(store.state.status.memoryTotal)) total",
             icon: "memorychip",
-            color: colorForUsage(monitor.metrics.memoryUsage),
-            progress: monitor.metrics.memoryUsage
+            color: colorForUsage(store.state.status.memoryUsage),
+            progress: store.state.status.memoryUsage
           )
           .onTapGesture { showProcessSheet = .memory }
           .help("Click to view process memory usage")
@@ -95,11 +95,11 @@ struct StatusView: View {
           // Disk Card
           MetricCard(
             title: "Disk",
-            value: "\(formatBytes(monitor.metrics.diskUsed))",
-            subtitle: "Total: \(formatBytes(monitor.metrics.diskTotal))",
+            value: "\(formatBytes(store.state.status.diskUsed))",
+            subtitle: "Total: \(formatBytes(store.state.status.diskTotal))",
             icon: "internaldrive",
-            color: colorForUsage(monitor.metrics.diskUsage),
-            progress: monitor.metrics.diskUsage
+            color: colorForUsage(store.state.status.diskUsage),
+            progress: store.state.status.diskUsage
           )
           .onTapGesture { selection = .analyze }
           .help("Click to open Disk Analyzer")
@@ -107,32 +107,32 @@ struct StatusView: View {
           // Network Card (New!)
           MetricCard(
             title: "Network",
-            value: "↓ " + formatSpeed(monitor.metrics.networkDownload),
-            subtitle: "↑ " + formatSpeed(monitor.metrics.networkUpload),
+            value: "↓ " + formatSpeed(store.state.status.networkDownload),
+            subtitle: "↑ " + formatSpeed(store.state.status.networkUpload),
             icon: "network",
             color: .blue,
             progress: 0  // Network doesn't update progress bar
           )
 
           // Battery Card (if available)
-          if monitor.metrics.batteryLevel > 0 {
+          if store.state.status.batteryLevel > 0 {
             MetricCard(
               title: "Battery",
-              value: String(format: "%.0f%%", monitor.metrics.batteryLevel),
+              value: String(format: "%.0f%%", store.state.status.batteryLevel),
               subtitle: "Power Source",
               icon: "battery.100",
-              color: colorForBattery(monitor.metrics.batteryLevel / 100),
-              progress: monitor.metrics.batteryLevel / 100
+              color: colorForBattery(store.state.status.batteryLevel / 100),
+              progress: store.state.status.batteryLevel / 100
             )
           }
 
           // Disk I/O Card (uses IOAnalyzer if tracing)
           MetricCard(
             title: "Disk I/O",
-            value: "↓ " + formatSpeed(monitor.ioReadRate),
-            subtitle: "↑ " + formatSpeed(monitor.ioWriteRate),
+            value: "↓ " + formatSpeed(store.state.status.ioReadRate),
+            subtitle: "↑ " + formatSpeed(store.state.status.ioWriteRate),
             icon: "arrow.up.arrow.down.circle",
-            color: ioColor(monitor.ioReadRate + monitor.ioWriteRate),
+            color: ioColor(store.state.status.ioReadRate + store.state.status.ioWriteRate),
             progress: 0
           )
           .onTapGesture { selection = .ioAnalyzer }
@@ -140,9 +140,9 @@ struct StatusView: View {
 
           MetricCard(
             title: L10n.Status.peripherals.localized,
-            value: "\(monitor.peripheralSnapshot.displays.count) \(L10n.Status.displays.localized)",
+            value: "\(store.state.status.peripheralSnapshot.displays.count) \(L10n.Status.displays.localized)",
             subtitle:
-              "\(monitor.peripheralSnapshot.inputDevices.count) \(L10n.Status.inputDevices.localized)",
+              "\(store.state.status.peripheralSnapshot.inputDevices.count) \(L10n.Status.inputDevices.localized)",
             icon: "keyboard",
             color: .purple,
             progress: 0
@@ -156,16 +156,16 @@ struct StatusView: View {
       .padding()
     }
     .onAppear {
-      monitor.startMonitoring()
+      store.dispatch(.status(.startMonitoring))
     }
     .onDisappear {
-      monitor.stopMonitoring()
+      store.dispatch(.status(.stopMonitoring))
     }
     .sheet(item: $showProcessSheet) { metricType in
       ProcessListSheet(metricType: metricType)
     }
     .sheet(isPresented: $showPeripheralsSheet) {
-      PeripheralsSheet(snapshot: monitor.peripheralSnapshot)
+      PeripheralsSheet(snapshot: store.state.status.peripheralSnapshot)
     }
     .sheet(isPresented: $showDiagnosticsSheet) {
       DiagnosticsGuideSheet(guide: DiagnosticsGuideService.shared.getGuide())
@@ -201,86 +201,6 @@ struct StatusView: View {
     if totalMBps > 20 { return .orange }
     if totalMBps > 5 { return .yellow }
     return .green
-  }
-}
-
-@MainActor
-class StatusMonitorViewModel: ObservableObject {
-  @Published var metrics = SystemMonitor.SystemMetrics()
-  @Published var peripheralSnapshot = PeripheralSnapshot()
-  @Published var isLoading = false
-  @Published var ioReadRate: Double = 0  // MB/s
-  @Published var ioWriteRate: Double = 0  // MB/s
-
-  private let metricsProvider: any StatusMetricsProviding
-  private let peripheralProvider: any PeripheralSnapshotProviding
-  private var timer: Timer?
-  private var lastIOSlice: IOTimeSlice?
-  private var isRefreshing = false
-
-  init(
-    metricsProvider: any StatusMetricsProviding = LiveStatusMetricsProvider(),
-    peripheralProvider: any PeripheralSnapshotProviding = LivePeripheralSnapshotProvider()
-  ) {
-    self.metricsProvider = metricsProvider
-    self.peripheralProvider = peripheralProvider
-  }
-
-  func startMonitoring() {
-    refresh(includePeripherals: true)
-    // Start IO tracing for this session (self mode, won't throw)
-    Task {
-      try? await IOAnalyzer.shared.startAnalysis { [weak self] slice in
-        Task { @MainActor [weak self] in
-          self?.ioReadRate = slice.readThroughput / (1024 * 1024)  // bytes -> MB
-          self?.ioWriteRate = slice.writeThroughput / (1024 * 1024)
-        }
-      }
-    }
-    timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-      Task { @MainActor [weak self] in
-        self?.refresh(includePeripherals: false)
-      }
-    }
-  }
-
-  func stopMonitoring() {
-    timer?.invalidate()
-    timer = nil
-    Task {
-      await IOAnalyzer.shared.stopAnalysis()
-    }
-  }
-
-  func refresh(includePeripherals: Bool = true) {
-    Task {
-      await performRefresh(includePeripherals: includePeripherals)
-    }
-  }
-
-  func refreshForTesting(includePeripherals: Bool = true) async {
-    await performRefresh(includePeripherals: includePeripherals)
-  }
-
-  private func performRefresh(includePeripherals: Bool) async {
-    guard !isRefreshing else { return }
-    isRefreshing = true
-    isLoading = true
-    defer {
-      isRefreshing = false
-      isLoading = false
-    }
-
-    do {
-      let newMetrics = try await metricsProvider.getMetrics()
-      self.metrics = newMetrics
-    } catch {
-      print("Failed to fetch metrics: \(error)")
-    }
-
-    if includePeripherals {
-      peripheralSnapshot = await peripheralProvider.getSnapshot()
-    }
   }
 }
 
