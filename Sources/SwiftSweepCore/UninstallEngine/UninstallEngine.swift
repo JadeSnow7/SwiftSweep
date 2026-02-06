@@ -1,7 +1,41 @@
 import Foundation
 import Logging
 
-/// SwiftSweep 卸载引擎 - 扫描已安装应用及其残留文件
+/// The uninstall engine for removing applications and their residual files.
+///
+/// `UninstallEngine` provides complete application removal including:
+/// - Application bundles from `/Applications` and `~/Applications`
+/// - Preference files (`~/Library/Preferences`)
+/// - Application support files (`~/Library/Application Support`)
+/// - Caches (`~/Library/Caches`)
+/// - Saved application state
+/// - Logs and crash reports
+///
+/// ## Usage
+///
+/// ```swift
+/// let engine = UninstallEngine.shared
+///
+/// // Scan installed applications
+/// let apps = try await engine.scanInstalledApps()
+///
+/// // Find residual files for an app
+/// let residuals = try await engine.findResiduals(for: app)
+///
+/// // Create deletion plan
+/// let plan = try engine.createDeletionPlan(for: app, residuals: residuals)
+///
+/// // Execute uninstall
+/// try await engine.execute(plan: plan)
+/// ```
+///
+/// ## Safety
+///
+/// - Validates all paths before deletion
+/// - Prevents deletion of system-critical files
+/// - Uses privileged helper when needed
+/// - Provides detailed deletion plans for review
+///
 public final class UninstallEngine {
   public static let shared = UninstallEngine()
 

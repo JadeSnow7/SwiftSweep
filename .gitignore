@@ -35,3 +35,17 @@ Package.resolved
 # Backup files
 *~.swift
 Package~.swift
+
+# Code quality tools
+.swiftlint.cache
+swiftlint_baseline.html
+coverage_html/
+*.profdata
+*.profraw
+.coverage/
+lcov.info
+
+# DocC documentation
+*.doccarchive
+.docc-build/
+docs/api/

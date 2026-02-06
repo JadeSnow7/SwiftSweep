@@ -1,0 +1,42 @@
+# Pre-commit hooks for SwiftSweep
+# See https://pre-commit.com for more information
+
+repos:
+  - repo: local
+    hooks:
+      # SwiftLint
+      - id: swiftlint
+        name: SwiftLint
+        entry: swiftlint lint --strict --quiet
+        language: system
+        types: [swift]
+        pass_filenames: false
+
+      # SwiftFormat
+      - id: swiftformat
+        name: SwiftFormat
+        entry: swiftformat --lint
+        language: system
+        types: [swift]
+        pass_filenames: false
+
+      # Fast unit tests (optional, can be slow)
+      # Uncomment to run tests on every commit
+      # - id: swift-test
+      #   name: Swift Tests
+      #   entry: swift test --filter ReducerTests
+      #   language: system
+      #   pass_filenames: false
+      #   stages: [commit]
+
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: detect-private-key

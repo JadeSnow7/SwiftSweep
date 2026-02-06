@@ -1,0 +1,46 @@
+# SwiftFormat Configuration for SwiftSweep
+# Matches existing code style: 2-space indentation, 120 char line length, K&R braces
+
+--indent 2
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen balanced
+--commas inline
+--trimwhitespace always
+--insertblanklines enabled
+--removeblanklines enabled
+--allman false
+--binarygrouping 4,8
+--decimalgrouping 3,6
+--exponentcase lowercase
+--fractiongrouping disabled
+--hexgrouping 4,8
+--hexliteralcase uppercase
+--octalgrouping 4,8
+--patternlet inline
+--self remove
+--selfrequired
+--semicolons inline
+--stripunusedargs closure-only
+--swiftversion 5.9
+--elseposition same-line
+--guardelse same-line
+--ifdef indent
+--indentcase false
+--linebreaks lf
+--operatorfunc spaced
+--ranges spaced
+--redundanttype inferred
+--shortoptionals always
+--smarttabs enabled
+--tabwidth 2
+--trailingclosures
+--xcodeindentation disabled
+--funcattributes prev-line
+--typeattributes prev-line
+--varattributes same-line
+
+# Disabled rules (keep explicit self in closures for clarity)
+--disable redundantSelf

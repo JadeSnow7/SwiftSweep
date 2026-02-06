@@ -1,7 +1,37 @@
 import Foundation
 import Logging
 
-/// MoleKit 清理引擎 - 负责文件清理、扫描、和删除操作
+/// The cleanup engine responsible for scanning and removing system files.
+///
+/// `CleanupEngine` provides comprehensive system cleanup capabilities including:
+/// - User and system caches
+/// - Browser caches (Safari, Chrome, Firefox)
+/// - System logs
+/// - Developer tool caches (Xcode, CocoaPods, Homebrew)
+/// - Trash/Recycle bin
+///
+/// ## Usage
+///
+/// ```swift
+/// let engine = CleanupEngine.shared
+///
+/// // Scan for cleanable items
+/// let items = try await engine.scanForCleanableItems()
+///
+/// // Execute cleanup (dry-run mode)
+/// let result = try await engine.executeCleanup(items: items, dryRun: true)
+///
+/// // Execute actual cleanup
+/// let result = try await engine.executeCleanup(items: items, dryRun: false)
+/// ```
+///
+/// ## Safety
+///
+/// - Supports dry-run mode for previewing changes
+/// - Uses privileged helper for system-protected files
+/// - Validates paths before deletion
+/// - Provides detailed operation results
+///
 public final class CleanupEngine {
   public static let shared = CleanupEngine()
 
@@ -65,7 +95,26 @@ public final class CleanupEngine {
     }
   }
 
-  /// 扫描可清理的项目
+  /// Scans the system for cleanable items.
+  ///
+  /// Performs a comprehensive scan of:
+  /// - User caches (`~/Library/Caches`)
+  /// - Browser caches (Safari, Chrome, Firefox)
+  /// - System caches (`/Library/Caches`)
+  /// - System logs (`/var/log`, `~/Library/Logs`)
+  /// - Developer tool caches (Xcode, CocoaPods, Homebrew)
+  /// - Trash (`~/.Trash`)
+  ///
+  /// - Returns: Array of ``CleanupItem`` representing cleanable files and directories
+  /// - Throws: `CleanupError` if scanning fails
+  ///
+  /// ## Example
+  ///
+  /// ```swift
+  /// let items = try await engine.scanForCleanableItems()
+  /// let totalSize = items.reduce(0) { $0 + $1.size }
+  /// print("Found \(items.count) items totaling \(totalSize) bytes")
+  /// ```
   public func scanForCleanableItems() async throws -> [CleanupItem] {
     logger.info("Starting cleanup scan...")
 

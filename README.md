@@ -128,9 +128,62 @@ swift run swiftsweep --help
 
 # 仅运行单元测试
 swift test
+
+# 生成代码覆盖率报告
+./scripts/coverage_report.sh
 ```
 
 更多测试说明见 `docs/TESTING.md`。
+
+---
+
+## 🛠️ 开发工具
+
+SwiftSweep 使用工业级代码质量工具确保代码标准：
+
+### 安装开发工具
+
+```bash
+# 一键安装所有工具（SwiftLint、SwiftFormat、pre-commit）
+./scripts/install_tools.sh
+
+# 安装 pre-commit hooks
+./scripts/install_hooks.sh
+```
+
+### 代码质量检查
+
+```bash
+# 运行 SwiftLint（代码规范检查）
+./scripts/lint.sh
+
+# 运行 SwiftLint 严格模式
+./scripts/lint.sh --strict
+
+# 自动修复 SwiftLint 问题
+./scripts/lint.sh --autocorrect
+
+# 运行 SwiftFormat（代码格式化检查）
+./scripts/format.sh --lint
+
+# 格式化代码
+./scripts/format.sh
+
+# 预览格式化更改（不实际修改）
+./scripts/format.sh --dryrun
+```
+
+### Pre-commit Hooks
+
+安装 hooks 后，每次 `git commit` 会自动运行：
+- SwiftLint 严格模式检查
+- SwiftFormat 格式检查
+- 通用检查（尾随空格、大文件、私钥检测等）
+
+跳过 hooks（不推荐）：
+```bash
+git commit --no-verify
+```
 
 ---
 
@@ -173,6 +226,15 @@ SwiftSweep/
 # 查看系统状态
 swift run swiftsweep status
 
+# 检查外设（默认脱敏）
+swift run swiftsweep peripherals --json
+
+# 检查外设（包含敏感硬件标识）
+swift run swiftsweep peripherals --json --sensitive
+
+# 查看 Apple Diagnostics 官方引导
+swift run swiftsweep diagnostics
+
 # 智能建议（可选 --json / --verbose）
 swift run swiftsweep insights
 
@@ -185,6 +247,11 @@ swift run swiftsweep clean
 # 磁盘分析
 swift run swiftsweep analyze ~/Documents
 ```
+
+说明：
+- `peripherals --json` 固定输出键名；不可用字段输出 `null`。
+- `serial_number`、`location` 默认脱敏（`null`），仅 `--sensitive` 输出明文。
+- `diagnostics` 为官方引导入口，不会在应用内直接执行 Apple Diagnostics 引擎。
 
 ---
 

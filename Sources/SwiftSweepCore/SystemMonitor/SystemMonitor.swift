@@ -5,7 +5,33 @@ import Logging
   import IOKit.ps
 #endif
 
-/// MoleKit 系统监控引擎 - 实时监控 CPU、内存、磁盘等系统指标
+/// Real-time system monitoring for CPU, memory, disk, battery, and network metrics.
+///
+/// `SystemMonitor` provides comprehensive system metrics including:
+/// - CPU usage percentage
+/// - Memory usage (used/total in bytes and percentage)
+/// - Disk usage (used/total in bytes and percentage)
+/// - Battery level (0-1.0)
+/// - Network throughput (download/upload in MB/s)
+///
+/// ## Usage
+///
+/// ```swift
+/// let monitor = SystemMonitor.shared
+///
+/// // Get current metrics
+/// let metrics = try await monitor.getMetrics()
+/// print("CPU: \(metrics.cpuUsage * 100)%")
+/// print("Memory: \(metrics.memoryUsage * 100)%")
+/// print("Disk: \(metrics.diskUsage * 100)%")
+/// ```
+///
+/// ## Performance
+///
+/// - Metrics are calculated on-demand
+/// - CPU usage is averaged over a short sampling period
+/// - Network metrics track delta since last call
+///
 public final class SystemMonitor {
   public static let shared = SystemMonitor()
 
@@ -39,7 +65,26 @@ public final class SystemMonitor {
 
   private init() {}
 
-  /// 获取当前系统指标
+  /// Retrieves current system metrics.
+  ///
+  /// Collects real-time metrics for:
+  /// - CPU usage (0-1.0)
+  /// - Memory usage (bytes and percentage)
+  /// - Disk usage (bytes and percentage)
+  /// - Battery level (0-1.0, or 0 if no battery)
+  /// - Network throughput (MB/s)
+  ///
+  /// - Returns: ``SystemMetrics`` containing current system state
+  /// - Throws: `SystemMonitorError` if metrics cannot be retrieved
+  ///
+  /// ## Example
+  ///
+  /// ```swift
+  /// let metrics = try await monitor.getMetrics()
+  /// if metrics.cpuUsage > 0.8 {
+  ///   print("High CPU usage detected!")
+  /// }
+  /// ```
   public func getMetrics() async throws -> SystemMetrics {
     logger.debug("Fetching system metrics...")
 
