@@ -162,12 +162,14 @@ public enum ProcessMetricType: String, Equatable, Sendable {
 }
 
 /// Action result for insights
-public struct ActionResult: Equatable, Sendable {
+public struct ActionResult: Identifiable, Equatable, Sendable {
+  public let id: UUID
   public let success: Bool
   public let message: String
   public let freedBytes: Int64?
 
-  public init(success: Bool, message: String, freedBytes: Int64? = nil) {
+  public init(id: UUID = UUID(), success: Bool, message: String, freedBytes: Int64? = nil) {
+    self.id = id
     self.success = success
     self.message = message
     self.freedBytes = freedBytes
