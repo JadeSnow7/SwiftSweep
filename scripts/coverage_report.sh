@@ -44,26 +44,29 @@ fi
 echo "Found coverage data: $PROFDATA_PATH"
 
 # Get list of test binaries
-TEST_BINARIES=$(find .build -name "SwiftSweepPackageTests.xctest" -o -name "*.xctest" | head -n 1)
-
-if [ -z "$TEST_BINARIES" ]; then
-  # Try to find the test binary directly
-  TEST_BINARIES=$(find .build/debug -type f -name "SwiftSweepPackageTests" | head -n 1)
-fi
+TEST_BINARIES=$(find .build -name "SwiftSweepPackageTests.xctest" -type d | head -n 1)
 
 if [ -z "$TEST_BINARIES" ]; then
   echo "❌ No test binaries found"
   exit 1
 fi
 
-echo "Using test binary: $TEST_BINARIES"
+# Find the actual binary inside the .xctest bundle
+TEST_BINARY="$TEST_BINARIES/Contents/MacOS/SwiftSweepPackageTests"
+
+if [ ! -f "$TEST_BINARY" ]; then
+  echo "❌ Test binary not found at: $TEST_BINARY"
+  exit 1
+fi
+
+echo "Using test binary: $TEST_BINARY"
 
 # Generate coverage report
 echo ""
 echo "📋 Coverage Summary:"
 echo "-------------------"
 xcrun llvm-cov report \
-  "$TEST_BINARIES" \
+  "$TEST_BINARY" \
   -instr-profile="$PROFDATA_PATH" \
   -ignore-filename-regex=".build|Tests" \
   -use-color
@@ -73,7 +76,7 @@ if command -v lcov &> /dev/null; then
   echo ""
   echo "📄 Generating lcov.info..."
   xcrun llvm-cov export \
-    "$TEST_BINARIES" \
+    "$TEST_BINARY" \
     -instr-profile="$PROFDATA_PATH" \
     -ignore-filename-regex=".build|Tests" \
     -format=lcov > lcov.info
