@@ -99,7 +99,7 @@ jobs:
           shasum -a 256 "Output/SwiftSweep.dmg" | awk '{print $1}' > "Output/SwiftSweep.dmg.sha256"
       
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: SwiftSweep-${{ github.ref_name }}
           path: |
