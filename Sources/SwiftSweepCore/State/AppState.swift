@@ -147,6 +147,10 @@ public struct StatusState: Equatable, Sendable {
   public var batteryLevel: Double = 0
   public var networkDownload: Double = 0
   public var networkUpload: Double = 0
+  public var ioReadRate: Double = 0
+  public var ioWriteRate: Double = 0
+  public var peripheralSnapshot: PeripheralSnapshot = PeripheralSnapshot(
+    displays: [], inputDevices: [], collectedAt: Date())
   public var lastUpdated: Date?
   public var showProcessSheet: ProcessMetricType?
   public var showPeripheralsSheet: Bool = false
