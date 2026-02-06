@@ -9,21 +9,11 @@ import SwiftUI
 
 /// Displays smart recommendations from the RecommendationEngine
 struct InsightsView: View {
-  @State private var recommendations: [Recommendation] = []
-  @State private var isLoading = false
-  @State private var error: String?
-  @State private var selectedRecommendation: Recommendation?
-  @State private var actionInProgress = false
-  @State private var actionResult: ActionResult?
+  @EnvironmentObject var store: AppStore
+
+  // Local UI-only state (not part of app state)
   @State private var showBatchCleanup = false
-
-  // Cache & Progress state
-  @State private var isCacheHit = false
-  @State private var cacheAge: TimeInterval?
   @State private var loadingPhase = ""
-
-  // Category filter state
-  @State private var selectedCategory: RuleCategory? = nil
 
   var body: some View {
     VStack(spacing: 0) {
@@ -33,10 +23,10 @@ struct InsightsView: View {
       Divider()
 
       // Content
-      if isLoading {
+      if store.state.insights.phase == .loading {
         loadingView
-      } else if let error = error {
-        errorView(error)
+      } else if case .error(let message) = store.state.insights.phase {
+        errorView(message)
       } else if filteredRecommendations.isEmpty {
         emptyStateView
       } else {
@@ -44,20 +34,28 @@ struct InsightsView: View {
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .task {
-      await loadRecommendations(forceRefresh: false)
+    .onAppear {
+      if store.state.insights.phase == .idle {
+        Task { await loadRecommendations(forceRefresh: false) }
+      }
     }
-    .sheet(item: $selectedRecommendation) { rec in
+    .sheet(item: Binding(
+      get: { store.state.insights.selectedRecommendation },
+      set: { store.dispatch(.insights(.selectRecommendation($0))) }
+    )) { rec in
       ActionConfirmationSheet(
         recommendation: rec,
         onComplete: { result in
-          actionResult = result
+          store.dispatch(.insights(.actionCompleted(result)))
           // Refresh after action
           Task { await loadRecommendations(forceRefresh: true) }
         }
       )
     }
-    .alert(item: $actionResult) { result in
+    .alert(item: Binding(
+      get: { store.state.insights.actionResult },
+      set: { _ in store.dispatch(.insights(.reset)) }
+    )) { result in
       Alert(
         title: Text(result.success ? "Success" : "Error"),
         message: Text(result.message),
@@ -69,7 +67,7 @@ struct InsightsView: View {
         recommendations: cleanableRecommendations,
         isPresented: $showBatchCleanup,
         onComplete: { result in
-          actionResult = result
+          store.dispatch(.insights(.actionCompleted(result)))
           Task { await loadRecommendations(forceRefresh: true) }
         }
       )
@@ -79,7 +77,8 @@ struct InsightsView: View {
   // MARK: - Filtered Recommendations
 
   private var filteredRecommendations: [Recommendation] {
-    guard let category = selectedCategory else {
+    let recommendations = store.state.insights.recommendations
+    guard let category = store.state.insights.selectedCategory else {
       return recommendations
     }
     return recommendations.filter { rec in
@@ -100,7 +99,7 @@ struct InsightsView: View {
             .foregroundColor(.secondary)
 
           // Cache indicator
-          if isCacheHit, let age = cacheAge {
+          if store.state.insights.isCacheHit, let age = store.state.insights.cacheAge {
             Text("• cached \(Int(age / 60))m ago")
               .font(.caption)
               .foregroundColor(.orange)
@@ -111,7 +110,10 @@ struct InsightsView: View {
       Spacer()
 
       // Category filter
-      Picker("Category", selection: $selectedCategory) {
+      Picker("Category", selection: Binding(
+        get: { store.state.insights.selectedCategory },
+        set: { store.dispatch(.insights(.selectCategory($0))) }
+      )) {
         Text("All").tag(nil as RuleCategory?)
         ForEach(RuleCategory.allCases, id: \.self) { category in
           Label(category.rawValue, systemImage: category.icon)
@@ -140,37 +142,38 @@ struct InsightsView: View {
         }
         .buttonStyle(.borderedProminent)
         .tint(.orange)
-        .disabled(isLoading)
+        .disabled(store.state.insights.phase == .loading)
       }
 
       // Refresh buttons
       Button(action: { Task { await loadRecommendations(forceRefresh: false) } }) {
         Label("Refresh", systemImage: "arrow.clockwise")
       }
-      .disabled(isLoading)
+      .disabled(store.state.insights.phase == .loading)
 
       Button(action: { Task { await loadRecommendations(forceRefresh: true) } }) {
         Label("Force Refresh", systemImage: "arrow.clockwise.circle")
       }
-      .disabled(isLoading)
+      .disabled(store.state.insights.phase == .loading)
       .help("Bypass cache and rescan everything")
     }
     .padding()
   }
 
   private var totalPotentialSavings: Int64? {
-    let total = recommendations.compactMap { $0.estimatedReclaimBytes }.reduce(0, +)
+    let total = store.state.insights.recommendations.compactMap { $0.estimatedReclaimBytes }.reduce(
+      0, +)
     return total > 0 ? total : nil
   }
 
   private var hasCleanableRecommendations: Bool {
-    recommendations.contains { rec in
+    store.state.insights.recommendations.contains { rec in
       rec.actions.contains { $0.type == .cleanupTrash || $0.type == .cleanupDelete }
     }
   }
 
   private var cleanableRecommendations: [Recommendation] {
-    recommendations.filter { rec in
+    store.state.insights.recommendations.filter { rec in
       rec.actions.contains { $0.type == .cleanupTrash || $0.type == .cleanupDelete }
     }
   }
@@ -229,7 +232,7 @@ struct InsightsView: View {
           RecommendationCard(
             recommendation: recommendation,
             onAction: {
-              selectedRecommendation = recommendation
+              store.dispatch(.insights(.selectRecommendation(recommendation)))
             }
           )
         }
@@ -241,8 +244,8 @@ struct InsightsView: View {
   // MARK: - Data Loading
 
   private func loadRecommendations(forceRefresh: Bool) async {
-    isLoading = true
-    error = nil
+    // Dispatch loading action
+    store.dispatch(.insights(.startEvaluation(forceRefresh: forceRefresh)))
     loadingPhase = ""
 
     do {
@@ -272,20 +275,27 @@ struct InsightsView: View {
           }
         }
       )
+
+      // Dispatch completion action
       await MainActor.run {
-        self.recommendations = result.recommendations
-        self.isCacheHit = result.isCacheHit
-        self.cacheAge = result.cacheAge
-        self.isLoading = false
+        store.dispatch(
+          .insights(
+            .evaluationCompleted(
+              result.recommendations,
+              isCacheHit: result.isCacheHit,
+              cacheAge: result.cacheAge
+            )
+          )
+        )
       }
     } catch is CancellationError {
+      // Silently handle cancellation
       await MainActor.run {
-        self.isLoading = false
+        store.dispatch(.insights(.reset))
       }
     } catch {
       await MainActor.run {
-        self.error = error.localizedDescription
-        self.isLoading = false
+        store.dispatch(.insights(.evaluationFailed(error.localizedDescription)))
       }
     }
   }
@@ -300,19 +310,11 @@ struct InsightsView: View {
   }
 }
 
-// MARK: - Action Result
-
-struct ActionResult: Identifiable {
-  let id = UUID()
-  let success: Bool
-  let message: String
-}
-
 // MARK: - Action Confirmation Sheet
 
 struct ActionConfirmationSheet: View {
   let recommendation: Recommendation
-  let onComplete: (ActionResult) -> Void
+  let onComplete: (SwiftSweepCore.ActionResult) -> Void
 
   @Environment(\.dismiss) private var dismiss
   @State private var dryRun = true
@@ -476,7 +478,7 @@ struct ActionConfirmationSheet: View {
           await MainActor.run {
             isExecuting = false
             onComplete(
-              ActionResult(
+              SwiftSweepCore.ActionResult(
                 success: true,
                 message: "Dry run complete. \(pathsToClean.count) items would be moved to Trash."
               ))
@@ -514,10 +516,11 @@ struct ActionConfirmationSheet: View {
             )
 
             onComplete(
-              ActionResult(
+              SwiftSweepCore.ActionResult(
                 success: true,
                 message:
-                  "Moved \(finalMovedCount) items to Trash (est. \(formatBytes(finalTotalSize))). Empty Trash to free space."
+                  "Moved \(finalMovedCount) items to Trash (est. \(formatBytes(finalTotalSize))). Empty Trash to free space.",
+                freedBytes: finalTotalSize
               ))
             dismiss()
           }
@@ -526,7 +529,7 @@ struct ActionConfirmationSheet: View {
         await MainActor.run {
           isExecuting = false
           onComplete(
-            ActionResult(
+            SwiftSweepCore.ActionResult(
               success: false,
               message: "Error: \(error.localizedDescription)"
             ))
@@ -747,7 +750,7 @@ struct EvidenceTag: View {
 struct BatchCleanupSheet: View {
   let recommendations: [Recommendation]
   @Binding var isPresented: Bool
-  let onComplete: (ActionResult) -> Void
+  let onComplete: (SwiftSweepCore.ActionResult) -> Void
 
   @State private var isExecuting = false
   @State private var progress: Double = 0
@@ -881,10 +884,11 @@ struct BatchCleanupSheet: View {
       await MainActor.run {
         isExecuting = false
         onComplete(
-          ActionResult(
+          SwiftSweepCore.ActionResult(
             success: true,
             message:
-              "Moved \(finalTotalMoved) items to Trash. Freed \(formatBytes(finalTotalFreed))."
+              "Moved \(finalTotalMoved) items to Trash. Freed \(formatBytes(finalTotalFreed)).",
+            freedBytes: finalTotalFreed
           ))
         isPresented = false
       }
