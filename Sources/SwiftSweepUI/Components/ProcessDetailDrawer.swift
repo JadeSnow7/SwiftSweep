@@ -195,7 +195,7 @@ struct SparklineChart: View {
   var body: some View {
     GeometryReader { geometry in
       let maxValue = data.max() ?? 1
-      let points = data.enumerated().map { index, value in
+      let points: [CGPoint] = data.enumerated().map { index, value in
         let x = CGFloat(index) / CGFloat(max(data.count - 1, 1)) * geometry.size.width
         let y = geometry.size.height - (CGFloat(value) / CGFloat(maxValue) * geometry.size.height)
         return CGPoint(x: x, y: y)

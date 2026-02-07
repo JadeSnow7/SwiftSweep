@@ -332,12 +332,16 @@ public struct MediaAnalyzerView: View {
         }
       }
 
+      let finalSuccessCount = successCount
+      let finalFailCount = failCount
+      let finalDeletedBytes = deletedBytes
+
       // Update UI on main thread
       await MainActor.run {
         isDeleting = false
 
         // Remove deleted files from the result
-        if successCount > 0 {
+        if finalSuccessCount > 0 {
           var updatedGroups: [SimilarGroup] = []
           for group in currentResult.similarGroups {
             let remainingDuplicates = group.duplicates.filter {
@@ -360,22 +364,22 @@ public struct MediaAnalyzerView: View {
           selectedForDeletion.removeAll()
 
           // Show result alert
-          let sizeStr = ByteCountFormatter.string(fromByteCount: deletedBytes, countStyle: .file)
-          if failCount == 0 {
+          let sizeStr = ByteCountFormatter.string(fromByteCount: finalDeletedBytes, countStyle: .file)
+          if finalFailCount == 0 {
             deletionAlert = DeletionAlert(
               title: "Deletion Complete",
-              message: "Successfully moved \(successCount) file(s) to Trash, freed \(sizeStr)."
+              message: "Successfully moved \(finalSuccessCount) file(s) to Trash, freed \(sizeStr)."
             )
           } else {
             deletionAlert = DeletionAlert(
               title: "Deletion Partial",
-              message: "Moved \(successCount) file(s) to Trash, \(failCount) failed."
+              message: "Moved \(finalSuccessCount) file(s) to Trash, \(finalFailCount) failed."
             )
           }
-        } else if failCount > 0 {
+        } else if finalFailCount > 0 {
           deletionAlert = DeletionAlert(
             title: "Deletion Failed",
-            message: "Failed to delete \(failCount) file(s). Check permissions."
+            message: "Failed to delete \(finalFailCount) file(s). Check permissions."
           )
         }
       }
