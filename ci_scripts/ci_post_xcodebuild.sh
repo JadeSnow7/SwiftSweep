@@ -66,8 +66,11 @@ fi
 echo "SwiftSweep: verifying app signature (best-effort)..."
 codesign --verify --deep --strict --verbose=2 "$APP_WORK" || true
 
+LAST_NOTARIZATION_SUBMITTED=0
+
 submit_notarization() {
   local file_path="$1"
+  LAST_NOTARIZATION_SUBMITTED=0
 
   if [[ "${SWIFTSWEEP_CI_NOTARIZE:-0}" != "1" ]]; then
     echo "SwiftSweep: notarization disabled (set SWIFTSWEEP_CI_NOTARIZE=1 to enable)."
@@ -83,6 +86,7 @@ submit_notarization() {
       --key-id "$NOTARY_KEY_ID" \
       --issuer "$NOTARY_ISSUER_ID" \
       --wait
+    LAST_NOTARIZATION_SUBMITTED=1
     return 0
   fi
 
@@ -92,6 +96,7 @@ submit_notarization() {
       --team-id "$APPLE_TEAM_ID" \
       --password "$APPLE_APP_PASSWORD" \
       --wait
+    LAST_NOTARIZATION_SUBMITTED=1
     return 0
   fi
 
@@ -99,7 +104,12 @@ submit_notarization() {
   echo "Set either:"
   echo "  - NOTARY_KEY_ID + NOTARY_ISSUER_ID + NOTARY_PRIVATE_KEY_BASE64 (App Store Connect API key), or"
   echo "  - APPLE_ID + APPLE_TEAM_ID + APPLE_APP_PASSWORD (app-specific password)."
-  exit 1
+  if [[ "${SWIFTSWEEP_CI_NOTARIZE_REQUIRED:-0}" == "1" ]]; then
+    exit 1
+  fi
+
+  echo "SwiftSweep: skipping notarization (set SWIFTSWEEP_CI_NOTARIZE_REQUIRED=1 to fail when credentials are missing)."
+  return 0
 }
 
 resolve_release_repo() {
@@ -186,7 +196,7 @@ echo "SwiftSweep: notarize+staple app..."
 APP_ZIP="${WORK_DIR}/${OUTPUT_NAME}.zip"
 /usr/bin/ditto -c -k --keepParent "$APP_WORK" "$APP_ZIP"
 submit_notarization "$APP_ZIP"
-if [[ "${SWIFTSWEEP_CI_NOTARIZE:-0}" == "1" ]]; then
+if [[ "${LAST_NOTARIZATION_SUBMITTED}" == "1" ]]; then
   xcrun stapler staple "$APP_WORK"
 fi
 
@@ -217,7 +227,7 @@ fi
 
 echo "SwiftSweep: notarize+staple DMG..."
 submit_notarization "$DMG_PATH"
-if [[ "${SWIFTSWEEP_CI_NOTARIZE:-0}" == "1" ]]; then
+if [[ "${LAST_NOTARIZATION_SUBMITTED}" == "1" ]]; then
   xcrun stapler staple "$DMG_PATH"
   xcrun stapler validate -v "$DMG_PATH" || true
 fi

@@ -39,6 +39,7 @@ DMG 由 `scripts/create_dmg.sh` 统一生成，默认包含 `/Applications` 软�
 
 - `SWIFTSWEEP_CI_EXPORT_DMG=1`（开启 DMG 导出）
 - `SWIFTSWEEP_CI_NOTARIZE=1`（开启 Notarize + Staple；可先不加，先跑通 DMG）
+- `SWIFTSWEEP_CI_NOTARIZE_REQUIRED=1`（可选：当开启 Notarize 但未配置凭据时强制失败；默认仅告警并跳过）
 - `SWIFTSWEEP_CI_SPM_BUILD=1`（当 workflow 动作为 `Build`/`Test` 时必须开启；脚本会走 SwiftPM 打包路径）
 - `SWIFTSWEEP_CI_UPLOAD_RELEASE=1`（可选：把 DMG 与 sha256 上传到 GitHub Release）
 

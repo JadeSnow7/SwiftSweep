@@ -97,9 +97,10 @@ public actor FSEventsTracer {
   public func stopTracing() async {
     guard isActive, let stream = stream else { return }
 
-    let capturedStream = stream
+    let capturedStreamAddress = Int(bitPattern: stream)
 
     await MainActor.run {
+      guard let capturedStream = OpaquePointer(bitPattern: capturedStreamAddress) else { return }
       FSEventStreamStop(capturedStream)
       FSEventStreamInvalidate(capturedStream)
       FSEventStreamRelease(capturedStream)
