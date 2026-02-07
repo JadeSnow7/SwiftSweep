@@ -1,6 +1,7 @@
 # Xcode Cloud Workflow 配置（SwiftSweep）
 
 SwiftSweep 采用 **Developer ID（独立分发，DMG + Notarize）** 发布方式：仓库根目录的 `Package.swift` + `scripts/build_universal.sh`（由 `ci_scripts` 在 Xcode Cloud 中产出 DMG Artifact 并可选自动公证）。
+DMG 由 `scripts/create_dmg.sh` 统一生成，默认包含 `/Applications` 软链接用于拖拽安装引导。
 
 > 说明：Xcode Cloud 的 workflow 本身在 App Store Connect/Xcode 里配置，不会像 GitHub Actions 一样"完全落在仓库文件里"。本仓库提供的是 **Xcode Cloud 可识别的自定义脚本（`ci_scripts/`）** + 一套推荐的 workflow 配置清单。
 
@@ -39,12 +40,16 @@ SwiftSweep 采用 **Developer ID（独立分发，DMG + Notarize）** 发布方�
 - `SWIFTSWEEP_CI_EXPORT_DMG=1`（开启 DMG 导出）
 - `SWIFTSWEEP_CI_NOTARIZE=1`（开启 Notarize + Staple；可先不加，先跑通 DMG）
 - `SWIFTSWEEP_CI_SPM_BUILD=1`（当 workflow 动作为 `Build`/`Test` 时必须开启；脚本会走 SwiftPM 打包路径）
+- `SWIFTSWEEP_CI_UPLOAD_RELEASE=1`（可选：把 DMG 与 sha256 上传到 GitHub Release）
 
 可选变量：
 
 - `SWIFTSWEEP_APP_NAME=SwiftSweep`（脚本会先按该名称找 `.app`；找不到会自动从 archive 里探测）
 - `SWIFTSWEEP_OUTPUT_NAME=SwiftSweep`（产物命名；当 archive 里的 `.app` 名称不是你想要的名字时使用）
 - `SIGNING_IDENTITY=Developer ID Application: ...`（可不填；脚本会尝试自动找第一个 Developer ID identity）
+- `SWIFTSWEEP_CI_RELEASE_REPO=owner/repo`（可选：默认从 `origin` 自动解析）
+- `SWIFTSWEEP_CI_RELEASE_TAG=v1.7.2`（可选：默认从当前 tag/HEAD 自动解析）
+- `GH_TOKEN` 或 `GITHUB_TOKEN`（当 `SWIFTSWEEP_CI_UPLOAD_RELEASE=1` 时必填）
 
 ### 2.3 配置 Developer ID 证书（Secrets）
 
@@ -82,6 +87,16 @@ Xcode Cloud 环境里如果没有可用的 `Developer ID Application` 证书，X
 - `$CI_ARTIFACTS_PATH/<SWIFTSWEEP_OUTPUT_NAME>.dmg.sha256`
 
 在 Xcode Cloud 的 build 页面里可直接下载。
+
+### 2.6 自动上传 GitHub Release（可选）
+
+当 `SWIFTSWEEP_CI_UPLOAD_RELEASE=1` 时，`ci_scripts/ci_post_xcodebuild.sh` 会：
+
+1. 确认/创建对应 tag 的 GitHub Release；
+2. 上传 `<name>.dmg` 与 `<name>.dmg.sha256`（同名会覆盖）；
+3. 输出 release URL 到日志。
+
+建议搭配 Tag 触发（`v*`）使用，避免在普通 push 上误发 release。
 
 ---
 

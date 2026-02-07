@@ -117,6 +117,13 @@ else
 EOF
 fi
 
+# Ensure app icon key exists for SwiftPM-built bundle
+APP_INFO_PLIST="${APP_BUNDLE}/Contents/Info.plist"
+if [ -f "${APP_INFO_PLIST}" ]; then
+    /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile AppIcon" "${APP_INFO_PLIST}" 2>/dev/null || \
+        /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string AppIcon" "${APP_INFO_PLIST}"
+fi
+
 # 5. Code Signing
 if [ -n "${SIGNING_IDENTITY}" ]; then
     echo "Signing with identity: ${SIGNING_IDENTITY}"
@@ -131,12 +138,32 @@ else
     codesign --force --deep --sign - "${APP_BUNDLE}"
 fi
 
+# 5.5 Create DMG
+DMG_PATH="${OUTPUT_DIR}/${APP_NAME}.dmg"
+DMG_SCRIPT="$(cd "$(dirname "$0")" && pwd)/scripts/create_dmg.sh"
+echo "Creating DMG with Applications shortcut..."
+if [ -n "${SIGNING_IDENTITY}" ]; then
+    "${DMG_SCRIPT}" \
+        --app "${APP_BUNDLE}" \
+        --output "${DMG_PATH}" \
+        --volume-name "${APP_NAME}" \
+        --sign-identity "${SIGNING_IDENTITY}"
+else
+    "${DMG_SCRIPT}" \
+        --app "${APP_BUNDLE}" \
+        --output "${DMG_PATH}" \
+        --volume-name "${APP_NAME}"
+fi
+
 echo -e "${GREEN}Packaging Complete!${NC}"
 echo "App Bundle: ${APP_BUNDLE}"
+echo "DMG: ${DMG_PATH}"
 
 # 6. Notarization Instructions
 echo ""
 echo -e "${YELLOW}--- Notarization Instructions ---${NC}"
-echo "1. Zip the app: /usr/bin/ditto -c -k --keepParent \"${APP_BUNDLE}\" \"${OUTPUT_DIR}/${APP_NAME}.zip\""
-echo "2. Submit: xcrun notarytool submit \"${OUTPUT_DIR}/${APP_NAME}.zip\" --keychain-profile \"YourProfileName\" --wait"
-echo "3. Staple: xcrun stapler staple \"${APP_BUNDLE}\""
+echo "1. Zip app: /usr/bin/ditto -c -k --keepParent \"${APP_BUNDLE}\" \"${OUTPUT_DIR}/${APP_NAME}.zip\""
+echo "2. Submit app: xcrun notarytool submit \"${OUTPUT_DIR}/${APP_NAME}.zip\" --keychain-profile \"YourProfileName\" --wait"
+echo "3. Staple app: xcrun stapler staple \"${APP_BUNDLE}\""
+echo "4. Submit dmg: xcrun notarytool submit \"${DMG_PATH}\" --keychain-profile \"YourProfileName\" --wait"
+echo "5. Staple dmg: xcrun stapler staple \"${DMG_PATH}\""

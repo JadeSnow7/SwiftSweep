@@ -95,6 +95,13 @@ if [ -f "${INFO_PLIST}" ]; then
         "${INFO_PLIST}" > "${APP_BUNDLE}/Contents/Info.plist"
 fi
 
+# Ensure app icon key exists for SwiftPM-built bundle
+APP_INFO_PLIST="${APP_BUNDLE}/Contents/Info.plist"
+if [ -f "${APP_INFO_PLIST}" ]; then
+    /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile AppIcon" "${APP_INFO_PLIST}" 2>/dev/null || \
+        /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string AppIcon" "${APP_INFO_PLIST}"
+fi
+
 # Copy SPM resource bundles (for localization)
 echo -e "${YELLOW}Copying resource bundles...${NC}"
 RESOURCE_BUNDLE="${ARM64_BUILD}/SwiftSweep_SwiftSweepUI.bundle"
@@ -121,10 +128,12 @@ codesign --verify --verbose "${APP_BUNDLE}"
 echo -e "${YELLOW}Creating DMG...${NC}"
 DMG_PATH="${OUTPUT_DIR}/${APP_NAME}.dmg"
 rm -f "${DMG_PATH}"
-hdiutil create -volname "${APP_NAME}" -srcfolder "${APP_BUNDLE}" -ov -format UDZO "${DMG_PATH}"
-
-echo -e "${YELLOW}Signing DMG...${NC}"
-codesign --force --timestamp --sign "${SIGNING_IDENTITY}" "${DMG_PATH}"
+DMG_SCRIPT="$(cd "$(dirname "$0")" && pwd)/create_dmg.sh"
+"${DMG_SCRIPT}" \
+    --app "${APP_BUNDLE}" \
+    --output "${DMG_PATH}" \
+    --volume-name "${APP_NAME}" \
+    --sign-identity "${SIGNING_IDENTITY}"
 
 echo -e "${YELLOW}Verifying DMG signature...${NC}"
 codesign --verify --verbose=2 "${DMG_PATH}"

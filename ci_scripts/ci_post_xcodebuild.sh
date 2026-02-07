@@ -102,6 +102,86 @@ submit_notarization() {
   exit 1
 }
 
+resolve_release_repo() {
+  if [[ -n "${SWIFTSWEEP_CI_RELEASE_REPO:-}" ]]; then
+    printf '%s\n' "${SWIFTSWEEP_CI_RELEASE_REPO}"
+    return 0
+  fi
+
+  local origin_url
+  origin_url="$(git -C "$REPO_ROOT" config --get remote.origin.url 2>/dev/null || true)"
+  if [[ -z "$origin_url" ]]; then
+    return 1
+  fi
+
+  printf '%s\n' "$origin_url" | sed -E 's#(git@github.com:|https://github.com/)##; s#\.git$##'
+}
+
+resolve_release_tag() {
+  if [[ -n "${SWIFTSWEEP_CI_RELEASE_TAG:-}" ]]; then
+    printf '%s\n' "${SWIFTSWEEP_CI_RELEASE_TAG#refs/tags/}"
+    return 0
+  fi
+
+  if [[ -n "${CI_TAG:-}" ]]; then
+    printf '%s\n' "${CI_TAG#refs/tags/}"
+    return 0
+  fi
+
+  if [[ -n "${CI_GIT_REF:-}" && "${CI_GIT_REF}" == refs/tags/* ]]; then
+    printf '%s\n' "${CI_GIT_REF#refs/tags/}"
+    return 0
+  fi
+
+  git -C "$REPO_ROOT" tag --points-at HEAD | head -n 1
+}
+
+publish_github_release() {
+  if [[ "${SWIFTSWEEP_CI_UPLOAD_RELEASE:-0}" != "1" ]]; then
+    echo "SwiftSweep: GitHub Release upload disabled (set SWIFTSWEEP_CI_UPLOAD_RELEASE=1 to enable)."
+    return 0
+  fi
+
+  local token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
+  if [[ -z "$token" ]]; then
+    echo "SwiftSweep: release upload requested but GH_TOKEN/GITHUB_TOKEN is missing."
+    exit 1
+  fi
+  export GH_TOKEN="$token"
+
+  local repo
+  repo="$(resolve_release_repo || true)"
+  if [[ -z "$repo" ]]; then
+    echo "SwiftSweep: unable to resolve GitHub repo. Set SWIFTSWEEP_CI_RELEASE_REPO=owner/repo."
+    exit 1
+  fi
+
+  local tag
+  tag="$(resolve_release_tag || true)"
+  if [[ -z "$tag" ]]; then
+    echo "SwiftSweep: unable to resolve release tag. Set SWIFTSWEEP_CI_RELEASE_TAG (e.g. v1.7.2)."
+    exit 1
+  fi
+
+  if ! command -v gh >/dev/null 2>&1; then
+    if command -v brew >/dev/null 2>&1; then
+      echo "SwiftSweep: gh CLI not found, installing via Homebrew..."
+      HOMEBREW_NO_AUTO_UPDATE=1 brew install gh
+    else
+      echo "SwiftSweep: gh CLI is required for release upload but Homebrew is unavailable."
+      exit 1
+    fi
+  fi
+
+  echo "SwiftSweep: publishing assets to GitHub release ${repo}@${tag}..."
+  if ! gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
+    gh release create "$tag" --repo "$repo" --title "$tag" --generate-notes
+  fi
+
+  gh release upload "$tag" "$FINAL_DMG" "$FINAL_SHA" --repo "$repo" --clobber
+  echo "SwiftSweep: release upload complete: https://github.com/${repo}/releases/tag/${tag}"
+}
+
 echo "SwiftSweep: notarize+staple app..."
 APP_ZIP="${WORK_DIR}/${OUTPUT_NAME}.zip"
 /usr/bin/ditto -c -k --keepParent "$APP_WORK" "$APP_ZIP"
@@ -112,7 +192,8 @@ fi
 
 echo "SwiftSweep: create DMG..."
 DMG_PATH="${WORK_DIR}/${OUTPUT_NAME}.dmg"
-/usr/bin/hdiutil create -volname "$OUTPUT_NAME" -srcfolder "$APP_WORK" -ov -format UDZO "$DMG_PATH"
+DMG_SCRIPT="${REPO_ROOT}/scripts/create_dmg.sh"
+chmod +x "$DMG_SCRIPT"
 
 SIGNING_IDENTITY="${SIGNING_IDENTITY:-}"
 if [[ -z "$SIGNING_IDENTITY" ]]; then
@@ -120,10 +201,18 @@ if [[ -z "$SIGNING_IDENTITY" ]]; then
 fi
 
 if [[ -n "$SIGNING_IDENTITY" ]]; then
-  echo "SwiftSweep: signing DMG with identity: $SIGNING_IDENTITY"
-  codesign --force --timestamp --sign "$SIGNING_IDENTITY" "$DMG_PATH"
+  echo "SwiftSweep: creating DMG with identity: $SIGNING_IDENTITY"
+  "$DMG_SCRIPT" \
+    --app "$APP_WORK" \
+    --output "$DMG_PATH" \
+    --volume-name "$OUTPUT_NAME" \
+    --sign-identity "$SIGNING_IDENTITY"
 else
-  echo "SwiftSweep: SIGNING_IDENTITY not set and no Developer ID identity found; skipping DMG signing."
+  echo "SwiftSweep: creating DMG without signing (no Developer ID identity found)."
+  "$DMG_SCRIPT" \
+    --app "$APP_WORK" \
+    --output "$DMG_PATH" \
+    --volume-name "$OUTPUT_NAME"
 fi
 
 echo "SwiftSweep: notarize+staple DMG..."
@@ -149,3 +238,5 @@ echo "SwiftSweep: done."
 echo "Artifacts:"
 echo "  - $FINAL_DMG"
 echo "  - $FINAL_SHA"
+
+publish_github_release

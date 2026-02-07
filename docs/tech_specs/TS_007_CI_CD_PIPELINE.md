@@ -84,7 +84,7 @@ flowchart LR
 -   **Build**: 标准 Archive 流程。
 -   **Post-build**:
     1.  导出 Archive 为 `.app`。
-    2.  运行 `create-dmg` 工具生成镜像。
+    2.  运行仓库脚本 `scripts/create_dmg.sh` 生成包含 `/Applications` 软链接的镜像。
     3.  调用 `notarytool` 提交公证。
     4.  Staple 公证票据。
 
