@@ -97,9 +97,7 @@ public actor FSEventsTracer {
   public func stopTracing() async {
     guard isActive, let stream = stream else { return }
 
-    // nonisolated(unsafe) 用于在 @Sendable 闭包中捕获 FSEventStreamRef
-    // FSEventStreamRef 是线程安全的 C 类型，此处捕获是安全的
-    nonisolated(unsafe) let capturedStream = stream
+    let capturedStream = stream
 
     await MainActor.run {
       FSEventStreamStop(capturedStream)

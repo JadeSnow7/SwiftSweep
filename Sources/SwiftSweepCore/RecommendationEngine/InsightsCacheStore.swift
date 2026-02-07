@@ -99,7 +99,7 @@ public actor InsightsCacheStore {
   // MARK: - Configuration
 
   private let ttl: TimeInterval = 300  // 5 minutes
-  nonisolated(unsafe) private var cachedContext: CachedContext?
+  private var cachedContext: CachedContext?
 
   private static var cacheFileURL: URL {
     let appSupport = FileManager.default.urls(

@@ -7,7 +7,7 @@ public final class SysAIBoxConfigStore: @unchecked Sendable {
 
   private let urlKey = "sysAIBoxBaseURL"
   // UserDefaults is thread-safe, so we use @unchecked Sendable
-  private nonisolated(unsafe) let defaults: UserDefaults
+  private let defaults: UserDefaults
 
   public init(defaults: UserDefaults = .standard) {
     self.defaults = defaults
