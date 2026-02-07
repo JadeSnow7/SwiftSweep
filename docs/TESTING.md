@@ -13,6 +13,7 @@ By default, this runs `swift test`.
 Optional flags:
 - `--with-xcodegen`: generate the Xcode project if xcodegen is installed.
 - `--with-cli-smoke`: run read-only CLI smoke checks.
+- `--with-es-fallback-check`: run an additional compile/test pass with `SWIFTSWEEP_NO_ENDPOINT_SECURITY`.
 
 ## 2. Unit tests
 
@@ -21,6 +22,14 @@ swift test
 ```
 
 Note: tests use SwiftPM and may read system metrics and scan paths, so they can take longer.
+
+### 2.1 EndpointSecurity fallback check (optional)
+
+```bash
+swift test -Xswiftc -DSWIFTSWEEP_NO_ENDPOINT_SECURITY
+```
+
+Use this only when you need to verify the explicit no-EndpointSecurity fallback branch in restricted environments.
 
 ## 3. CLI smoke (optional)
 

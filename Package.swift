@@ -1,5 +1,38 @@
 // swift-tools-version: 5.9
 import PackageDescription
+import Foundation
+
+let hasEndpointSecurityFramework: Bool = {
+  if FileManager.default.fileExists(atPath: "/System/Library/Frameworks/EndpointSecurity.framework") {
+    return true
+  }
+
+  if let sdkRoot = ProcessInfo.processInfo.environment["SDKROOT"] {
+    let sdkFrameworkPath = sdkRoot + "/System/Library/Frameworks/EndpointSecurity.framework"
+    if FileManager.default.fileExists(atPath: sdkFrameworkPath) {
+      return true
+    }
+  }
+
+  return false
+}()
+
+let swiftSweepCoreSwiftSettings: [SwiftSetting] = hasEndpointSecurityFramework
+  ? []
+  : [.define("SWIFTSWEEP_NO_ENDPOINT_SECURITY")]
+
+let swiftSweepCoreLinkerSettings: [LinkerSetting] = {
+  var settings: [LinkerSetting] = [
+    .linkedFramework("IOKit"),
+    .linkedFramework("ApplicationServices"),
+  ]
+
+  if hasEndpointSecurityFramework {
+    settings.insert(.linkedFramework("EndpointSecurity"), at: 0)
+  }
+
+  return settings
+}()
 
 let package = Package(
   name: "SwiftSweep",
@@ -47,14 +80,8 @@ let package = Package(
         "Integration",
         "State",
       ],
-      swiftSettings: [
-        .define("SWIFTSWEEP_NO_ENDPOINT_SECURITY", .when(configuration: .debug))
-      ],
-      linkerSettings: [
-        .linkedFramework("EndpointSecurity", .when(configuration: .release)),
-        .linkedFramework("IOKit"),
-        .linkedFramework("ApplicationServices")
-      ]
+      swiftSettings: swiftSweepCoreSwiftSettings,
+      linkerSettings: swiftSweepCoreLinkerSettings
     ),
 
     // CLI Tool

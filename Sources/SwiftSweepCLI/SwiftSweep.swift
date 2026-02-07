@@ -455,7 +455,7 @@ struct Peripherals: ParsableCommand {
     } else {
       for display in snapshot.displays {
         let name = display.name ?? "Unknown Display"
-        let builtIn = display.isBuiltin == true ? "Built-in" : "External"
+        let builtIn = peripheralBuiltInLabel(display.isBuiltin)
         let resolution = [display.pixelsWidth, display.pixelsHeight]
           .compactMap { $0 }
         let resolutionText =
@@ -490,6 +490,13 @@ struct Peripherals: ParsableCommand {
   }
 }
 
+func peripheralBuiltInLabel(_ isBuiltin: Bool?) -> String {
+  switch isBuiltin {
+  case true: return "Built-in"
+  case false: return "External"
+  case nil: return "Unknown"
+  }
+}
 struct Diagnostics: ParsableCommand {
   static let configuration = CommandConfiguration(
     abstract: "Show Apple Diagnostics startup guide"

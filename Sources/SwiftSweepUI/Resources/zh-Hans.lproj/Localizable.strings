@@ -34,6 +34,11 @@
 "status.builtIn" = "内建";
 "status.external" = "外接";
 "status.mainDisplay" = "主显示器";
+"status.na" = "不可用";
+"status.deviceKind.keyboard" = "键盘";
+"status.deviceKind.mouse" = "鼠标";
+"status.deviceKind.trackpad" = "触控板";
+"status.deviceKind.other" = "其他";
 "status.architecture" = "架构";
 "status.architecture.appleSilicon" = "Apple Silicon";
 "status.architecture.intel" = "Intel";

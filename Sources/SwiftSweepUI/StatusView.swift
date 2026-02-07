@@ -204,6 +204,85 @@ struct StatusView: View {
   }
 }
 
+@MainActor
+class StatusMonitorViewModel: ObservableObject {
+  @Published var metrics = SystemMonitor.SystemMetrics()
+  @Published var peripheralSnapshot = PeripheralSnapshot()
+  @Published var isLoading = false
+  @Published var ioReadRate: Double = 0  // MB/s
+  @Published var ioWriteRate: Double = 0  // MB/s
+
+  private let metricsProvider: any StatusMetricsProviding
+  private let peripheralProvider: any PeripheralSnapshotProviding
+  private var timer: Timer?
+  private var lastIOSlice: IOTimeSlice?
+  private var isRefreshing = false
+
+  init(
+    metricsProvider: any StatusMetricsProviding = LiveStatusMetricsProvider(),
+    peripheralProvider: any PeripheralSnapshotProviding = LivePeripheralSnapshotProvider()
+  ) {
+    self.metricsProvider = metricsProvider
+    self.peripheralProvider = peripheralProvider
+  }
+
+  func startMonitoring() {
+    refresh(includePeripherals: true)
+    // Start IO tracing for this session (self mode, won't throw)
+    Task {
+      try? await IOAnalyzer.shared.startAnalysis { [weak self] slice in
+        Task { @MainActor [weak self] in
+          self?.ioReadRate = slice.readThroughput / (1024 * 1024)  // bytes -> MB
+          self?.ioWriteRate = slice.writeThroughput / (1024 * 1024)
+        }
+      }
+    }
+    timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+      Task { @MainActor [weak self] in
+        self?.refresh(includePeripherals: false)
+      }
+    }
+  }
+
+  func stopMonitoring() {
+    timer?.invalidate()
+    timer = nil
+    Task {
+      await IOAnalyzer.shared.stopAnalysis()
+    }
+  }
+
+  func refresh(includePeripherals: Bool = true) {
+    Task {
+      await performRefresh(includePeripherals: includePeripherals)
+    }
+  }
+
+  func refreshForTesting(includePeripherals: Bool = true) async {
+    await performRefresh(includePeripherals: includePeripherals)
+  }
+
+  private func performRefresh(includePeripherals: Bool) async {
+    guard !isRefreshing else { return }
+    isRefreshing = true
+    isLoading = true
+    defer {
+      isRefreshing = false
+      isLoading = false
+    }
+
+    do {
+      let newMetrics = try await metricsProvider.getMetrics()
+      self.metrics = newMetrics
+    } catch {
+      print("Failed to fetch metrics: \(error)")
+    }
+
+    if includePeripherals {
+      peripheralSnapshot = await peripheralProvider.getSnapshot()
+    }
+  }
+}
 struct MetricCard: View {
   let title: String
   let value: String

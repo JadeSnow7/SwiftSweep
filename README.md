@@ -134,6 +134,9 @@ swift test
 
 # 生成代码覆盖率报告
 ./scripts/coverage_report.sh
+
+# 可选：显式验证 EndpointSecurity 降级分支
+swift test -Xswiftc -DSWIFTSWEEP_NO_ENDPOINT_SECURITY
 ```
 
 更多测试说明见 `docs/TESTING.md`。

@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 RUN_XCODEGEN=0
 RUN_CLI_SMOKE=0
+RUN_ES_FALLBACK_CHECK=0
 
 usage() {
   cat <<'EOF'
@@ -11,6 +12,7 @@ Usage: ./ci_scripts/local_test.sh [--with-xcodegen] [--with-cli-smoke]
 
   --with-xcodegen   Generate the Xcode project if xcodegen is installed.
   --with-cli-smoke  Run read-only CLI smoke checks.
+  --with-es-fallback-check  Run additional tests with SWIFTSWEEP_NO_ENDPOINT_SECURITY.
   -h, --help        Show this help message.
 EOF
 }
@@ -19,6 +21,7 @@ for arg in "$@"; do
   case "$arg" in
     --with-xcodegen) RUN_XCODEGEN=1 ;;
     --with-cli-smoke) RUN_CLI_SMOKE=1 ;;
+    --with-es-fallback-check) RUN_ES_FALLBACK_CHECK=1 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown arg: $arg"; usage; exit 1 ;;
   esac
@@ -38,6 +41,11 @@ fi
 
 echo "Running unit tests..."
 swift test
+
+if [[ "$RUN_ES_FALLBACK_CHECK" == "1" ]]; then
+  echo "Running EndpointSecurity fallback check..."
+  swift test -Xswiftc -DSWIFTSWEEP_NO_ENDPOINT_SECURITY
+fi
 
 if [[ "$RUN_CLI_SMOKE" == "1" ]]; then
   echo "Running CLI smoke checks..."

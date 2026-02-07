@@ -56,7 +56,7 @@ private struct DisplayRow: View {
         if let width = display.pixelsWidth, let height = display.pixelsHeight {
           Badge(text: "\(width)x\(height)")
         } else {
-          Badge(text: "N/A")
+          Badge(text: L10n.Status.na.localized)
         }
 
         if display.isMain == true {
@@ -85,8 +85,8 @@ private struct InputDeviceRow: View {
         .font(.headline)
 
       HStack(spacing: 10) {
-        Badge(text: device.kind.rawValue.capitalized)
-        Badge(text: device.transport ?? "N/A")
+        Badge(text: localizedDeviceKindLabel(device.kind))
+        Badge(text: device.transport ?? L10n.Status.na.localized)
         if device.isBuiltin == true {
           Badge(text: L10n.Status.builtIn.localized)
         } else if device.isBuiltin == false {
@@ -177,5 +177,13 @@ struct DiagnosticsGuideSheet: View {
     case .intel: return L10n.Status.architectureIntel.localized
     case .unknown: return L10n.Status.architectureUnknown.localized
     }
+  }
+}
+func localizedDeviceKindLabel(_ kind: InputDeviceKind) -> String {
+  switch kind {
+  case .keyboard: return L10n.Status.deviceKindKeyboard.localized
+  case .mouse: return L10n.Status.deviceKindMouse.localized
+  case .trackpad: return L10n.Status.deviceKindTrackpad.localized
+  case .other: return L10n.Status.deviceKindOther.localized
   }
 }

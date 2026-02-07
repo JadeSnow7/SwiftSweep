@@ -34,6 +34,11 @@
 "status.builtIn" = "Built-in";
 "status.external" = "External";
 "status.mainDisplay" = "Main";
+"status.na" = "N/A";
+"status.deviceKind.keyboard" = "Keyboard";
+"status.deviceKind.mouse" = "Mouse";
+"status.deviceKind.trackpad" = "Trackpad";
+"status.deviceKind.other" = "Other";
 "status.architecture" = "Architecture";
 "status.architecture.appleSilicon" = "Apple Silicon";
 "status.architecture.intel" = "Intel";
