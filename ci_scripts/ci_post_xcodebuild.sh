@@ -170,7 +170,8 @@ publish_github_release() {
   tag="$(resolve_release_tag || true)"
   if [[ -z "$tag" ]]; then
     echo "SwiftSweep: unable to resolve release tag. Set SWIFTSWEEP_CI_RELEASE_TAG (e.g. v1.7.2)."
-    exit 1
+    echo "SwiftSweep: skipping release upload because this build is not on a tag."
+    return 0
   fi
 
   if ! command -v gh >/dev/null 2>&1; then

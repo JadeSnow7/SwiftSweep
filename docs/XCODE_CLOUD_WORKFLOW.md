@@ -97,6 +97,8 @@ Xcode Cloud 环境里如果没有可用的 `Developer ID Application` 证书，X
 2. 上传 `<name>.dmg` 与 `<name>.dmg.sha256`（同名会覆盖）；
 3. 输出 release URL 到日志。
 
+如果当前构建不是 tag（且未设置 `SWIFTSWEEP_CI_RELEASE_TAG`），脚本会输出提示并跳过上传，不会让构建失败。
+
 建议搭配 Tag 触发（`v*`）使用，避免在普通 push 上误发 release。
 
 ---
