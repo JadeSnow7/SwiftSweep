@@ -174,7 +174,7 @@ public actor GitRepoCleaner {
       return []
     }
 
-    for case let fileURL as URL in enumerator {
+    while let fileURL = enumerator.nextObject() as? URL {
       let relativePath = fileURL.path.replacingOccurrences(of: repoPath + "/", with: "")
 
       // Skip .git directory
@@ -216,7 +216,7 @@ public actor GitRepoCleaner {
       return []
     }
 
-    for case let fileURL as URL in enumerator {
+    while let fileURL = enumerator.nextObject() as? URL {
       let relativePath = fileURL.path.replacingOccurrences(of: repoPath + "/", with: "")
       let fileName = fileURL.lastPathComponent
 

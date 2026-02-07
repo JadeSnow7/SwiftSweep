@@ -27,7 +27,7 @@ struct LivePeripheralSnapshotProvider: PeripheralSnapshotProviding {
 struct StatusView: View {
   @Binding var selection: ContentView.NavigationItem?
   @EnvironmentObject var store: AppStore
-  @State private var showProcessSheet: ProcessMetricType?
+  @State private var showProcessSheet: ProcessListMetricType?
   @State private var showPeripheralsSheet = false
   @State private var showDiagnosticsSheet = false
 

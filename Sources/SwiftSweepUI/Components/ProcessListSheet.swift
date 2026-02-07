@@ -7,7 +7,7 @@ import SwiftUI
 // MARK: - Metric Type
 
 /// 指标类型枚举
-public enum ProcessMetricType: String, Identifiable, CaseIterable {
+public enum ProcessListMetricType: String, Identifiable, CaseIterable {
   case cpu = "CPU"
   case memory = "Memory"
   case network = "Network"
@@ -47,13 +47,13 @@ public enum ProcessMetricType: String, Identifiable, CaseIterable {
 
 /// 进程列表弹窗 - 显示系统进程的资源使用情况
 public struct ProcessListSheet: View {
-  let metricType: ProcessMetricType
+  let metricType: ProcessListMetricType
 
   @StateObject private var viewModel = ProcessListViewModel()
   @Environment(\.dismiss) private var dismiss
   @State private var selectedProcess: SystemProcessInfo?  // For detail drawer
 
-  public init(metricType: ProcessMetricType) {
+  public init(metricType: ProcessListMetricType) {
     self.metricType = metricType
   }
 
@@ -268,7 +268,7 @@ public struct ProcessListSheet: View {
 
 struct ProcessRow: View {
   let process: SystemProcessInfo
-  let metricType: ProcessMetricType
+  let metricType: ProcessListMetricType
   let onKill: () -> Void
 
   @State private var isHovered = false

@@ -118,6 +118,7 @@ let package = Package(
       dependencies: [],
       path: "Helper",
       exclude: [
+        "Info.plist",
         "com.swiftsweep.helper.plist"
       ],
       linkerSettings: [

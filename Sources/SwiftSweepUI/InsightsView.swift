@@ -314,7 +314,7 @@ struct InsightsView: View {
 
 struct ActionConfirmationSheet: View {
   let recommendation: Recommendation
-  let onComplete: (SwiftSweepCore.ActionResult) -> Void
+  let onComplete: (ActionResult) -> Void
 
   @Environment(\.dismiss) private var dismiss
   @State private var dryRun = true
@@ -478,7 +478,7 @@ struct ActionConfirmationSheet: View {
           await MainActor.run {
             isExecuting = false
             onComplete(
-              SwiftSweepCore.ActionResult(
+              ActionResult(
                 success: true,
                 message: "Dry run complete. \(pathsToClean.count) items would be moved to Trash."
               ))
@@ -516,7 +516,7 @@ struct ActionConfirmationSheet: View {
             )
 
             onComplete(
-              SwiftSweepCore.ActionResult(
+              ActionResult(
                 success: true,
                 message:
                   "Moved \(finalMovedCount) items to Trash (est. \(formatBytes(finalTotalSize))). Empty Trash to free space.",
@@ -529,7 +529,7 @@ struct ActionConfirmationSheet: View {
         await MainActor.run {
           isExecuting = false
           onComplete(
-            SwiftSweepCore.ActionResult(
+            ActionResult(
               success: false,
               message: "Error: \(error.localizedDescription)"
             ))
@@ -750,7 +750,7 @@ struct EvidenceTag: View {
 struct BatchCleanupSheet: View {
   let recommendations: [Recommendation]
   @Binding var isPresented: Bool
-  let onComplete: (SwiftSweepCore.ActionResult) -> Void
+  let onComplete: (ActionResult) -> Void
 
   @State private var isExecuting = false
   @State private var progress: Double = 0
@@ -884,7 +884,7 @@ struct BatchCleanupSheet: View {
       await MainActor.run {
         isExecuting = false
         onComplete(
-          SwiftSweepCore.ActionResult(
+          ActionResult(
             success: true,
             message:
               "Moved \(finalTotalMoved) items to Trash. Freed \(formatBytes(finalTotalFreed)).",
