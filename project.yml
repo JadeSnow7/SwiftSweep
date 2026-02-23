@@ -73,10 +73,28 @@ targets:
         product: Logging
       - sdk: libEndpointSecurity.tbd
     postCompileScripts:
-      - name: Copy Helper LaunchDaemon plist
+      - name: Bundle Helper Binary and LaunchDaemon plist
         script: |
-          mkdir -p "${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Contents/Library/LaunchDaemons"
-          cp "${SRCROOT}/Helper/com.swiftsweep.helper.plist" "${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Contents/Library/LaunchDaemons/"
+          APP_DAEMON_DIR="${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Contents/Library/LaunchDaemons"
+          mkdir -p "$APP_DAEMON_DIR"
+
+          HELPER_CANDIDATES=(
+            "${BUILT_PRODUCTS_DIR}/SwiftSweepHelper"
+            "${TARGET_BUILD_DIR}/SwiftSweepHelper"
+          )
+          for helper_path in "${HELPER_CANDIDATES[@]}"; do
+            if [[ -f "$helper_path" ]]; then
+              cp "$helper_path" "$APP_DAEMON_DIR/com.swiftsweep.helper"
+              chmod +x "$APP_DAEMON_DIR/com.swiftsweep.helper"
+              break
+            fi
+          done
+
+          if [[ ! -f "$APP_DAEMON_DIR/com.swiftsweep.helper" ]]; then
+            echo "warning: SwiftSweepHelper binary was not found in build products"
+          fi
+
+          cp "${SRCROOT}/Helper/com.swiftsweep.helper.plist" "$APP_DAEMON_DIR/"
         basedOnDependencyAnalysis: false
 
   SwiftSweepHelper:

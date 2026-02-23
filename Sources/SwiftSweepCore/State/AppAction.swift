@@ -7,6 +7,10 @@ public enum AppAction: Sendable {
   case cleanup(CleanupAction)
   case insights(InsightsAction)
   case status(StatusAction)
+  case workspaceFileManager(WorkspaceFileManagerAction)
+  case workspaceLauncher(WorkspaceLauncherAction)
+  case workspaceMedia(WorkspaceMediaAction)
+  case workspaceDocuments(WorkspaceDocumentsAction)
 }
 
 /// Actions for Navigation
@@ -76,4 +80,73 @@ public enum StatusAction: Sendable {
   case showPeripheralsSheet(Bool)
   case showDiagnosticsSheet(Bool)
   case reset
+}
+
+/// Actions for Workspace File Manager
+public enum WorkspaceFileManagerAction: Sendable {
+  case boot
+  case openLocation(URL, pane: WorkspacePane?)
+  case openCompleted(pane: WorkspacePane, tabID: UUID, location: URL, items: [WorkspaceItem])
+  case openFailed(String)
+  case refreshVolumes
+  case volumesUpdated([URL])
+  case setActivePane(WorkspacePane)
+  case toggleDualPane
+  case createTab(pane: WorkspacePane, location: URL?)
+  case closeTab(pane: WorkspacePane, tabID: UUID)
+  case selectTab(pane: WorkspacePane, tabID: UUID)
+  case updateSelection(pane: WorkspacePane, tabID: UUID, itemIDs: Set<String>)
+  case setSort(pane: WorkspacePane, tabID: UUID, sort: WorkspaceSortDescriptor)
+  case setPreview(URL?)
+  case enqueueOperation(
+    type: FileOperationType,
+    sources: [URL],
+    destination: URL?,
+    conflictPolicy: FileConflictPolicy?
+  )
+  case pauseOperation(UUID)
+  case resumeOperation(UUID)
+  case cancelOperation(UUID)
+  case queueSnapshotUpdated([FileOperationProgress])
+  case showQueueSheet(Bool)
+}
+
+/// Actions for Workspace Launcher
+public enum WorkspaceLauncherAction: Sendable {
+  case loadPinned
+  case pinnedLoaded([PinnedLaunchItem])
+  case addPinnedFolder(URL)
+  case addPinnedApp(path: String, title: String)
+  case removePinned(UUID)
+  case movePinned(from: Int, to: Int)
+  case savePinned
+  case failed(String)
+}
+
+/// Actions for Workspace Media
+public enum WorkspaceMediaAction: Sendable {
+  case setRoot(URL)
+  case startScan
+  case scanCompleted([MediaLibraryItem])
+  case scanFailed(String)
+  case setKindFilter(Set<WorkspaceMediaKind>)
+  case setMinSize(Int64)
+  case toggleDuplicatesView(Bool)
+}
+
+/// Actions for Workspace Documents
+public enum WorkspaceDocumentsAction: Sendable {
+  case setRoot(URL)
+  case startScan
+  case scanCompleted(DocumentCatalogPage)
+  case scanFailed(String)
+  case updateQuery(DocumentQuery)
+  case selectRecord(String?)
+  case setFavorite(path: String, isFavorite: Bool)
+  case replaceTags(path: String, tags: [String])
+  case loadSavedSearches
+  case savedSearchesLoaded([WorkspaceSavedSearch])
+  case saveCurrentSearch(name: String)
+  case applySavedSearch(UUID)
+  case deleteSavedSearch(UUID)
 }

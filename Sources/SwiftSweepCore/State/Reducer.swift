@@ -14,6 +14,14 @@ public func appReducer(_ state: AppState, _ action: AppAction) -> AppState {
     newState.insights = insightsReducer(state.insights, action)
   case .status(let action):
     newState.status = statusReducer(state.status, action)
+  case .workspaceFileManager(let action):
+    newState.workspaceFileManager = workspaceFileManagerReducer(state.workspaceFileManager, action)
+  case .workspaceLauncher(let action):
+    newState.workspaceLauncher = workspaceLauncherReducer(state.workspaceLauncher, action)
+  case .workspaceMedia(let action):
+    newState.workspaceMedia = workspaceMediaReducer(state.workspaceMedia, action)
+  case .workspaceDocuments(let action):
+    newState.workspaceDocuments = workspaceDocumentsReducer(state.workspaceDocuments, action)
   }
   return newState
 }
@@ -263,4 +271,358 @@ public func statusReducer(_ state: StatusState, _ action: StatusAction) -> Statu
     state.lastUpdated = nil
   }
   return state
+}
+
+public func workspaceFileManagerReducer(
+  _ state: WorkspaceFileManagerState,
+  _ action: WorkspaceFileManagerAction
+) -> WorkspaceFileManagerState {
+  var state = state
+
+  switch action {
+  case .boot:
+    state.phase = .loading
+
+  case .openLocation(let location, let pane):
+    let targetPane = pane ?? state.activePane
+    state.phase = .loading
+    if !state.recentLocations.contains(location) {
+      state.recentLocations.insert(location, at: 0)
+      state.recentLocations = Array(state.recentLocations.prefix(10))
+    }
+    updateSelectedTab(in: &state, pane: targetPane) { tab in
+      tab.locationURL = location
+      tab.title = location.lastPathComponent.isEmpty ? location.path : location.lastPathComponent
+    }
+
+  case .openCompleted(let pane, let tabID, let location, let items):
+    state.phase = .loaded
+    updateTab(in: &state, pane: pane, tabID: tabID) { tab in
+      tab.locationURL = location
+      tab.title = location.lastPathComponent.isEmpty ? location.path : location.lastPathComponent
+      tab.items = sortItems(items, by: tab.sort)
+      tab.selectedItemIDs = []
+    }
+
+  case .openFailed(let message):
+    state.phase = .error(message)
+
+  case .refreshVolumes:
+    state.phase = .loading
+
+  case .volumesUpdated(let volumes):
+    state.mountedVolumes = volumes
+    if case .loading = state.phase {
+      state.phase = .loaded
+    }
+
+  case .setActivePane(let pane):
+    state.activePane = pane
+
+  case .toggleDualPane:
+    state.isDualPane.toggle()
+
+  case .createTab(let pane, let location):
+    let baseLocation = location ?? selectedLocation(in: state, pane: pane)
+    let newTab = WorkspaceTabState(locationURL: baseLocation, title: baseLocation.lastPathComponent)
+    updatePane(in: &state, pane: pane) { paneState in
+      paneState.tabs.append(newTab)
+      paneState.selectedTabID = newTab.id
+    }
+
+  case .closeTab(let pane, let tabID):
+    updatePane(in: &state, pane: pane) { paneState in
+      paneState.tabs.removeAll { $0.id == tabID }
+      if paneState.tabs.isEmpty {
+        let fallback = WorkspaceTabState(locationURL: FileManager.default.homeDirectoryForCurrentUser)
+        paneState.tabs = [fallback]
+        paneState.selectedTabID = fallback.id
+      } else if paneState.selectedTabID == tabID {
+        paneState.selectedTabID = paneState.tabs[0].id
+      }
+    }
+
+  case .selectTab(let pane, let tabID):
+    updatePane(in: &state, pane: pane) { paneState in
+      if paneState.tabs.contains(where: { $0.id == tabID }) {
+        paneState.selectedTabID = tabID
+      }
+    }
+
+  case .updateSelection(let pane, let tabID, let itemIDs):
+    updateTab(in: &state, pane: pane, tabID: tabID) { tab in
+      tab.selectedItemIDs = itemIDs
+    }
+
+  case .setSort(let pane, let tabID, let sort):
+    updateTab(in: &state, pane: pane, tabID: tabID) { tab in
+      tab.sort = sort
+      tab.items = sortItems(tab.items, by: sort)
+    }
+
+  case .setPreview(let url):
+    state.previewURL = url
+
+  case .enqueueOperation:
+    state.showQueueSheet = true
+
+  case .pauseOperation, .resumeOperation, .cancelOperation:
+    break
+
+  case .queueSnapshotUpdated(let queueItems):
+    state.queueItems = queueItems
+
+  case .showQueueSheet(let show):
+    state.showQueueSheet = show
+  }
+
+  return state
+}
+
+public func workspaceLauncherReducer(
+  _ state: WorkspaceLauncherState,
+  _ action: WorkspaceLauncherAction
+) -> WorkspaceLauncherState {
+  var state = state
+
+  switch action {
+  case .loadPinned:
+    state.phase = .loading
+
+  case .pinnedLoaded(let items):
+    state.phase = .ready
+    state.pinnedItems = items.sorted { $0.order < $1.order }
+
+  case .addPinnedFolder(let url):
+    if state.pinnedItems.contains(where: { $0.path == url.path }) {
+      return state
+    }
+
+    state.pinnedItems.append(
+      PinnedLaunchItem(
+        type: .folder,
+        path: url.path,
+        title: url.lastPathComponent,
+        order: state.pinnedItems.count
+      )
+    )
+
+  case .addPinnedApp(let path, let title):
+    if state.pinnedItems.contains(where: { $0.path == path }) {
+      return state
+    }
+
+    state.pinnedItems.append(
+      PinnedLaunchItem(
+        type: .app,
+        path: path,
+        title: title,
+        order: state.pinnedItems.count
+      )
+    )
+
+  case .removePinned(let id):
+    state.pinnedItems.removeAll { $0.id == id }
+    state.pinnedItems = state.pinnedItems.enumerated().map { index, item in
+      PinnedLaunchItem(
+        id: item.id,
+        type: item.type,
+        path: item.path,
+        title: item.title,
+        createdAt: item.createdAt,
+        order: index
+      )
+    }
+
+  case .movePinned(let from, let to):
+    guard from != to, from >= 0, to >= 0, from < state.pinnedItems.count else {
+      break
+    }
+
+    var newItems = state.pinnedItems
+    let item = newItems.remove(at: from)
+    let destination = min(to, newItems.count)
+    newItems.insert(item, at: destination)
+
+    state.pinnedItems = newItems.enumerated().map { index, item in
+      PinnedLaunchItem(
+        id: item.id,
+        type: item.type,
+        path: item.path,
+        title: item.title,
+        createdAt: item.createdAt,
+        order: index
+      )
+    }
+
+  case .savePinned:
+    if case .idle = state.phase {
+      state.phase = .ready
+    }
+
+  case .failed(let message):
+    state.phase = .error(message)
+  }
+
+  return state
+}
+
+public func workspaceMediaReducer(
+  _ state: WorkspaceMediaState,
+  _ action: WorkspaceMediaAction
+) -> WorkspaceMediaState {
+  var state = state
+
+  switch action {
+  case .setRoot(let url):
+    state.rootURL = url
+    state.phase = .scanning
+
+  case .startScan:
+    state.phase = .scanning
+
+  case .scanCompleted(let items):
+    state.items = items
+    state.phase = .ready
+
+  case .scanFailed(let message):
+    state.phase = .error(message)
+
+  case .setKindFilter(let kinds):
+    state.selectedKinds = kinds
+
+  case .setMinSize(let size):
+    state.minSize = max(0, size)
+
+  case .toggleDuplicatesView(let show):
+    state.showDuplicatesView = show
+  }
+
+  return state
+}
+
+public func workspaceDocumentsReducer(
+  _ state: WorkspaceDocumentsState,
+  _ action: WorkspaceDocumentsAction
+) -> WorkspaceDocumentsState {
+  var state = state
+
+  switch action {
+  case .setRoot(let url):
+    state.rootURL = url
+    state.page = 0
+    state.phase = .scanning
+
+  case .startScan:
+    state.phase = .scanning
+
+  case .scanCompleted(let page):
+    state.records = page.records
+    state.page = page.page
+    state.pageSize = page.pageSize
+    state.totalCount = page.totalCount
+    state.phase = .ready
+
+  case .scanFailed(let message):
+    state.phase = .error(message)
+
+  case .updateQuery(let query):
+    state.query = query
+    state.page = 0
+
+  case .selectRecord(let id):
+    state.selectedRecordID = id
+
+  case .setFavorite, .replaceTags:
+    break
+
+  case .loadSavedSearches:
+    break
+
+  case .savedSearchesLoaded(let savedSearches):
+    state.savedSearches = savedSearches
+
+  case .saveCurrentSearch:
+    break
+
+  case .applySavedSearch(let id):
+    if let search = state.savedSearches.first(where: { $0.id == id }) {
+      state.query = search.query
+      state.page = 0
+    }
+
+  case .deleteSavedSearch(let id):
+    state.savedSearches.removeAll { $0.id == id }
+  }
+
+  return state
+}
+
+private func updatePane(
+  in state: inout WorkspaceFileManagerState,
+  pane: WorkspacePane,
+  block: (inout WorkspacePaneState) -> Void
+) {
+  switch pane {
+  case .left:
+    block(&state.leftPane)
+  case .right:
+    block(&state.rightPane)
+  }
+}
+
+private func updateTab(
+  in state: inout WorkspaceFileManagerState,
+  pane: WorkspacePane,
+  tabID: UUID,
+  block: (inout WorkspaceTabState) -> Void
+) {
+  updatePane(in: &state, pane: pane) { paneState in
+    if let index = paneState.tabs.firstIndex(where: { $0.id == tabID }) {
+      block(&paneState.tabs[index])
+    }
+  }
+}
+
+private func updateSelectedTab(
+  in state: inout WorkspaceFileManagerState,
+  pane: WorkspacePane,
+  block: (inout WorkspaceTabState) -> Void
+) {
+  updatePane(in: &state, pane: pane) { paneState in
+    guard let index = paneState.tabs.firstIndex(where: { $0.id == paneState.selectedTabID }) else {
+      return
+    }
+    block(&paneState.tabs[index])
+  }
+}
+
+private func selectedLocation(in state: WorkspaceFileManagerState, pane: WorkspacePane) -> URL {
+  let paneState = pane == .left ? state.leftPane : state.rightPane
+  if let selected = paneState.selectedTab {
+    return selected.locationURL
+  }
+  return FileManager.default.homeDirectoryForCurrentUser
+}
+
+private func sortItems(_ items: [WorkspaceItem], by sort: WorkspaceSortDescriptor) -> [WorkspaceItem] {
+  items.sorted { lhs, rhs in
+    let ascending = sort.order == .ascending
+    switch sort.field {
+    case .name:
+      let compare = lhs.url.lastPathComponent.localizedCaseInsensitiveCompare(rhs.url.lastPathComponent)
+      return ascending ? compare == .orderedAscending : compare == .orderedDescending
+    case .size:
+      let l = lhs.size ?? 0
+      let r = rhs.size ?? 0
+      return ascending ? l < r : l > r
+    case .kind:
+      let compare = lhs.kind.rawValue.localizedCaseInsensitiveCompare(rhs.kind.rawValue)
+      return ascending ? compare == .orderedAscending : compare == .orderedDescending
+    case .modifiedAt:
+      let l = lhs.modifiedAt ?? .distantPast
+      let r = rhs.modifiedAt ?? .distantPast
+      return ascending ? l < r : l > r
+    }
+  }
 }

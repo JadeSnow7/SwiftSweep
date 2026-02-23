@@ -58,6 +58,10 @@ public final class AppStore: ObservableObject {
   ) {
     self.state = initial
     self.scheduler = scheduler
+
+    Task {
+      try? await WorkspaceDatabase.shared.setupSchema()
+    }
   }
 
   public func setEffectHandler(_ handler: @escaping EffectHandler) {

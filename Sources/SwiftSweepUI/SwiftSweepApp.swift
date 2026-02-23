@@ -27,6 +27,10 @@ struct SwiftSweepApp: App {
     store.setEffectHandler { action, store in
       await uninstallEffects(action, store)
       await cleanupEffects(action, store)
+      await workspaceFileManagerEffects(action, store)
+      await workspaceLauncherEffects(action, store)
+      await workspaceMediaEffects(action, store)
+      await workspaceDocumentsEffects(action, store)
     }
     self.store = store
   }
@@ -37,7 +41,7 @@ struct SwiftSweepApp: App {
   var body: some Scene {
     WindowGroup {
       ContentView()
-        .frame(minWidth: 900, minHeight: 700)
+        .frame(minWidth: 1000, minHeight: 720)
         .withMotionConfig()  // Enable global motion configuration
         .environmentObject(store)
     }
@@ -66,13 +70,17 @@ struct ContentView: View {
     case clean
     case uninstall
     case optimize
+    case fileManager
+    case launcher
+    case mediaManager
+    case documentCenter
     case analyze
     case applications
+    case mediaAnalyzer
     case packages
     case ghostBuster
     case galaxy
     case snapshot
-    case mediaAnalyzer
     case ioAnalyzer
     case capCut
     case settings
@@ -92,24 +100,43 @@ struct ContentView: View {
             value: NavigationItem.clean, title: L10n.Nav.clean.localized, icon: "sparkles")
           SidebarNavLink(
             value: NavigationItem.optimize, title: L10n.Nav.optimize.localized, icon: "bolt.fill")
+          SidebarNavLink(
+            value: NavigationItem.uninstall, title: L10n.Nav.uninstall.localized, icon: "xmark.bin.fill")
         }
 
-        Section(L10n.Nav.appManagement.localized) {
+        Section("Workspace") {
           SidebarNavLink(
-            value: NavigationItem.applications, title: L10n.Nav.applications.localized,
+            value: NavigationItem.fileManager,
+            title: "File Manager",
+            shortTitle: "Files",
+            icon: "folder")
+          SidebarNavLink(
+            value: NavigationItem.launcher,
+            title: "App Launcher",
+            shortTitle: "Launcher",
+            icon: "square.grid.2x2")
+          SidebarNavLink(
+            value: NavigationItem.mediaManager,
+            title: "Media Manager",
+            shortTitle: "Media",
+            icon: "photo.stack")
+          SidebarNavLink(
+            value: NavigationItem.documentCenter,
+            title: "Document Center",
+            shortTitle: "Docs",
+            icon: "doc.text")
+        }
+
+        Section("Legacy") {
+          SidebarNavLink(
+            value: NavigationItem.analyze, title: "Disk Analyzer (Legacy)",
+            shortTitle: "Analyze", icon: "magnifyingglass")
+          SidebarNavLink(
+            value: NavigationItem.applications, title: "Applications (Legacy)",
             shortTitle: "Apps", icon: "square.grid.2x2")
-        }
-
-        Section(L10n.Nav.media.localized) {
           SidebarNavLink(
-            value: NavigationItem.analyze, title: L10n.Nav.analyze.localized,
-            icon: "magnifyingglass")
-          SidebarNavLink(
-            value: NavigationItem.mediaAnalyzer, title: "Media Analyzer",
-            shortTitle: "Media", icon: "photo.stack")
-          SidebarNavLink(
-            value: NavigationItem.snapshot, title: "Time Machine",
-            shortTitle: "Snapshot", icon: "camera.on.rectangle")
+            value: NavigationItem.mediaAnalyzer, title: "Media Analyzer (Legacy)",
+            shortTitle: "Legacy Media", icon: "photo.on.rectangle")
         }
 
         Section(L10n.Nav.developer.localized) {
@@ -123,6 +150,9 @@ struct ContentView: View {
           SidebarNavLink(
             value: NavigationItem.ioAnalyzer, title: "I/O Analyzer",
             shortTitle: "I/O", icon: "chart.line.uptrend.xyaxis")
+          SidebarNavLink(
+            value: NavigationItem.snapshot, title: "Time Machine",
+            shortTitle: "Snapshot", icon: "camera.on.rectangle")
           if isCapCutEnabled {
             SidebarNavLink(
               value: NavigationItem.capCut, title: "CapCut Cleaner",
@@ -138,7 +168,7 @@ struct ContentView: View {
       .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
       .navigationTitle("SwiftSweep")
       .listStyle(SidebarListStyle())
-      .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 280)
+      .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 300)
     } detail: {
       Group {
         switch selection {
@@ -155,10 +185,32 @@ struct ContentView: View {
             }
         case .optimize:
           OptimizeView()
+        case .fileManager:
+          FileManagerView()
+        case .launcher:
+          LauncherView()
+        case .mediaManager:
+          MediaManagerView()
+        case .documentCenter:
+          DocumentCenterView()
         case .analyze:
-          AnalyzeView()
+          LegacyRedirectView(
+            title: "Disk Analyzer moved",
+            message: "Disk Analyzer is now inside File Manager as a workspace tool.",
+            buttonTitle: "Open File Manager"
+          ) {
+            selection = .fileManager
+          }
         case .applications:
-          MainApplicationsView()
+          LegacyRedirectView(
+            title: "Applications moved",
+            message: "Applications page is now merged into App Launcher.",
+            buttonTitle: "Open Launcher"
+          ) {
+            selection = .launcher
+          }
+        case .mediaAnalyzer:
+          MediaManagerView(initialTab: .duplicates)
         case .packages:
           if #available(macOS 13.0, *) {
             PackageFinderView()
@@ -183,8 +235,6 @@ struct ContentView: View {
           } else {
             Text("Time Machine requires macOS 13.0 or later")
           }
-        case .mediaAnalyzer:
-          MediaAnalyzerView()
         case .ioAnalyzer:
           IOAnalyzerView()
         case .capCut:
@@ -203,6 +253,29 @@ struct ContentView: View {
       selection = .uninstall
       store.dispatch(.navigation(.clearUninstallRequest))
     }
+  }
+}
+
+private struct LegacyRedirectView: View {
+  let title: String
+  let message: String
+  let buttonTitle: String
+  let onAction: () -> Void
+
+  var body: some View {
+    VStack(spacing: 16) {
+      Image(systemName: "arrow.triangle.2.circlepath.circle")
+        .font(.system(size: 40))
+        .foregroundStyle(.secondary)
+      Text(title)
+        .font(.title3.bold())
+      Text(message)
+        .foregroundStyle(.secondary)
+      Button(buttonTitle, action: onAction)
+        .buttonStyle(.borderedProminent)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .padding()
   }
 }
 

@@ -25,6 +25,7 @@ let swiftSweepCoreLinkerSettings: [LinkerSetting] = {
   var settings: [LinkerSetting] = [
     .linkedFramework("IOKit"),
     .linkedFramework("ApplicationServices"),
+    .linkedLibrary("sqlite3"),
   ]
 
   if hasEndpointSecurityFramework {
@@ -79,6 +80,7 @@ let package = Package(
         "SmartInterpreter",
         "Integration",
         "State",
+        "Workspace",
       ],
       swiftSettings: swiftSweepCoreSwiftSettings,
       linkerSettings: swiftSweepCoreLinkerSettings

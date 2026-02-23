@@ -11,10 +11,17 @@ public struct ApplicationsView: View {
     
     /// Action callback for Main app's "Uninstall" feature. Nil for MAS.
     public var onUninstallRequested: ((AppItem) -> Void)?
+    /// Optional callback used by Launcher to pin app shortcuts.
+    public var onPinRequested: ((AppItem) -> Void)?
     
-    public init(defaults: UserDefaults, onUninstallRequested: ((AppItem) -> Void)? = nil) {
+    public init(
+        defaults: UserDefaults,
+        onUninstallRequested: ((AppItem) -> Void)? = nil,
+        onPinRequested: ((AppItem) -> Void)? = nil
+    ) {
         _viewModel = StateObject(wrappedValue: AppInventoryViewModel(defaults: defaults))
         self.onUninstallRequested = onUninstallRequested
+        self.onPinRequested = onPinRequested
     }
     
     public var body: some View {
@@ -160,6 +167,9 @@ public struct ApplicationsView: View {
                         },
                         onUninstall: onUninstallRequested != nil ? {
                             onUninstallRequested?(app)
+                        } : nil,
+                        onPinToHome: onPinRequested != nil ? {
+                            onPinRequested?(app)
                         } : nil
                     )
                 }
@@ -229,6 +239,7 @@ struct AppCell: View {
     let categories: [AppCategory]
     let onAssign: (UUID?) -> Void
     let onUninstall: (() -> Void)?
+    let onPinToHome: (() -> Void)?
     
     @State private var icon: NSImage?
     @State private var isHovering = false
@@ -327,6 +338,13 @@ struct AppCell: View {
             }
         }
         
+        if let onPinToHome = onPinToHome {
+            Divider()
+            Button("Pin to Home") {
+                onPinToHome()
+            }
+        }
+
         if let onUninstall = onUninstall {
             Divider()
             Button("Uninstall...") {
