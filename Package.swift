@@ -140,6 +140,9 @@ let package = Package(
         "SwiftSweepCore",
         "SwiftSweepCLI",
         "SwiftSweepUI",
+        "SwiftSweepCapCutPlugin",
+        .product(name: "ArgumentParser", package: "swift-argument-parser"),
+        .product(name: "SwiftSweepAppInventory", package: "SwiftSweepAppInventory"),
       ],
       path: "Tests"
     ),
