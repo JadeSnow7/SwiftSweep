@@ -1824,7 +1824,7 @@
 			repositoryURL = "https://github.com/apple/swift-log";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.4.0;
+				minimumVersion = 1.6.0;
 			};
 		};
 		8C952D5700CAB0D57EA35919 /* XCRemoteSwiftPackageReference "swift-argument-parser" */ = {
@@ -1832,7 +1832,7 @@
 			repositoryURL = "https://github.com/apple/swift-argument-parser";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.0;
+				minimumVersion = 1.6.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

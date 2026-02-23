@@ -48,8 +48,8 @@ let package = Package(
     .library(name: "SwiftSweepCapCutPlugin", targets: ["SwiftSweepCapCutPlugin"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
-    .package(url: "https://github.com/apple/swift-log", from: "1.4.0"),
+    .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMinor(from: "1.6.0")),
+    .package(url: "https://github.com/apple/swift-log", .upToNextMinor(from: "1.6.0")),
     .package(path: "Packages/SwiftSweepAppInventory"),
   ],
   targets: [

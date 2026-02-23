@@ -16,10 +16,10 @@ packages:
     path: Packages/SwiftSweepAppInventory
   ArgumentParser:
     url: https://github.com/apple/swift-argument-parser
-    from: "1.2.0"
+    from: "1.6.0"
   Logging:
     url: https://github.com/apple/swift-log
-    from: "1.4.0"
+    from: "1.6.0"
 
 targets:
   SwiftSweepApp:

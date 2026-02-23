@@ -105,6 +105,6 @@ jobs:
 
       - name: Run pre-commit hooks
         run: |
-          pip3 install pre-commit
+          brew install pre-commit
           pre-commit run --all-files detect-private-key || true
           pre-commit run --all-files check-added-large-files || true
