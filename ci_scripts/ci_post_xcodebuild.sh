@@ -6,11 +6,16 @@ if [[ "${SWIFTSWEEP_CI_EXPORT_DMG:-0}" != "1" ]]; then
   exit 0
 fi
 
-REPO_ROOT="${CI_PRIMARY_REPOSITORY_PATH:-$(pwd)}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="${CI_PRIMARY_REPOSITORY_PATH:-$(cd "${SCRIPT_DIR}/.." && pwd)}"
 APP_NAME="${SWIFTSWEEP_APP_NAME:-SwiftSweep}"
 OUTPUT_NAME="${SWIFTSWEEP_OUTPUT_NAME:-}"
 
 ARTIFACTS_DIR="${CI_ARTIFACTS_PATH:-$REPO_ROOT/Output}"
+if [[ -x "${REPO_ROOT}/ci_scripts/xcode_cloud_workflow_doctor.sh" ]]; then
+  "${REPO_ROOT}/ci_scripts/xcode_cloud_workflow_doctor.sh" postbuild || true
+fi
+
 mkdir -p "$ARTIFACTS_DIR"
 
 if [[ -z "${CI_ARCHIVE_PATH:-}" || ! -d "${CI_ARCHIVE_PATH}" ]]; then

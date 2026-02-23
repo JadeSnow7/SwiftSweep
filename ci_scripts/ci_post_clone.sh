@@ -37,4 +37,9 @@ xcodebuild -resolvePackageDependencies \
     -project SwiftSweepDevID.xcodeproj \
     -scheme SwiftSweepApp || echo "Package resolution completed with warnings"
 
+if [[ -x "./ci_scripts/xcode_cloud_workflow_doctor.sh" ]]; then
+    echo "Running Xcode Cloud workflow preflight..."
+    ./ci_scripts/xcode_cloud_workflow_doctor.sh preflight || true
+fi
+
 echo "=== ci_post_clone.sh completed ==="

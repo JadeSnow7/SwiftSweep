@@ -98,7 +98,7 @@ flowchart LR
 
 ### 6.2 自动化公证 (Notarization)
 *   **设计**：使用 App Store Connect API Key（而非账号密码）。
-*   **安全**：API Key 保存为 Xcode Cloud 的 Secret 环境变量 `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID`, `NOTARY_PRIVATE_KEY`。
+*   **安全**：API Key 保存为 Xcode Cloud 的 Secret 环境变量 `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID`, `NOTARY_PRIVATE_KEY_BASE64`。
 
 ---
 
