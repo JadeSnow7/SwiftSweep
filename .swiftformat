@@ -9,7 +9,6 @@
 --closingparen balanced
 --commas inline
 --trimwhitespace always
---removeblanklines enabled
 --allman false
 --binarygrouping 4,8
 --decimalgrouping 3,6

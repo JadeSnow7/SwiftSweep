@@ -17,10 +17,54 @@ struct SwiftSweep: ParsableCommand {
       Peripherals.self,
       Diagnostics.self,
       Uninstall.self,
-      Insights.self,
+      Insights.self
     ],
     defaultSubcommand: Status.self
   )
+}
+
+private enum CLIAsyncBridgeError: Error {
+  case missingResult
+}
+
+private final class CLIAsyncResultBox<T>: @unchecked Sendable {
+  private let lock = NSLock()
+  private var result: Result<T, Error>?
+
+  func set(_ result: Result<T, Error>) {
+    lock.lock()
+    self.result = result
+    lock.unlock()
+  }
+
+  func get() -> Result<T, Error>? {
+    lock.lock()
+    defer { lock.unlock() }
+    return result
+  }
+}
+
+private func awaitAsync<T>(_ operation: @escaping @Sendable () async throws -> T) throws -> T {
+  let semaphore = DispatchSemaphore(value: 0)
+  let resultBox = CLIAsyncResultBox<T>()
+
+  Task {
+    do {
+      let value = try await operation()
+      resultBox.set(.success(value))
+    } catch {
+      resultBox.set(.failure(error))
+    }
+    semaphore.signal()
+  }
+
+  semaphore.wait()
+
+  guard let result = resultBox.get() else {
+    throw CLIAsyncBridgeError.missingResult
+  }
+
+  return try result.get()
 }
 
 struct Clean: ParsableCommand {
@@ -28,34 +72,22 @@ struct Clean: ParsableCommand {
     abstract: "Deep system cleanup to free up disk space"
   )
 
-  @Flag(name: .long, help: "Preview cleanup without deleting")
-  var dryRun = false
+  @Flag(name: .long, help: "Preview cleanup without deleting") var dryRun = false
 
-  @Option(name: .long, help: "Filter by category: cache, logs, browser, system")
-  var category: String?
+  @Option(name: .long, help: "Filter by category: cache, logs, browser, system") var category: String?
 
-  @Flag(name: .long, help: "Output as JSON")
-  var json = false
+  @Flag(name: .long, help: "Output as JSON") var json = false
 
   mutating func run() throws {
-    let semaphore = DispatchSemaphore(value: 0)
-    var items: [CleanupEngine.CleanupItem] = []
-    var scanError: Error?
+    var items: [CleanupEngine.CleanupItem]
 
     print("🔍 Scanning for cleanable items...")
 
-    Task {
-      do {
-        items = try await CleanupEngine.shared.scanForCleanableItems()
-      } catch {
-        scanError = error
+    do {
+      items = try awaitAsync {
+        try await CleanupEngine.shared.scanForCleanableItems()
       }
-      semaphore.signal()
-    }
-
-    semaphore.wait()
-
-    if let error = scanError {
+    } catch {
       print("❌ Error scanning: \(error)")
       return
     }
@@ -64,11 +96,11 @@ struct Clean: ParsableCommand {
     if let cat = category {
       items = items.filter { item in
         switch cat.lowercased() {
-        case "cache": return item.category == .userCache || item.category == .systemCache
-        case "logs": return item.category == .logs
-        case "browser": return item.category == .browserCache
-        case "system": return item.category == .systemCache
-        default: return true
+        case "cache": item.category == .userCache || item.category == .systemCache
+        case "logs": item.category == .logs
+        case "browser": item.category == .browserCache
+        case "system": item.category == .systemCache
+        default: true
         }
       }
     }
@@ -89,24 +121,14 @@ struct Clean: ParsableCommand {
     if !dryRun {
       print("\n🧹 Cleaning...")
 
-      var freedBytes: Int64 = 0
-      var cleanError: Error?
-
-      Task {
-        do {
-          freedBytes = try await CleanupEngine.shared.performCleanup(items: items, dryRun: false)
-        } catch {
-          cleanError = error
+      let cleanupItems = items
+      do {
+        let freedBytes = try awaitAsync {
+          try await CleanupEngine.shared.performCleanup(items: cleanupItems, dryRun: false)
         }
-        semaphore.signal()
-      }
-
-      semaphore.wait()
-
-      if let error = cleanError {
-        print("❌ Error cleaning: \(error)")
-      } else {
         print("✅ Freed \(formatBytes(freedBytes))")
+      } catch {
+        print("❌ Error cleaning: \(error)")
       }
     } else {
       print("\n💡 Dry run mode - no files were deleted")
@@ -141,7 +163,7 @@ struct Clean: ParsableCommand {
         "name": item.name,
         "path": item.path,
         "size": item.size,
-        "category": item.category.rawValue,
+        "category": item.category.rawValue
       ])
     }
 
@@ -149,11 +171,11 @@ struct Clean: ParsableCommand {
       "total_items": items.count,
       "total_size": totalSize,
       "total_size_human": formatBytes(totalSize),
-      "items": jsonItems,
+      "items": jsonItems
     ]
 
     if let data = try? JSONSerialization.data(withJSONObject: output, options: .prettyPrinted),
-      let str = String(data: data, encoding: .utf8)
+       let str = String(data: data, encoding: .utf8)
     {
       print(str)
     }
@@ -173,17 +195,13 @@ struct Analyze: ParsableCommand {
     abstract: "Analyze disk usage and show large files/folders"
   )
 
-  @Argument(help: "Path to analyze (default: home directory)")
-  var path: String?
+  @Argument(help: "Path to analyze (default: home directory)") var path: String?
 
-  @Option(name: .long, help: "Number of largest items to show")
-  var top: Int = 10
+  @Option(name: .long, help: "Number of largest items to show") var top = 10
 
-  @Flag(name: .long, help: "Show folder sizes (tree analysis)")
-  var tree = false
+  @Flag(name: .long, help: "Show folder sizes (tree analysis)") var tree = false
 
-  @Flag(name: .long, help: "Output as JSON")
-  var json = false
+  @Flag(name: .long, help: "Output as JSON") var json = false
 
   mutating func run() throws {
     let targetPath = path ?? NSHomeDirectory()
@@ -199,45 +217,32 @@ struct Analyze: ParsableCommand {
       print("   This may take a while for large directories...\n")
     }
 
-    let semaphore = DispatchSemaphore(value: 0)
-    var result: AnalyzerEngine.AnalysisResult?
-    var scanError: Error?
     let showProgress = !json
 
-    Task {
-      do {
-        result = try await AnalyzerEngine.shared.analyze(path: targetPath) { count, size in
+    let result: AnalyzerEngine.AnalysisResult
+    do {
+      result = try awaitAsync {
+        try await AnalyzerEngine.shared.analyze(path: targetPath) { count, _ in
           if showProgress {
             print("\r   Scanned \(count) items...", terminator: "")
             fflush(stdout)
           }
         }
-      } catch {
-        scanError = error
       }
-      semaphore.signal()
-    }
-
-    semaphore.wait()
-
-    if !json { print("") }  // New line after progress
-
-    if let error = scanError {
+    } catch {
+      if !json { print("") } // New line after progress
       printError("Error scanning: \(error)")
       return
     }
 
-    guard let r = result else {
-      printError("Analysis failed")
-      return
-    }
+    if !json { print("") } // New line after progress
 
     if json {
-      printJSON(result: r, path: targetPath)
-    } else if tree, let root = r.rootNode {
+      printJSON(result: result, path: targetPath)
+    } else if tree, let root = result.rootNode {
       printTree(root: root)
     } else {
-      printSummary(result: r, path: targetPath)
+      printSummary(result: result, path: targetPath)
     }
   }
 
@@ -276,7 +281,7 @@ struct Analyze: ParsableCommand {
   }
 
   func collectFolders(node: FileNode, into array: inout [FileNode]) {
-    if node.isDirectory && node.size > 0 {
+    if node.isDirectory, node.size > 0 {
       array.append(node)
       node.children?.forEach { collectFolders(node: $0, into: &array) }
     }
@@ -288,7 +293,7 @@ struct Analyze: ParsableCommand {
       topFilesJSON.append([
         "path": file.path,
         "size": file.size,
-        "size_human": formatBytes(file.size),
+        "size_human": formatBytes(file.size)
       ])
     }
 
@@ -302,7 +307,7 @@ struct Analyze: ParsableCommand {
           "size": folder.size,
           "size_human": formatBytes(folder.size),
           "file_count": folder.fileCount,
-          "percentage": root.size > 0 ? Double(folder.size) / Double(root.size) * 100 : 0,
+          "percentage": root.size > 0 ? Double(folder.size) / Double(root.size) * 100 : 0
         ])
       }
     }
@@ -314,11 +319,12 @@ struct Analyze: ParsableCommand {
       "file_count": result.fileCount,
       "dir_count": result.dirCount,
       "top_files": topFilesJSON,
-      "top_folders": topFoldersJSON,
+      "top_folders": topFoldersJSON
     ]
 
     if let data = try? JSONSerialization.data(
-      withJSONObject: output, options: [.prettyPrinted, .sortedKeys]),
+      withJSONObject: output, options: [.prettyPrinted, .sortedKeys]
+    ),
       let str = String(data: data, encoding: .utf8)
     {
       print(str)
@@ -355,53 +361,38 @@ struct Status: ParsableCommand {
     abstract: "Show real-time system status"
   )
 
-  @Flag(name: .long, help: "Output as JSON")
-  var json = false
+  @Flag(name: .long, help: "Output as JSON") var json = false
 
   mutating func run() throws {
-    // 使用同步方式调用异步函数
-    let semaphore = DispatchSemaphore(value: 0)
-    var metrics: SystemMonitor.SystemMetrics?
-    var fetchError: Error?
-
-    Task {
-      do {
-        metrics = try await SystemMonitor.shared.getMetrics()
-      } catch {
-        fetchError = error
+    let metrics: SystemMonitor.SystemMetrics
+    do {
+      metrics = try awaitAsync {
+        try await SystemMonitor.shared.getMetrics()
       }
-      semaphore.signal()
-    }
-
-    semaphore.wait()
-
-    if let error = fetchError {
+    } catch {
       print("Error fetching metrics: \(error)")
       return
     }
 
-    guard let m = metrics else {
-      print("Error: Unable to fetch system metrics")
-      return
-    }
+    let m = metrics
 
     if json {
       let jsonOutput = """
-        {
-          "cpu": \(String(format: "%.1f", m.cpuUsage)),
-          "memory": {
-            "used_gb": \(String(format: "%.2f", Double(m.memoryUsed) / 1_073_741_824)),
-            "total_gb": \(String(format: "%.2f", Double(m.memoryTotal) / 1_073_741_824)),
-            "percentage": \(String(format: "%.1f", m.memoryUsage * 100))
-          },
-          "disk": {
-            "used_gb": \(String(format: "%.2f", Double(m.diskUsed) / 1_073_741_824)),
-            "total_gb": \(String(format: "%.2f", Double(m.diskTotal) / 1_073_741_824)),
-            "percentage": \(String(format: "%.1f", m.diskUsage * 100))
-          },
-          "battery": \(String(format: "%.1f", m.batteryLevel))
-        }
-        """
+      {
+        "cpu": \(String(format: "%.1f", m.cpuUsage)),
+        "memory": {
+          "used_gb": \(String(format: "%.2f", Double(m.memoryUsed) / 1_073_741_824)),
+          "total_gb": \(String(format: "%.2f", Double(m.memoryTotal) / 1_073_741_824)),
+          "percentage": \(String(format: "%.1f", m.memoryUsage * 100))
+        },
+        "disk": {
+          "used_gb": \(String(format: "%.2f", Double(m.diskUsed) / 1_073_741_824)),
+          "total_gb": \(String(format: "%.2f", Double(m.diskTotal) / 1_073_741_824)),
+          "percentage": \(String(format: "%.1f", m.diskUsage * 100))
+        },
+        "battery": \(String(format: "%.1f", m.batteryLevel))
+      }
+      """
       print(jsonOutput)
     } else {
       print("System status:")
@@ -422,23 +413,22 @@ struct Peripherals: ParsableCommand {
     abstract: "Inspect connected displays and input devices"
   )
 
-  @Flag(name: .long, help: "Output as JSON")
-  var json = false
+  @Flag(name: .long, help: "Output as JSON") var json = false
 
-  @Flag(name: .long, help: "Include sensitive identifiers")
-  var sensitive = false
+  @Flag(name: .long, help: "Include sensitive identifiers") var sensitive = false
 
   mutating func run() throws {
-    let semaphore = DispatchSemaphore(value: 0)
-    var snapshot = PeripheralSnapshot()
     let includeSensitive = sensitive
+    let snapshot: PeripheralSnapshot
 
-    Task {
-      snapshot = await PeripheralInspector.shared.getSnapshot(includeSensitive: includeSensitive)
-      semaphore.signal()
+    do {
+      snapshot = try awaitAsync {
+        await PeripheralInspector.shared.getSnapshot(includeSensitive: includeSensitive)
+      }
+    } catch {
+      print("Error fetching peripherals: \(error)")
+      return
     }
-
-    semaphore.wait()
 
     if json {
       printJSON(snapshot)
@@ -491,19 +481,18 @@ struct Peripherals: ParsableCommand {
 }
 
 func peripheralBuiltInLabel(_ isBuiltin: Bool?) -> String {
-  switch isBuiltin {
-  case true: return "Built-in"
-  case false: return "External"
-  case nil: return "Unknown"
+  if let isBuiltin {
+    return isBuiltin ? "Built-in" : "External"
   }
+  return "Unknown"
 }
+
 struct Diagnostics: ParsableCommand {
   static let configuration = CommandConfiguration(
     abstract: "Show Apple Diagnostics startup guide"
   )
 
-  @Flag(name: .long, help: "Open Apple support article in browser")
-  var openSupport = false
+  @Flag(name: .long, help: "Open Apple support article in browser") var openSupport = false
 
   mutating func run() throws {
     let guide = DiagnosticsGuideService.shared.getGuide()
@@ -534,9 +523,9 @@ struct Diagnostics: ParsableCommand {
 
   private func displayArchitecture(_ architecture: MachineArchitecture) -> String {
     switch architecture {
-    case .appleSilicon: return "Apple Silicon"
-    case .intel: return "Intel"
-    case .unknown: return "Unknown"
+    case .appleSilicon: "Apple Silicon"
+    case .intel: "Intel"
+    case .unknown: "Unknown"
     }
   }
 
@@ -561,37 +550,24 @@ struct Uninstall: ParsableCommand {
     abstract: "Uninstall applications completely"
   )
 
-  @Argument(help: "Application name to uninstall (partial match supported)")
-  var appName: String?
+  @Argument(help: "Application name to uninstall (partial match supported)") var appName: String?
 
-  @Flag(name: .long, help: "List all installed applications")
-  var list = false
+  @Flag(name: .long, help: "List all installed applications") var list = false
 
-  @Flag(name: .long, help: "Show residual files without uninstalling")
-  var scan = false
+  @Flag(name: .long, help: "Show residual files without uninstalling") var scan = false
 
-  @Flag(name: .long, help: "Output as JSON")
-  var json = false
+  @Flag(name: .long, help: "Output as JSON") var json = false
 
   mutating func run() throws {
-    let semaphore = DispatchSemaphore(value: 0)
-    var apps: [UninstallEngine.InstalledApp] = []
-    var scanError: Error?
+    let apps: [UninstallEngine.InstalledApp]
 
     print("🔍 Scanning installed applications...")
 
-    Task {
-      do {
-        apps = try await UninstallEngine.shared.scanInstalledApps()
-      } catch {
-        scanError = error
+    do {
+      apps = try awaitAsync {
+        try await UninstallEngine.shared.scanInstalledApps()
       }
-      semaphore.signal()
-    }
-
-    semaphore.wait()
-
-    if let error = scanError {
+    } catch {
       print("❌ Error scanning: \(error)")
       return
     }
@@ -663,8 +639,7 @@ struct Uninstall: ParsableCommand {
     }
   }
 
-  func printAppDetails(app: UninstallEngine.InstalledApp, residuals: [UninstallEngine.ResidualFile])
-  {
+  func printAppDetails(app: UninstallEngine.InstalledApp, residuals: [UninstallEngine.ResidualFile]) {
     print("\n📦 \(app.name)")
     print("   Bundle ID:  \(app.bundleID)")
     print("   Path:       \(app.path)")
@@ -696,7 +671,7 @@ struct Uninstall: ParsableCommand {
       residualItems.append([
         "path": file.path,
         "size": file.size,
-        "type": file.type.rawValue,
+        "type": file.type.rawValue
       ])
     }
 
@@ -706,11 +681,11 @@ struct Uninstall: ParsableCommand {
       "path": app.path,
       "size": app.size,
       "residual_files": residualItems,
-      "total_size": app.size + residuals.reduce(0) { $0 + $1.size },
+      "total_size": app.size + residuals.reduce(0) { $0 + $1.size }
     ]
 
     if let data = try? JSONSerialization.data(withJSONObject: output, options: .prettyPrinted),
-      let str = String(data: data, encoding: .utf8)
+       let str = String(data: data, encoding: .utf8)
     {
       print(str)
     }
@@ -735,33 +710,22 @@ struct Insights: ParsableCommand {
     abstract: "Smart insights and recommendations for system optimization"
   )
 
-  @Flag(name: .long, help: "Output as JSON")
-  var json = false
+  @Flag(name: .long, help: "Output as JSON") var json = false
 
-  @Flag(name: .long, help: "Show verbose evidence details")
-  var verbose = false
+  @Flag(name: .long, help: "Show verbose evidence details") var verbose = false
 
   mutating func run() throws {
-    let semaphore = DispatchSemaphore(value: 0)
-    var recommendations: [Recommendation] = []
-    var evalError: Error?
+    let recommendations: [Recommendation]
 
     if !json {
       print("🔍 Analyzing system for recommendations...")
     }
 
-    Task {
-      do {
-        recommendations = try await RecommendationEngine.shared.evaluateWithSystemContext()
-      } catch {
-        evalError = error
+    do {
+      recommendations = try awaitAsync {
+        try await RecommendationEngine.shared.evaluateWithSystemContext()
       }
-      semaphore.signal()
-    }
-
-    semaphore.wait()
-
-    if let error = evalError {
+    } catch {
       if json {
         print("{\"error\": \"\(error.localizedDescription)\"}")
       } else {
@@ -798,7 +762,7 @@ struct Insights: ParsableCommand {
 
       print("   Risk: \(rec.risk.displayName) | Confidence: \(rec.confidence.displayName)")
 
-      if verbose && !rec.evidence.isEmpty {
+      if verbose, !rec.evidence.isEmpty {
         print("   Evidence:")
         for evidence in rec.evidence.prefix(5) {
           print("     • \(evidence.label): \(evidence.value)")
@@ -806,7 +770,7 @@ struct Insights: ParsableCommand {
       }
 
       if !rec.actions.isEmpty {
-        let actionTypes = rec.actions.map { $0.type.rawValue }.joined(separator: ", ")
+        let actionTypes = rec.actions.map(\.type.rawValue).joined(separator: ", ")
         print("   Actions: \(actionTypes)")
       }
 
@@ -832,9 +796,9 @@ struct Insights: ParsableCommand {
 
   func severityIcon(_ severity: Severity) -> String {
     switch severity {
-    case .critical: return "🔴"
-    case .warning: return "🟡"
-    case .info: return "🔵"
+    case .critical: "🔴"
+    case .warning: "🟡"
+    case .info: "🔵"
     }
   }
 

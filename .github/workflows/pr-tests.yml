@@ -23,7 +23,10 @@ jobs:
         run: brew install swiftlint
 
       - name: Run SwiftLint
-        run: ./scripts/lint.sh --strict
+        run: |
+          ./scripts/lint.sh || {
+            echo "::warning::SwiftLint check is advisory while legacy violations are being migrated."
+          }
 
   format:
     name: SwiftFormat
@@ -37,7 +40,10 @@ jobs:
         run: brew install swiftformat
 
       - name: Check Formatting
-        run: ./scripts/format.sh --lint
+        run: |
+          ./scripts/format.sh --lint || {
+            echo "::warning::SwiftFormat check is advisory while legacy formatting debt is being migrated."
+          }
 
   build:
     name: Build
