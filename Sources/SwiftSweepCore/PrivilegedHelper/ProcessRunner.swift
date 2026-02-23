@@ -346,7 +346,7 @@ public final class ProcessRunner: @unchecked Sendable {
 
     // Wait for process exit (bounded)
     DispatchQueue.global().async {
-      let exitTimeout = DispatchTime.now() + min(2.0, self.config.timeout)
+      let exitTimeout = DispatchTime.now() + self.config.timeout + 0.5
       let waitResult = exitSemaphore.wait(timeout: exitTimeout)
 
       timeoutTimer.cancel()
