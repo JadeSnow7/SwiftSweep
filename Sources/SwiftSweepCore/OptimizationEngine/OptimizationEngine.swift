@@ -1,23 +1,31 @@
 import Foundation
-import SwiftUI
 
 /// SwiftSweep 系统优化引擎
 public final class OptimizationEngine {
     public static let shared = OptimizationEngine()
-    
+
     private init() {}
-    
+
     public struct OptimizationTask: Identifiable {
+        public enum ColorToken: String, Sendable {
+            case blue
+            case purple
+            case green
+            case orange
+            case cyan
+            case pink
+        }
+
         public let id = UUID()
         public let title: String
         public let description: String
         public let icon: String
-        public let color: Color
+        public let color: ColorToken
         public let taskType: TaskType
         public let requiresPrivilege: Bool
         public var isRunning: Bool = false
         public var lastResult: Bool? = nil
-        
+
         public enum TaskType: Sendable {
             case flushDNS
             case rebuildSpotlight
@@ -26,8 +34,15 @@ public final class OptimizationEngine {
             case resetFinder
             case clearFontCache
         }
-        
-        public init(title: String, description: String, icon: String, color: Color, taskType: TaskType, requiresPrivilege: Bool) {
+
+        public init(
+            title: String,
+            description: String,
+            icon: String,
+            color: ColorToken,
+            taskType: TaskType,
+            requiresPrivilege: Bool
+        ) {
             self.title = title
             self.description = description
             self.icon = icon
@@ -36,7 +51,7 @@ public final class OptimizationEngine {
             self.requiresPrivilege = requiresPrivilege
         }
     }
-    
+
     public let availableTasks: [OptimizationTask] = [
         OptimizationTask(
             title: "Flush DNS Cache",
@@ -87,7 +102,7 @@ public final class OptimizationEngine {
             requiresPrivilege: true
         ),
     ]
-    
+
     /// 运行优化任务
     public func run(_ task: OptimizationTask) async -> Bool {
         if task.requiresPrivilege {
@@ -96,14 +111,14 @@ public final class OptimizationEngine {
             return await runStandard(task: task)
         }
     }
-    
+
     private func runStandard(task: OptimizationTask) async -> Bool {
         let taskType = task.taskType
         return await withCheckedContinuation { continuation in
             DispatchQueue.global().async {
                 let process = Process()
                 process.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
-                
+
                 switch taskType {
                 case .resetDock:
                     process.arguments = ["Dock"]
@@ -113,7 +128,7 @@ public final class OptimizationEngine {
                     continuation.resume(returning: false)
                     return
                 }
-                
+
                 do {
                     try process.run()
                     process.waitUntilExit()
@@ -124,22 +139,22 @@ public final class OptimizationEngine {
             }
         }
     }
-    
+
     private func runPrivileged(task: OptimizationTask) async -> Bool {
         guard #available(macOS 13.0, *) else {
             // Fallback to AppleScript for older systems
             return await runPrivilegedLegacy(task: task)
         }
-        
+
         let client = HelperClient.shared
-        
+
         // Check if helper is installed
         let status = client.checkStatus()
         if status != .enabled {
             // Fall back to legacy method if helper not installed
             return await runPrivilegedLegacy(task: task)
         }
-        
+
         do {
             switch task.taskType {
             case .flushDNS:
@@ -160,7 +175,7 @@ public final class OptimizationEngine {
             return await runPrivilegedLegacy(task: task)
         }
     }
-    
+
     private func runPrivilegedLegacy(task: OptimizationTask) async -> Bool {
         let taskType = task.taskType
         return await withCheckedContinuation { continuation in
@@ -179,11 +194,11 @@ public final class OptimizationEngine {
                     continuation.resume(returning: false)
                     return
                 }
-                
+
                 let script = """
                 do shell script "\(command)" with administrator privileges
                 """
-                
+
                 var error: NSDictionary?
                 if let appleScript = NSAppleScript(source: script) {
                     _ = appleScript.executeAndReturnError(&error)

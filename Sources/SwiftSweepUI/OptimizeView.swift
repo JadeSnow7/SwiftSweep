@@ -1,13 +1,24 @@
 import SwiftUI
 #if canImport(SwiftSweepCore)
-#if canImport(SwiftSweepCore)
 import SwiftSweepCore
 #endif
-#endif
+
+private extension OptimizationEngine.OptimizationTask.ColorToken {
+    var swiftUIColor: Color {
+        switch self {
+        case .blue: return .blue
+        case .purple: return .purple
+        case .green: return .green
+        case .orange: return .orange
+        case .cyan: return .cyan
+        case .pink: return .pink
+        }
+    }
+}
 
 struct OptimizeView: View {
     @StateObject private var viewModel = OptimizeViewModel()
-    
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -21,14 +32,14 @@ struct OptimizeView: View {
                             .foregroundColor(.secondary)
                     }
                     Spacer()
-                    
+
                     Button(action: { viewModel.runAll() }) {
                         Label("Run All", systemImage: "bolt.fill")
                     }
                     .buttonStyle(.borderedProminent)
                 }
                 .padding()
-                
+
                 // Info banner explaining password prompt
                 HStack {
                     Image(systemName: "info.circle.fill")
@@ -39,7 +50,7 @@ struct OptimizeView: View {
                     Spacer()
                 }
                 .padding(.horizontal)
-                
+
                 // Optimization Tasks
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 280))], spacing: 16) {
                     ForEach(viewModel.tasks) { task in
@@ -47,7 +58,7 @@ struct OptimizeView: View {
                     }
                 }
                 .padding()
-                
+
                 Spacer()
             }
         }
@@ -57,15 +68,15 @@ struct OptimizeView: View {
 struct OptimizationCard: View {
     let task: OptimizationEngine.OptimizationTask
     @ObservedObject var viewModel: OptimizeViewModel
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: task.icon)
                     .font(.title2)
-                    .foregroundColor(task.color)
+                    .foregroundColor(task.color.swiftUIColor)
                     .frame(width: 32)
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(task.title)
                         .fontWeight(.semibold)
@@ -74,12 +85,12 @@ struct OptimizationCard: View {
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                 }
-                
+
                 Spacer()
             }
-            
+
             Divider()
-            
+
             HStack {
                 if task.requiresPrivilege {
                     Image(systemName: "lock.fill")
@@ -89,9 +100,9 @@ struct OptimizationCard: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 if task.isRunning {
                     ProgressView()
                         .scaleEffect(0.7)
@@ -99,7 +110,7 @@ struct OptimizationCard: View {
                     Image(systemName: task.lastResult! ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundColor(task.lastResult! ? .green : .red)
                 }
-                
+
                 Button("Run") {
                     viewModel.runTask(task)
                 }
@@ -116,23 +127,23 @@ struct OptimizationCard: View {
 class OptimizeViewModel: ObservableObject {
     @Published var tasks: [OptimizationEngine.OptimizationTask] = []
     private let engine = OptimizationEngine.shared
-    
+
     init() {
         self.tasks = engine.availableTasks
     }
-    
+
     func runTask(_ task: OptimizationEngine.OptimizationTask) {
         guard let index = tasks.firstIndex(where: { $0.id == task.id }) else { return }
-        
+
         tasks[index].isRunning = true
-        
+
         Task {
             let success = await engine.run(task)
             tasks[index].isRunning = false
             tasks[index].lastResult = success
         }
     }
-    
+
     func runAll() {
         for task in tasks {
             runTask(task)

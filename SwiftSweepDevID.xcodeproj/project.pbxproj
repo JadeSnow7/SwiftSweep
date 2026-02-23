@@ -171,6 +171,7 @@
 		8B183BB55AC408F5015635F5 /* IOSelfTracer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEC321B2CCB370B789AD487 /* IOSelfTracer.swift */; };
 		8B1EDCF1E8FA78FFCED17C7A /* BrowserCacheRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65B36142B70F448F3601681 /* BrowserCacheRule.swift */; };
 		8B5852315331A760DA3F941B /* ToolLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6ADB45695DFD3649CDCE33 /* ToolLocator.swift */; };
+		8C8A6F558C6DB0948627E50D /* libEndpointSecurity.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 223BA2A6B3A4FA8061C0D9DF /* libEndpointSecurity.tbd */; };
 		8DE84C4D2FA1ECB4A4771A1A /* PluginStoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F4AF6BC3E7138C4D26A504 /* PluginStoreManager.swift */; };
 		8E10C50C99B1BD0AF4AC4DA0 /* GitRepoCleanupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AA92C244AED203191894D73 /* GitRepoCleanupView.swift */; };
 		8FD63AC9F44E6E54765B4A47 /* IOHotspotDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C19B7A2B70BEEC44CAA286 /* IOHotspotDetector.swift */; };
@@ -497,6 +498,7 @@
 			files = (
 				6B2BAC6FC9A34B3B35F30CC1 /* ArgumentParser in Frameworks */,
 				49F07107FE824E9DFBC16861 /* Logging in Frameworks */,
+				8C8A6F558C6DB0948627E50D /* libEndpointSecurity.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
