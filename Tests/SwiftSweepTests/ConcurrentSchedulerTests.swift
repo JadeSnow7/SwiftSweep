@@ -1,3 +1,4 @@
+#if canImport(Testing)
 import Foundation
 import Testing
 
@@ -170,3 +171,5 @@ struct ConcurrentSchedulerTests {
     #expect(SchedulerPriority.high < SchedulerPriority.critical)
   }
 }
+
+#endif

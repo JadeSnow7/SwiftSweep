@@ -1,3 +1,4 @@
+#if canImport(Testing)
 import Foundation
 import Testing
 
@@ -176,3 +177,5 @@ struct PerformanceMonitorTests {
     #expect(afterClear.isEmpty)
   }
 }
+
+#endif
