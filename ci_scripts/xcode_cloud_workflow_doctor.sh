@@ -63,6 +63,10 @@ if [[ "${SWIFTSWEEP_CI_EXPORT_DMG:-0}" == "1" ]]; then
     log_warn "CI_ARCHIVE_PATH 为空且未启用 SWIFTSWEEP_CI_SPM_BUILD=1，Build/Test 动作可能失败。"
   fi
 
+  if [[ "${SWIFTSWEEP_CI_NOTARIZE_APP:-0}" == "1" && "${SWIFTSWEEP_CI_NOTARIZE:-0}" != "1" ]]; then
+    log_warn "SWIFTSWEEP_CI_NOTARIZE_APP=1 但 SWIFTSWEEP_CI_NOTARIZE!=1，APP 公证开关将被忽略。"
+  fi
+
   if [[ "${SWIFTSWEEP_CI_NOTARIZE:-0}" == "1" ]]; then
     check_notary_credentials
   fi

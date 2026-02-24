@@ -198,12 +198,18 @@ publish_github_release() {
   echo "SwiftSweep: release upload complete: https://github.com/${repo}/releases/tag/${tag}"
 }
 
-echo "SwiftSweep: notarize+staple app..."
-APP_ZIP="${WORK_DIR}/${OUTPUT_NAME}.zip"
-/usr/bin/ditto -c -k --keepParent "$APP_WORK" "$APP_ZIP"
-submit_notarization "$APP_ZIP"
-if [[ "${LAST_NOTARIZATION_SUBMITTED}" == "1" ]]; then
-  xcrun stapler staple "$APP_WORK"
+if [[ "${SWIFTSWEEP_CI_NOTARIZE:-0}" == "1" && "${SWIFTSWEEP_CI_NOTARIZE_APP:-0}" == "1" ]]; then
+  echo "SwiftSweep: notarize+staple app..."
+  APP_ZIP="${WORK_DIR}/${OUTPUT_NAME}.zip"
+  /usr/bin/ditto -c -k --keepParent "$APP_WORK" "$APP_ZIP"
+  submit_notarization "$APP_ZIP"
+  if [[ "${LAST_NOTARIZATION_SUBMITTED}" == "1" ]]; then
+    xcrun stapler staple "$APP_WORK"
+  fi
+elif [[ "${SWIFTSWEEP_CI_NOTARIZE_APP:-0}" == "1" ]]; then
+  echo "SwiftSweep: skip app notarization because SWIFTSWEEP_CI_NOTARIZE!=1."
+else
+  echo "SwiftSweep: skip app notarization (default behavior). Set SWIFTSWEEP_CI_NOTARIZE_APP=1 to enable."
 fi
 
 echo "SwiftSweep: create DMG..."

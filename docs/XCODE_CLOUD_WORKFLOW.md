@@ -51,11 +51,14 @@ Xcode Cloud workflow 需要在 App Store Connect / Xcode UI 里配置，本仓�
 可选：
 
 - `SWIFTSWEEP_CI_NOTARIZE=1`
+- `SWIFTSWEEP_CI_NOTARIZE_APP=1`（可选，额外公证 APP；默认只公证 DMG）
 - `SWIFTSWEEP_CI_NOTARIZE_REQUIRED=1`
 - `SWIFTSWEEP_CI_UPLOAD_RELEASE=1`
 - `SWIFTSWEEP_CI_RELEASE_REPO=owner/repo`
 - `SWIFTSWEEP_CI_RELEASE_TAG=v1.7.2`
 - `SWIFTSWEEP_CI_DOCTOR_STRICT=1`（doctor 发现错误时直接 fail）
+
+说明：设置 `SWIFTSWEEP_CI_NOTARIZE=1` 后默认仅对 DMG 公证；如需同时公证 APP，请额外设置 `SWIFTSWEEP_CI_NOTARIZE_APP=1`。
 
 ---
 
@@ -106,4 +109,5 @@ Xcode Cloud workflow 需要在 App Store Connect / Xcode UI 里配置，本仓�
 
 - `CI_ARCHIVE_PATH is not set`: Build/Test 动作下未启用 `SWIFTSWEEP_CI_SPM_BUILD=1`。
 - `missing notarization credentials`: 开启了 `SWIFTSWEEP_CI_NOTARIZE=1` 但未配置公证凭据。
+- 默认只公证 DMG：开启 `SWIFTSWEEP_CI_NOTARIZE=1` 后，如需同时公证 APP，请设置 `SWIFTSWEEP_CI_NOTARIZE_APP=1`。
 - DMG 未签名: 未导入 Developer ID 证书或未设置可用 `SIGNING_IDENTITY`。
