@@ -12,11 +12,11 @@ APP_NAME="${SWIFTSWEEP_APP_NAME:-SwiftSweep}"
 OUTPUT_NAME="${SWIFTSWEEP_OUTPUT_NAME:-}"
 
 ARTIFACTS_DIR="${CI_ARTIFACTS_PATH:-$REPO_ROOT/Output}"
+mkdir -p "$ARTIFACTS_DIR"
+
 if [[ -x "${REPO_ROOT}/ci_scripts/xcode_cloud_workflow_doctor.sh" ]]; then
   "${REPO_ROOT}/ci_scripts/xcode_cloud_workflow_doctor.sh" postbuild || true
 fi
-
-mkdir -p "$ARTIFACTS_DIR"
 
 if [[ -z "${CI_ARCHIVE_PATH:-}" || ! -d "${CI_ARCHIVE_PATH}" ]]; then
   if [[ "${SWIFTSWEEP_CI_SPM_BUILD:-0}" != "1" ]]; then
@@ -86,22 +86,28 @@ submit_notarization() {
     local key_path="${WORK_DIR}/AuthKey.p8"
     printf '%s' "$NOTARY_PRIVATE_KEY_BASE64" | base64 --decode > "$key_path"
 
-    xcrun notarytool submit "$file_path" \
+    if xcrun notarytool submit "$file_path" \
       --key "$key_path" \
       --key-id "$NOTARY_KEY_ID" \
       --issuer "$NOTARY_ISSUER_ID" \
-      --wait
-    LAST_NOTARIZATION_SUBMITTED=1
+      --wait; then
+      LAST_NOTARIZATION_SUBMITTED=1
+    else
+      echo "SwiftSweep: notarytool submit failed (key-based auth)."
+    fi
     return 0
   fi
 
   if [[ -n "${APPLE_ID:-}" && -n "${APPLE_TEAM_ID:-}" && -n "${APPLE_APP_PASSWORD:-}" ]]; then
-    xcrun notarytool submit "$file_path" \
+    if xcrun notarytool submit "$file_path" \
       --apple-id "$APPLE_ID" \
       --team-id "$APPLE_TEAM_ID" \
       --password "$APPLE_APP_PASSWORD" \
-      --wait
-    LAST_NOTARIZATION_SUBMITTED=1
+      --wait; then
+      LAST_NOTARIZATION_SUBMITTED=1
+    else
+      echo "SwiftSweep: notarytool submit failed (Apple ID auth)."
+    fi
     return 0
   fi
 

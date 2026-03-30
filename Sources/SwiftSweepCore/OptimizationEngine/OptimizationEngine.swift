@@ -6,7 +6,7 @@ public final class OptimizationEngine {
 
     private init() {}
 
-    public struct OptimizationTask: Identifiable {
+    public struct OptimizationTask: Identifiable, Sendable {
         public enum ColorToken: String, Sendable {
             case blue
             case purple

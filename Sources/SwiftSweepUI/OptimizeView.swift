@@ -106,9 +106,9 @@ struct OptimizationCard: View {
                 if task.isRunning {
                     ProgressView()
                         .scaleEffect(0.7)
-                } else if task.lastResult != nil {
-                    Image(systemName: task.lastResult! ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(task.lastResult! ? .green : .red)
+                } else if let result = task.lastResult {
+                    Image(systemName: result ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundColor(result ? .green : .red)
                 }
 
                 Button("Run") {

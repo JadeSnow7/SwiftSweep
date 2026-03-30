@@ -2,6 +2,18 @@
 
 All notable changes to SwiftSweep will be documented in this file.
 
+## [1.7.5] - 2026-03-30
+
+### Fixed
+- **CI/CD**: Xcode Cloud notarization now correctly captures `notarytool` exit code — stapling is skipped when submission fails instead of incorrectly proceeding
+- **CI/CD**: `ARTIFACTS_DIR` is now created before the workflow doctor script runs, preventing potential write failures in postbuild checks
+- **Swift Concurrency**: `OptimizationTask` now explicitly conforms to `Sendable`, preventing fragile implicit inference breakage when new properties are added
+- **SwiftUI**: Replaced force-unwrap on `task.lastResult` in `OptimizationCard` with safe `if let` binding
+- **CI/CD**: Made app notarization optional in Xcode Cloud (controlled by `SWIFTSWEEP_CI_NOTARIZE_APP` flag)
+- **CLI**: Decoupled core optimizer from SwiftUI — `OptimizationEngine` no longer imports SwiftUI, enabling clean CLI builds
+- **Tests**: Fixed coverage test linking and added explicit test dependencies
+- **Tests**: Added `#if canImport(Testing)` guards for compatibility with older CI toolchains
+
 ## [0.6.0] - 2026-01-14
 
 ### Added
