@@ -15,16 +15,6 @@ struct SettingsView: View {
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 24) {
-        // Header
-        VStack(alignment: .leading) {
-          Text("Settings")
-            .font(.largeTitle)
-            .fontWeight(.bold)
-          Text("Configure SwiftSweep preferences")
-            .foregroundColor(.secondary)
-        }
-        .padding()
-
         // General Settings
         SettingsSection(title: "General", icon: "gear") {
           Picker("Language", selection: $languageManager.currentLanguage) {
@@ -174,6 +164,7 @@ struct SettingsView: View {
         Spacer()
       }
     }
+    .navigationTitle("Settings")
     .onAppear {
       helperViewModel.checkStatus()
     }
