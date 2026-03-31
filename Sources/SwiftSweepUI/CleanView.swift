@@ -13,7 +13,7 @@ struct CleanView: View {
 
   var body: some View {
     ScrollView {
-      VStack(alignment: .leading, spacing: 20) {
+      VStack(alignment: .leading, spacing: Spacing.xl) {
         // Scan Control
         if state.phase == .idle {
           Button(action: {
@@ -43,7 +43,7 @@ struct CleanView: View {
               .foregroundColor(.secondary)
 
             IndeterminateProgressBar(color: .blue, height: 4)
-              .padding(.top, 4)
+              .padding(.top, Spacing.xs)
           }
           .cardStyle()
         }
@@ -221,7 +221,7 @@ struct CleanupItemRowStore: View {
           .foregroundColor(.secondary)
           .font(.monospacedDigit(.body)())
       }
-      .padding(.vertical, 4)
+      .padding(.vertical, Spacing.xs)
     }
   }
 
@@ -288,9 +288,9 @@ struct CleanupConfirmationSheetStore: View {
           .foregroundColor(.secondary)
         Spacer()
       }
-      .padding(8)
+      .padding(Spacing.sm)
       .background(Color.orange.opacity(0.1))
-      .cornerRadius(4)
+      .cornerRadius(Radius.sm)
 
       // Items preview
       VStack(alignment: .leading, spacing: 4) {
@@ -319,9 +319,9 @@ struct CleanupConfirmationSheetStore: View {
         }
         .frame(maxHeight: 150)
       }
-      .padding(8)
-      .background(Color(nsColor: .controlBackgroundColor))
-      .cornerRadius(4)
+      .padding(Spacing.sm)
+      .background(Color.cardBackground)
+      .cornerRadius(Radius.sm)
 
       Divider()
 

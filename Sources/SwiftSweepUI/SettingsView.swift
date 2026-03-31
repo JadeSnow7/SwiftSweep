@@ -14,7 +14,7 @@ struct SettingsView: View {
 
   var body: some View {
     ScrollView {
-      VStack(alignment: .leading, spacing: 24) {
+      VStack(alignment: .leading, spacing: Spacing.xxl) {
         // General Settings
         SettingsSection(title: "General", icon: "gear") {
           Picker("Language", selection: $languageManager.currentLanguage) {
@@ -176,24 +176,24 @@ struct SettingsView: View {
     case .enabled:
       Text("Enabled")
         .foregroundColor(.green)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
         .background(Color.green.opacity(0.1))
-        .cornerRadius(6)
+        .cornerRadius(Radius.sm)
     case .requiresApproval:
       Text("Needs Approval")
         .foregroundColor(.orange)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
         .background(Color.orange.opacity(0.1))
-        .cornerRadius(6)
+        .cornerRadius(Radius.sm)
     case .notRegistered, .notFound:
       Text("Not Installed")
         .foregroundColor(.secondary)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
         .background(Color.gray.opacity(0.1))
-        .cornerRadius(6)
+        .cornerRadius(Radius.sm)
     }
   }
 
@@ -282,8 +282,8 @@ struct SettingsSection<Content: View>: View {
       }
       .padding()
       .frame(maxWidth: .infinity, alignment: .leading)
-      .background(Color(nsColor: .controlBackgroundColor))
-      .cornerRadius(10)
+      .background(Color.cardBackground)
+      .cornerRadius(Radius.md)
       .padding(.horizontal)
     }
   }

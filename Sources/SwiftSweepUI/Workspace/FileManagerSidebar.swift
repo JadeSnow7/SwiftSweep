@@ -26,8 +26,7 @@ struct FileManagerSidebar: View {
         }
       }
     }
-    .listStyle(.sidebar)
-    .navigationTitle("Locations")
+    .listStyle(.plain)
   }
 
   private func sidebarButton(url: URL, icon: String) -> some View {

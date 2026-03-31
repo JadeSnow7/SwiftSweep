@@ -34,17 +34,17 @@ struct FileManagerPaneView: View {
 
   private var tabBar: some View {
     ScrollView(.horizontal, showsIndicators: false) {
-      HStack(spacing: 8) {
+      HStack(spacing: Spacing.sm) {
         ForEach(paneState.tabs) { tab in
-          HStack(spacing: 6) {
+          HStack(spacing: Spacing.sm) {
             Button {
               onSelectTab(tab.id)
             } label: {
               Text(tab.title.isEmpty ? tab.locationURL.path : tab.title)
                 .lineLimit(1)
                 .font(.caption)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.horizontal, Spacing.sm)
+                .padding(.vertical, Spacing.xs)
                 .background(tab.id == paneState.selectedTabID ? Color.accentColor.opacity(0.2) : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             }
@@ -67,12 +67,12 @@ struct FileManagerPaneView: View {
         } label: {
           Image(systemName: "plus")
             .font(.caption)
-            .padding(4)
+            .padding(Spacing.xs)
         }
         .buttonStyle(.borderless)
       }
-      .padding(.horizontal, 10)
-      .padding(.vertical, 6)
+      .padding(.horizontal, Spacing.md)
+      .padding(.vertical, Spacing.sm)
     }
   }
 
@@ -108,8 +108,8 @@ struct FileManagerPaneView: View {
       }
       .menuStyle(.borderlessButton)
     }
-    .padding(.horizontal, 10)
-    .padding(.vertical, 6)
+    .padding(.horizontal, Spacing.md)
+    .padding(.vertical, Spacing.sm)
   }
 
   private var fileList: some View {
@@ -131,7 +131,7 @@ struct FileManagerPaneView: View {
             }
           )
         ) { item in
-          HStack(spacing: 8) {
+          HStack(spacing: Spacing.sm) {
             Image(systemName: icon(for: item))
               .foregroundStyle(item.kind == .folder ? .blue : .secondary)
               .frame(width: 18)

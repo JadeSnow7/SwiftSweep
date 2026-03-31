@@ -21,7 +21,7 @@ struct OptimizeView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: Spacing.xl) {
                 // Info banner explaining password prompt
                 HStack {
                     Image(systemName: "info.circle.fill")
@@ -34,7 +34,7 @@ struct OptimizeView: View {
                 .padding(.horizontal)
 
                 // Optimization Tasks
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 280))], spacing: 16) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 280))], spacing: Spacing.lg) {
                     ForEach(viewModel.tasks) { task in
                         OptimizationCard(task: task, viewModel: viewModel)
                     }

@@ -33,9 +33,9 @@ struct StatusView: View {
 
   var body: some View {
     ScrollView {
-      VStack(alignment: .leading, spacing: 20) {
+      VStack(alignment: .leading, spacing: Spacing.xl) {
         // Metrics Cards
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: Spacing.xl) {
           // CPU Card - Clickable
           MetricCard(
             title: "CPU",
@@ -277,7 +277,7 @@ struct MetricCard: View {
   @Environment(\.motionConfig) private var motion
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
+    VStack(alignment: .leading, spacing: Spacing.sm) {
       HStack {
         Image(systemName: icon)
           .foregroundColor(color)
@@ -310,7 +310,7 @@ struct MetricCard: View {
     .frame(height: 110)
     .background(
       RoundedRectangle(cornerRadius: 12)
-        .fill(Color(nsColor: .controlBackgroundColor))
+        .fill(Color.cardBackground)
         .shadow(
           color: .black.opacity(isHovered ? 0.12 : 0.05),
           radius: isHovered ? 8 : 2,

@@ -39,9 +39,9 @@ struct UninstallView: View {
         TextField("Search apps...", text: $searchText)
           .textFieldStyle(.plain)
       }
-      .padding(8)
-      .background(Color(nsColor: .controlBackgroundColor))
-      .cornerRadius(8)
+      .padding(Spacing.sm)
+      .background(Color.cardBackground)
+      .cornerRadius(Radius.sm)
       .padding(.horizontal)
 
       Divider()
@@ -185,7 +185,7 @@ struct AppRow: View {
           .foregroundColor(.secondary)
       }
     }
-    .padding(.vertical, 4)
+    .padding(.vertical, Spacing.xs)
     .contentShape(Rectangle())
   }
 
@@ -237,7 +237,7 @@ struct AppDetailPanel: View {
 
       if !residuals.isEmpty {
         ScrollView(.horizontal, showsIndicators: false) {
-          HStack(spacing: 8) {
+          HStack(spacing: Spacing.sm) {
             ResidualBadge(label: "App", size: app.size, color: .blue)
 
             // Simplified grouping for badge display
@@ -257,7 +257,7 @@ struct AppDetailPanel: View {
       }
     }
     .padding()
-    .background(Color(nsColor: .controlBackgroundColor))
+    .background(Color.cardBackground)
   }
 
   func colorForType(_ type: UninstallEngine.ResidualType) -> Color {
@@ -286,10 +286,10 @@ struct ResidualBadge: View {
         .font(.caption2)
         .foregroundColor(.secondary)
     }
-    .padding(.horizontal, 12)
-    .padding(.vertical, 6)
+    .padding(.horizontal, Spacing.md)
+    .padding(.vertical, Spacing.sm)
     .background(color.opacity(0.15))
-    .cornerRadius(8)
+    .cornerRadius(Radius.sm)
   }
 }
 
@@ -304,11 +304,11 @@ struct UninstallConfirmationSheet: View {
   var body: some View {
     VStack(spacing: 0) {
       // Header
-      HStack(spacing: 12) {
+      HStack(spacing: Spacing.md) {
         Image(nsImage: NSWorkspace.shared.icon(forFile: plan.app.path))
           .resizable()
           .frame(width: 44, height: 44)
-          .cornerRadius(8)
+          .cornerRadius(Radius.sm)
 
         VStack(alignment: .leading, spacing: 4) {
           Text("Confirm Uninstall")

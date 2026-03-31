@@ -569,7 +569,7 @@ struct RecommendationCard: View {
       // Evidence tags
       if !recommendation.evidence.isEmpty {
         ScrollView(.horizontal, showsIndicators: false) {
-          HStack(spacing: 8) {
+          HStack(spacing: Spacing.sm) {
             ForEach(recommendation.evidence.prefix(4), id: \.label) { evidence in
               EvidenceTag(evidence: evidence)
             }
@@ -608,9 +608,9 @@ struct RecommendationCard: View {
     }
     .padding()
     .background(cardBackground)
-    .cornerRadius(12)
+    .cornerRadius(Radius.lg)
     .overlay(
-      RoundedRectangle(cornerRadius: 12)
+      RoundedRectangle(cornerRadius: Radius.lg)
         .stroke(borderColor, lineWidth: 1)
     )
   }
@@ -701,10 +701,10 @@ struct EvidenceTag: View {
       Text("\(evidence.label): \(evidence.value)")
         .font(.caption)
     }
-    .padding(.horizontal, 8)
-    .padding(.vertical, 4)
+    .padding(.horizontal, Spacing.sm)
+    .padding(.vertical, Spacing.xs)
     .background(Color.secondary.opacity(0.1))
-    .cornerRadius(6)
+    .cornerRadius(Radius.sm)
   }
 
   private var evidenceIcon: some View {
