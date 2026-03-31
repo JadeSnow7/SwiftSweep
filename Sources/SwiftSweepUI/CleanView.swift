@@ -14,13 +14,6 @@ struct CleanView: View {
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 20) {
-        Text("System Cleanup")
-          .font(.largeTitle)
-          .fontWeight(.bold)
-
-        Text("Remove junk files, caches, and temporary data to free up disk space.")
-          .foregroundColor(.secondary)
-
         // Scan Control
         if state.phase == .idle {
           Button(action: {
@@ -52,9 +45,7 @@ struct CleanView: View {
             IndeterminateProgressBar(color: .blue, height: 4)
               .padding(.top, 4)
           }
-          .padding()
-          .background(Color(nsColor: .controlBackgroundColor))
-          .cornerRadius(10)
+          .cardStyle()
         }
 
         // Error State
@@ -74,9 +65,7 @@ struct CleanView: View {
             }
             .buttonStyle(.borderedProminent)
           }
-          .padding()
-          .background(Color(nsColor: .controlBackgroundColor))
-          .cornerRadius(10)
+          .cardStyle()
         }
 
         // Results
@@ -147,18 +136,14 @@ struct CleanView: View {
             }
             .padding()
           }
-          .background(Color(nsColor: .controlBackgroundColor))
-          .cornerRadius(10)
-          .overlay(
-            RoundedRectangle(cornerRadius: 10)
-              .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-          )
+          .cardStyle()
         }
 
         Spacer()
       }
       .padding()
     }
+    .navigationTitle("System Cleanup")
     .sheet(isPresented: $showingConfirmation) {
       CleanupConfirmationSheetStore(
         onConfirm: {
