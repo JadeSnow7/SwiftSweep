@@ -34,38 +34,6 @@ struct StatusView: View {
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 20) {
-        // Header
-        HStack {
-          VStack(alignment: .leading) {
-            Text("System Status")
-              .font(.largeTitle)
-              .fontWeight(.bold)
-            Text("Real-time monitoring")
-              .font(.subheadline)
-              .foregroundColor(.secondary)
-          }
-
-          Spacer()
-
-          Button(action: { showDiagnosticsSheet = true }) {
-            HStack(spacing: 4) {
-              Image(systemName: "stethoscope")
-              Text(L10n.Status.appleDiagnostics.localized)
-            }
-            .font(.subheadline)
-          }
-          .animatedButton()
-
-          Button(action: { store.dispatch(.status(.startMonitoring)) }) {
-            Image(systemName: "arrow.clockwise")
-              .font(.title3)
-          }
-          .help(L10n.Common.refresh.localized)
-          .animatedButton()
-          .disabled(store.state.status.phase == .monitoring)
-        }
-        .padding(.bottom)
-
         // Metrics Cards
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 20) {
           // CPU Card - Clickable
@@ -154,6 +122,20 @@ struct StatusView: View {
         Spacer()
       }
       .padding()
+    }
+    .navigationTitle("System Status")
+    .toolbar {
+      ToolbarItemGroup(placement: .primaryAction) {
+        Button(action: { showDiagnosticsSheet = true }) {
+          Label(L10n.Status.appleDiagnostics.localized, systemImage: "stethoscope")
+        }
+
+        Button(action: { store.dispatch(.status(.startMonitoring)) }) {
+          Label(L10n.Common.refresh.localized, systemImage: "arrow.clockwise")
+        }
+        .disabled(store.state.status.phase == .monitoring)
+        .help(L10n.Common.refresh.localized)
+      }
     }
     .onAppear {
       store.dispatch(.status(.startMonitoring))
