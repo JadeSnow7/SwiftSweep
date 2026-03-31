@@ -22,24 +22,6 @@ struct OptimizeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                // Header
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text("System Optimizer")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                        Text("Maintain and optimize your Mac")
-                            .foregroundColor(.secondary)
-                    }
-                    Spacer()
-
-                    Button(action: { viewModel.runAll() }) {
-                        Label("Run All", systemImage: "bolt.fill")
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-                .padding()
-
                 // Info banner explaining password prompt
                 HStack {
                     Image(systemName: "info.circle.fill")
@@ -61,6 +43,15 @@ struct OptimizeView: View {
 
                 Spacer()
             }
+        }
+        .navigationTitle("System Optimizer")
+        .toolbar {
+          ToolbarItem(placement: .primaryAction) {
+            Button(action: { viewModel.runAll() }) {
+              Label("Run All", systemImage: "bolt.fill")
+            }
+            .buttonStyle(.borderedProminent)
+          }
         }
     }
 }
@@ -117,9 +108,7 @@ struct OptimizationCard: View {
                 .buttonStyle(.bordered)
             }
         }
-        .padding()
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(12)
+        .cardStyle()
     }
 }
 
