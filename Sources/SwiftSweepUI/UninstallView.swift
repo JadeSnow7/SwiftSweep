@@ -32,34 +32,6 @@ struct UninstallView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      // Header
-      HStack {
-        VStack(alignment: .leading) {
-          Text("App Uninstaller")
-            .font(.largeTitle)
-            .fontWeight(.bold)
-          HStack(spacing: 8) {
-            Text("Remove apps and their residual files")
-              .foregroundColor(.secondary)
-
-            if state.phase == .scanning {
-              ProgressView()
-                .scaleEffect(0.6)
-            }
-          }
-        }
-        Spacer()
-
-        Button(action: {
-          store.dispatch(.uninstall(.startScan))
-        }) {
-          Image(systemName: "arrow.clockwise")
-        }
-        .buttonStyle(.borderless)
-        .disabled(state.phase == .scanning)
-      }
-      .padding()
-
       // Search
       HStack {
         Image(systemName: "magnifyingglass")
@@ -105,6 +77,20 @@ struct UninstallView: View {
       if let selected = state.selectedApp {
         Divider()
         AppDetailPanel(app: selected, residuals: state.residuals)
+      }
+    }
+    .navigationTitle("App Uninstaller")
+    .toolbar {
+      ToolbarItemGroup(placement: .primaryAction) {
+        if state.phase == .scanning {
+          ProgressView()
+            .scaleEffect(0.8)
+        }
+
+        Button(action: { store.dispatch(.uninstall(.startScan)) }) {
+          Label("Refresh", systemImage: "arrow.clockwise")
+        }
+        .disabled(state.phase == .scanning)
       }
     }
     .sheet(
