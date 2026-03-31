@@ -17,10 +17,25 @@ struct InsightsView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      // Header
-      headerView
-
-      Divider()
+      // Cache-age + savings indicator
+      if store.state.insights.isCacheHit, let age = store.state.insights.cacheAge {
+        HStack {
+          Image(systemName: "clock")
+            .font(.caption)
+            .foregroundStyle(.orange)
+          Text("Cached \(Int(age / 60))m ago")
+            .font(.caption)
+            .foregroundStyle(.orange)
+          Spacer()
+          if let total = totalPotentialSavings {
+            Text("\(formatBytes(total)) potential savings")
+              .font(.caption.bold())
+              .foregroundStyle(.green)
+          }
+        }
+        .padding(.horizontal, Spacing.lg)
+        .padding(.top, Spacing.sm)
+      }
 
       // Content
       if store.state.insights.phase == .loading {
@@ -34,6 +49,43 @@ struct InsightsView: View {
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .navigationTitle("Smart Insights")
+    .toolbar {
+      ToolbarItemGroup(placement: .primaryAction) {
+        Picker("Category", selection: Binding(
+          get: { store.state.insights.selectedCategory },
+          set: { store.dispatch(.insights(.selectCategory($0))) }
+        )) {
+          Text("All").tag(nil as RuleCategory?)
+          ForEach(RuleCategory.allCases, id: \.self) { category in
+            Label(category.rawValue, systemImage: category.icon)
+              .tag(category as RuleCategory?)
+          }
+        }
+        .pickerStyle(.menu)
+        .frame(width: 140)
+
+        if hasCleanableRecommendations {
+          Button(action: { showBatchCleanup = true }) {
+            Label("Clean All", systemImage: "trash")
+          }
+          .buttonStyle(.borderedProminent)
+          .tint(.orange)
+          .disabled(store.state.insights.phase == .loading)
+        }
+
+        Button(action: { Task { await loadRecommendations(forceRefresh: false) } }) {
+          Label("Refresh", systemImage: "arrow.clockwise")
+        }
+        .disabled(store.state.insights.phase == .loading)
+
+        Button(action: { Task { await loadRecommendations(forceRefresh: true) } }) {
+          Label("Force Refresh", systemImage: "arrow.clockwise.circle")
+        }
+        .disabled(store.state.insights.phase == .loading)
+        .help("Bypass cache and rescan everything")
+      }
+    }
     .onAppear {
       if store.state.insights.phase == .idle {
         Task { await loadRecommendations(forceRefresh: false) }
@@ -84,80 +136,6 @@ struct InsightsView: View {
     return recommendations.filter { rec in
       RuleSettings.category(for: rec.id) == category
     }
-  }
-
-  // MARK: - Header
-
-  private var headerView: some View {
-    HStack {
-      VStack(alignment: .leading, spacing: 4) {
-        Text("Smart Insights")
-          .font(.title.bold())
-        HStack(spacing: 4) {
-          Text("Personalized recommendations for your Mac")
-            .font(.subheadline)
-            .foregroundColor(.secondary)
-
-          // Cache indicator
-          if store.state.insights.isCacheHit, let age = store.state.insights.cacheAge {
-            Text("• cached \(Int(age / 60))m ago")
-              .font(.caption)
-              .foregroundColor(.orange)
-          }
-        }
-      }
-
-      Spacer()
-
-      // Category filter
-      Picker("Category", selection: Binding(
-        get: { store.state.insights.selectedCategory },
-        set: { store.dispatch(.insights(.selectCategory($0))) }
-      )) {
-        Text("All").tag(nil as RuleCategory?)
-        ForEach(RuleCategory.allCases, id: \.self) { category in
-          Label(category.rawValue, systemImage: category.icon)
-            .tag(category as RuleCategory?)
-        }
-      }
-      .pickerStyle(.menu)
-      .frame(width: 140)
-
-      if let total = totalPotentialSavings {
-        VStack(alignment: .trailing) {
-          Text(formatBytes(total))
-            .font(.title2.bold())
-            .foregroundColor(.green)
-          Text("potential savings")
-            .font(.caption)
-            .foregroundColor(.secondary)
-        }
-        .padding(.trailing)
-      }
-
-      // Clean All button
-      if hasCleanableRecommendations {
-        Button(action: { showBatchCleanup = true }) {
-          Label("Clean All", systemImage: "trash")
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(.orange)
-        .disabled(store.state.insights.phase == .loading)
-      }
-
-      // Refresh buttons
-      Button(action: { Task { await loadRecommendations(forceRefresh: false) } }) {
-        Label("Refresh", systemImage: "arrow.clockwise")
-      }
-      .disabled(store.state.insights.phase == .loading)
-
-      Button(action: { Task { await loadRecommendations(forceRefresh: true) } }) {
-        Label("Force Refresh", systemImage: "arrow.clockwise.circle")
-      }
-      .disabled(store.state.insights.phase == .loading)
-      .help("Bypass cache and rescan everything")
-    }
-    .padding()
   }
 
   private var totalPotentialSavings: Int64? {
