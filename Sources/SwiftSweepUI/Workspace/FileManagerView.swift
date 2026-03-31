@@ -12,6 +12,7 @@ public struct FileManagerView: View {
 
   @EnvironmentObject private var store: AppStore
   @State private var mode: Mode = .browser
+  @State private var pathInput: String = ""
 
   private var state: WorkspaceFileManagerState {
     store.state.workspaceFileManager
@@ -21,57 +22,33 @@ public struct FileManagerView: View {
 
   public var body: some View {
     VStack(spacing: 0) {
-      FileManagerToolbar(
-        currentLocation: activeTab?.locationURL,
-        isDualPane: state.isDualPane,
-        onToggleDualPane: {
-          store.dispatch(.workspaceFileManager(.toggleDualPane))
-        },
-        onGoToPath: { url in
-          mode = .browser
-          store.dispatch(.workspaceFileManager(.openLocation(url, pane: state.activePane)))
-        },
-        onRefresh: {
-          if mode == .spaceAnalysis {
-            return
+      // Path bar — stays in content so layout is unambiguous
+      HStack {
+        TextField("Path", text: $pathInput)
+          .textFieldStyle(.roundedBorder)
+          .onSubmit {
+            let url = URL(fileURLWithPath: pathInput)
+            mode = .browser
+            store.dispatch(.workspaceFileManager(.openLocation(url, pane: state.activePane)))
           }
-
-          if let location = activeTab?.locationURL {
-            store.dispatch(.workspaceFileManager(.openLocation(location, pane: state.activePane)))
-          }
-          store.dispatch(.workspaceFileManager(.refreshVolumes))
-        },
-        onShowQueue: {
-          store.dispatch(.workspaceFileManager(.showQueueSheet(true)))
-        },
-        onNewTab: {
-          mode = .browser
-          store.dispatch(.workspaceFileManager(.createTab(pane: state.activePane, location: nil)))
-        },
-        onCopy: {
-          performTransfer(type: .copy)
-        },
-        onMove: {
-          performTransfer(type: .move)
-        },
-        onRename: {
-          performRename()
-        },
-        onTrash: {
-          performTrash()
-        }
-      )
+      }
+      .padding(.horizontal, Spacing.lg)
+      .padding(.vertical, Spacing.sm)
+      .onAppear { pathInput = activeTab?.locationURL.path ?? "" }
+      .onChange(of: activeTab?.locationURL.path) { newPath in
+        pathInput = newPath ?? ""
+      }
 
       Divider()
 
       Picker("", selection: $mode) {
-        ForEach(Mode.allCases, id: \.self) { mode in
-          Text(mode.rawValue).tag(mode)
+        ForEach(Mode.allCases, id: \.self) { m in
+          Text(m.rawValue).tag(m)
         }
       }
       .pickerStyle(.segmented)
-      .padding(.horizontal, 10)
-      .padding(.vertical, 8)
+      .padding(.horizontal, Spacing.lg)
+      .padding(.vertical, Spacing.sm)
 
       if case .error(let message) = state.phase {
         HStack {
@@ -82,8 +59,8 @@ public struct FileManagerView: View {
             .lineLimit(1)
           Spacer()
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.horizontal, Spacing.lg)
+        .padding(.vertical, Spacing.sm)
         Divider()
       }
 
@@ -116,6 +93,59 @@ public struct FileManagerView: View {
         }
       }
     }
+    .navigationTitle("File Manager")
+    .toolbar {
+      ToolbarItemGroup(placement: .primaryAction) {
+        Button {
+          if mode == .browser, let location = activeTab?.locationURL {
+            store.dispatch(.workspaceFileManager(.openLocation(location, pane: state.activePane)))
+          }
+          store.dispatch(.workspaceFileManager(.refreshVolumes))
+        } label: {
+          Label("Refresh", systemImage: "arrow.clockwise")
+        }
+
+        Button {
+          mode = .browser
+          store.dispatch(.workspaceFileManager(.toggleDualPane))
+        } label: {
+          Label(state.isDualPane ? "Single Pane" : "Dual Pane", systemImage: "rectangle.split.2x1")
+        }
+
+        Button {
+          mode = .browser
+          store.dispatch(.workspaceFileManager(.createTab(pane: state.activePane, location: nil)))
+        } label: {
+          Label("New Tab", systemImage: "plus.rectangle.on.rectangle")
+        }
+
+        Divider()
+
+        Button { performTransfer(type: .copy) } label: {
+          Label("Copy", systemImage: "doc.on.doc")
+        }
+
+        Button { performTransfer(type: .move) } label: {
+          Label("Move", systemImage: "arrow.right.doc.on.clipboard")
+        }
+
+        Button { performRename() } label: {
+          Label("Rename", systemImage: "pencil")
+        }
+
+        Button(role: .destructive) { performTrash() } label: {
+          Label("Trash", systemImage: "trash")
+        }
+      }
+
+      ToolbarItem(placement: .automatic) {
+        Button {
+          store.dispatch(.workspaceFileManager(.showQueueSheet(true)))
+        } label: {
+          Label("Queue", systemImage: "list.bullet.rectangle")
+        }
+      }
+    }
     .onAppear {
       store.dispatch(.workspaceFileManager(.boot))
     }
@@ -127,15 +157,9 @@ public struct FileManagerView: View {
     ) {
       FileOperationQueueSheet(
         items: state.queueItems,
-        onPause: { id in
-          store.dispatch(.workspaceFileManager(.pauseOperation(id)))
-        },
-        onResume: { id in
-          store.dispatch(.workspaceFileManager(.resumeOperation(id)))
-        },
-        onCancel: { id in
-          store.dispatch(.workspaceFileManager(.cancelOperation(id)))
-        }
+        onPause: { id in store.dispatch(.workspaceFileManager(.pauseOperation(id))) },
+        onResume: { id in store.dispatch(.workspaceFileManager(.resumeOperation(id))) },
+        onCancel: { id in store.dispatch(.workspaceFileManager(.cancelOperation(id))) }
       )
     }
   }
