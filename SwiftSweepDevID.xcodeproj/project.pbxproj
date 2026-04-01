@@ -269,7 +269,6 @@
 		E1EE20F6CF9033CFF47DD3C0 /* ProcessMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24BE9BE7C3F4F7AAAE379BE0 /* ProcessMonitor.swift */; };
 		E325FBEAE9064E3B87FD91C5 /* Recommendation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 568DBC900A688E1C6F8682D1 /* Recommendation.swift */; };
 		E42A61DA241AF6F994A51C50 /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CC353997D7F5DCB0FEF9E68 /* LauncherView.swift */; };
-		E4EA6C489405184887375676 /* FileManagerToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB43B17DEF44D1BCAFED93F4 /* FileManagerToolbar.swift */; };
 		E65F958BD4FE35AE1F111CA7 /* CleanupEffects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AB46ED086442B93DC8AE619 /* CleanupEffects.swift */; };
 		E809A527809C0657E3D7B306 /* GitPackFixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6252C119655CFBC0EDE09149 /* GitPackFixer.swift */; };
 		E9153A4925B914A9AA4453D3 /* SysAIBoxHealthChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F386ABB60AC3309AEB7C8666 /* SysAIBoxHealthChecker.swift */; };
@@ -468,7 +467,6 @@
 		E8314B1EB70F264DF4B52F44 /* IOEventBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOEventBuffer.swift; sourceTree = "<group>"; };
 		E9FA3BA4B0F24B34F8C3F094 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		EAB74F4C3DA4BF3820F3B956 /* WaveProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveProgressBar.swift; sourceTree = "<group>"; };
-		EB43B17DEF44D1BCAFED93F4 /* FileManagerToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManagerToolbar.swift; sourceTree = "<group>"; };
 		EC414EA68F888C69D022A902 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		ECE3EF05AF824AC7F787C3E0 /* PulseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseView.swift; sourceTree = "<group>"; };
 		ECF4605B3CD6D4056967E0B2 /* swiftsweep */ = {isa = PBXFileReference; includeInIndex = 0; path = swiftsweep; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -712,8 +710,7 @@
 				AF5F9937F296D536CA4B46E8 /* DocumentCenterView.swift */,
 				ABEF3F27642F0B8F71ACF841 /* FileManagerPaneView.swift */,
 				A851A166A9E8A30B78C45DB6 /* FileManagerSidebar.swift */,
-				EB43B17DEF44D1BCAFED93F4 /* FileManagerToolbar.swift */,
-				7B4D14AEDCA4C787F5779000 /* FileManagerView.swift */,
+					7B4D14AEDCA4C787F5779000 /* FileManagerView.swift */,
 				A7CCD586FB7E22B3E80A6D1C /* FileOperationQueueSheet.swift */,
 				2CC353997D7F5DCB0FEF9E68 /* LauncherView.swift */,
 				206A34B363389313520C9CDF /* MediaManagerView.swift */,
@@ -1378,8 +1375,7 @@
 				A6418288F0B7ED9F53DFD915 /* FSEventsTracer.swift in Sources */,
 				8153E6282676CB1778EA3921 /* FileManagerPaneView.swift in Sources */,
 				9E705C94D62C92774CCC4DA1 /* FileManagerSidebar.swift in Sources */,
-				E4EA6C489405184887375676 /* FileManagerToolbar.swift in Sources */,
-				4225254BF5A6F43F8B7E5E1D /* FileManagerView.swift in Sources */,
+					4225254BF5A6F43F8B7E5E1D /* FileManagerView.swift in Sources */,
 				1F0AECAA088D9756F81B3641 /* FileOperationQueue.swift in Sources */,
 				0FB479F3B537FA0354CEC3DE /* FileOperationQueueSheet.swift in Sources */,
 				D58D90BD611E8E4838820B9D /* FileTreeView.swift in Sources */,
