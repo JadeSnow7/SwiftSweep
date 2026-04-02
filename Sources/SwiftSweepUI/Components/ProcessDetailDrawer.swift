@@ -12,6 +12,8 @@ struct ProcessDetailDrawer: View {
   let history: [ProcessSnapshot]  // 最近 5 次采样
   let onKill: () -> Void
   let onClose: () -> Void
+  var showsCloseButton = true
+  var embedded = false
 
   @Environment(\.motionConfig) private var motion
 
@@ -29,11 +31,13 @@ struct ProcessDetailDrawer: View {
 
         Spacer()
 
-        Button(action: onClose) {
-          Image(systemName: "xmark.circle.fill")
-            .foregroundColor(.secondary)
+        if showsCloseButton {
+          Button(action: onClose) {
+            Image(systemName: "xmark.circle.fill")
+              .foregroundColor(.secondary)
+          }
+          .buttonStyle(.borderless)
         }
-        .buttonStyle(.borderless)
       }
 
       Divider()
@@ -86,36 +90,41 @@ struct ProcessDetailDrawer: View {
 
       Divider()
 
-      // Quick Actions
+      VStack(alignment: .leading, spacing: 10) {
+        Text("Runtime I/O")
+          .font(.caption)
+          .foregroundColor(.secondary)
+
+        DetailStatRow(
+          title: "Network",
+          value: formatNetwork(process.networkBytesIn, process.networkBytesOut)
+        )
+
+        DetailStatRow(
+          title: "Disk I/O",
+          value: formatDiskIORate(process.diskReadRate, process.diskWriteRate)
+        )
+      }
+
+      Divider()
+
       HStack(spacing: 12) {
         Button(action: onKill) {
           Label("Force Quit", systemImage: "xmark.circle")
         }
         .buttonStyle(.borderedProminent)
         .tint(.red)
-
-        Button(action: {
-          // TODO: Implement pause (SIGSTOP)
-        }) {
-          Label("Pause", systemImage: "pause.circle")
-        }
-        .buttonStyle(.bordered)
-        .disabled(true)  // Placeholder
-
-        Button(action: {
-          // TODO: Implement resource limit
-        }) {
-          Label("Limit", systemImage: "gauge")
-        }
-        .buttonStyle(.bordered)
-        .disabled(true)  // Placeholder
       }
     }
     .padding()
-    .frame(width: 400)
-    .background(Color(nsColor: .controlBackgroundColor))
-    .cornerRadius(12)
-    .shadow(radius: 10)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Color.cardBackground)
+    .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+    .overlay(
+      RoundedRectangle(cornerRadius: Radius.lg)
+        .stroke(Color.borderSubtle, lineWidth: 1)
+    )
+    .shadow(radius: embedded ? 0 : 10)
   }
 
   private func cpuColor(_ usage: Double) -> Color {
@@ -152,6 +161,33 @@ struct ProcessDetailDrawer: View {
     }
     return String(format: "%.1f MB/s", mb)
   }
+
+  private func formatNetwork(_ bytesIn: Int64, _ bytesOut: Int64) -> String {
+    "Rx \(formatCompactBytes(bytesIn)) / Tx \(formatCompactBytes(bytesOut))"
+  }
+
+  private func formatDiskIORate(_ readRate: Double, _ writeRate: Double) -> String {
+    if readRate < 1 && writeRate < 1 {
+      return "–"
+    }
+    return "↓\(formatSpeed(readRate)) ↑\(formatSpeed(writeRate))"
+  }
+
+  private func formatCompactBytes(_ bytes: Int64) -> String {
+    let kb = Double(bytes) / 1024
+    if kb < 1 {
+      return "0K"
+    }
+    let mb = kb / 1024
+    if mb < 1 {
+      return String(format: "%.0fK", kb)
+    }
+    let gb = mb / 1024
+    if gb < 1 {
+      return String(format: "%.1fM", mb)
+    }
+    return String(format: "%.1fG", gb)
+  }
 }
 
 // MARK: - Metric Tile
@@ -182,6 +218,22 @@ struct MetricTile: View {
     .padding(10)
     .background(Color(nsColor: .textBackgroundColor))
     .cornerRadius(8)
+  }
+}
+
+private struct DetailStatRow: View {
+  let title: String
+  let value: String
+
+  var body: some View {
+    HStack {
+      Text(title)
+        .font(.caption)
+        .foregroundColor(.secondary)
+      Spacer()
+      Text(value)
+        .font(.system(.caption, design: .monospaced))
+    }
   }
 }
 

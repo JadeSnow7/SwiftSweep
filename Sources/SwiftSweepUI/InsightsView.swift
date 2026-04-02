@@ -54,7 +54,7 @@ struct InsightsView: View {
       ToolbarItemGroup(placement: .primaryAction) {
         Picker("Category", selection: Binding(
           get: { store.state.insights.selectedCategory },
-          set: { store.dispatch(.insights(.selectCategory($0))) }
+          set: { dispatchAfterUpdate(.insights(.selectCategory($0))) }
         )) {
           Text("All").tag(nil as RuleCategory?)
           ForEach(RuleCategory.allCases, id: \.self) { category in
@@ -93,12 +93,12 @@ struct InsightsView: View {
     }
     .sheet(item: Binding(
       get: { store.state.insights.selectedRecommendation },
-      set: { store.dispatch(.insights(.selectRecommendation($0))) }
+      set: { dispatchAfterUpdate(.insights(.selectRecommendation($0))) }
     )) { rec in
       ActionConfirmationSheet(
         recommendation: rec,
         onComplete: { result in
-          store.dispatch(.insights(.actionCompleted(result)))
+          dispatchAfterUpdate(.insights(.actionCompleted(result)))
           // Refresh after action
           Task { await loadRecommendations(forceRefresh: true) }
         }
@@ -106,7 +106,7 @@ struct InsightsView: View {
     }
     .alert(item: Binding(
       get: { store.state.insights.actionResult },
-      set: { _ in store.dispatch(.insights(.reset)) }
+      set: { _ in dispatchAfterUpdate(.insights(.reset)) }
     )) { result in
       Alert(
         title: Text(result.success ? "Success" : "Error"),
@@ -119,7 +119,7 @@ struct InsightsView: View {
         recommendations: cleanableRecommendations,
         isPresented: $showBatchCleanup,
         onComplete: { result in
-          store.dispatch(.insights(.actionCompleted(result)))
+          dispatchAfterUpdate(.insights(.actionCompleted(result)))
           Task { await loadRecommendations(forceRefresh: true) }
         }
       )
@@ -285,6 +285,12 @@ struct InsightsView: View {
     }
     let mb = Double(bytes) / 1_000_000
     return String(format: "%.0f MB", mb)
+  }
+
+  private func dispatchAfterUpdate(_ action: AppAction) {
+    Task { @MainActor in
+      store.dispatch(action)
+    }
   }
 }
 

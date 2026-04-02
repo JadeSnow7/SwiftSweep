@@ -122,6 +122,14 @@
 "process.list.title.memory" = "Memory Usage by Process";
 "process.list.title.network" = "Network Usage by Process";
 "process.list.title.io" = "Disk I/O by Process";
+"process.monitor.title" = "Process Monitor";
+"process.monitor.back" = "Back to Status";
+"process.summary.cpu" = "Review CPU-heavy processes and compare recent usage at a glance.";
+"process.summary.memory" = "Review memory-heavy processes and inspect live resource details.";
+"process.summary.network" = "Review network-heavy processes and inspect live resource details.";
+"process.summary.io" = "Review disk-intensive processes and inspect live resource details.";
+"process.details.empty.title" = "Select a process";
+"process.details.empty.body" = "Choose a row to inspect history, network activity, and disk I/O.";
 "process.loading" = "Loading processes...";
 "process.empty" = "No processes found";
 "process.column.name" = "Process Name";

@@ -26,8 +26,8 @@ struct LivePeripheralSnapshotProvider: PeripheralSnapshotProviding {
 
 struct StatusView: View {
   @Binding var selection: ContentView.NavigationItem?
+  @Binding var processMonitorMetric: ProcessListMetricType
   @EnvironmentObject var store: AppStore
-  @State private var showProcessSheet: ProcessListMetricType?
   @State private var showPeripheralsSheet = false
   @State private var showDiagnosticsSheet = false
 
@@ -45,7 +45,10 @@ struct StatusView: View {
             color: colorForUsage(store.state.status.cpuUsage / 100),
             progress: store.state.status.cpuUsage / 100
           )
-          .onTapGesture { showProcessSheet = .cpu }
+          .onTapGesture {
+            processMonitorMetric = .cpu
+            selection = .processMonitor
+          }
           .help("Click to view process CPU usage")
 
           // Memory Card - Clickable
@@ -57,7 +60,10 @@ struct StatusView: View {
             color: colorForUsage(store.state.status.memoryUsage),
             progress: store.state.status.memoryUsage
           )
-          .onTapGesture { showProcessSheet = .memory }
+          .onTapGesture {
+            processMonitorMetric = .memory
+            selection = .processMonitor
+          }
           .help("Click to view process memory usage")
 
           // Disk Card
@@ -142,9 +148,6 @@ struct StatusView: View {
     }
     .onDisappear {
       store.dispatch(.status(.stopMonitoring))
-    }
-    .sheet(item: $showProcessSheet) { metricType in
-      ProcessListSheet(metricType: metricType)
     }
     .sheet(isPresented: $showPeripheralsSheet) {
       PeripheralsSheet(snapshot: store.state.status.peripheralSnapshot)

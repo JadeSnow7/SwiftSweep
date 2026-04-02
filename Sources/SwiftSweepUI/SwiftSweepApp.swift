@@ -62,6 +62,7 @@ struct ContentView: View {
   @EnvironmentObject private var store: AppStore
   @State private var selection: NavigationItem? = .status
   @State private var uninstallTargetURL: URL?
+  @State private var processMonitorMetric: ProcessListMetricType = .cpu
   @AppStorage("PluginEnabled_com.swiftsweep.capcut") private var isCapCutEnabled = false
 
   enum NavigationItem: String, Hashable {
@@ -82,6 +83,7 @@ struct ContentView: View {
     case galaxy
     case snapshot
     case ioAnalyzer
+    case processMonitor
     case capCut
     case settings
   }
@@ -173,7 +175,7 @@ struct ContentView: View {
       Group {
         switch selection {
         case .status:
-          StatusView(selection: $selection)
+          StatusView(selection: $selection, processMonitorMetric: $processMonitorMetric)
         case .insights:
           InsightsView()
         case .clean:
@@ -237,6 +239,11 @@ struct ContentView: View {
           }
         case .ioAnalyzer:
           IOAnalyzerView()
+        case .processMonitor:
+          ProcessMonitorView(
+            selection: $selection,
+            selectedMetric: $processMonitorMetric
+          )
         case .capCut:
           Text("CapCut Cleaner Plugin")
         case .settings:

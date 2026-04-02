@@ -2,6 +2,18 @@
 
 All notable changes to SwiftSweep will be documented in this file.
 
+## [1.7.6] - 2026-04-02
+
+### Added
+- **Process Monitor**: Promoted process inspection into a dedicated navigation destination so CPU and Memory cards now drill into a full-screen monitor instead of a modal sheet
+- **Process Details**: Added inline process detail states plus live network and disk I/O summaries to make per-process investigation faster
+- **Tests**: Added `ProcessMonitorViewModelTests` to cover metric selection and selection retention across refreshes
+
+### Changed
+- **Process Monitor**: Refactored process loading, sorting, auto-refresh, and kill actions into a dedicated `ProcessMonitorViewModel` and `ProcessDataProviding` abstraction
+- **Localization**: Added dedicated process monitor title, summary, and empty-state strings in English and Simplified Chinese
+- **Build Metadata**: Aligned project and bundle version metadata with the 1.7.6 release
+
 ## [1.7.5] - 2026-03-30
 
 ### Fixed

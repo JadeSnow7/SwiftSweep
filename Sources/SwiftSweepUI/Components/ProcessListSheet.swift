@@ -6,7 +6,6 @@ import SwiftUI
 
 // MARK: - Metric Type
 
-/// 指标类型枚举
 public enum ProcessListMetricType: String, Identifiable, CaseIterable {
   case cpu = "CPU"
   case memory = "Memory"
@@ -15,12 +14,23 @@ public enum ProcessListMetricType: String, Identifiable, CaseIterable {
 
   public var id: String { rawValue }
 
+  static let primaryCases: [ProcessListMetricType] = [.cpu, .memory]
+
   var titleKey: String {
     switch self {
     case .cpu: return "process.list.title.cpu"
     case .memory: return "process.list.title.memory"
     case .network: return "process.list.title.network"
     case .io: return "process.list.title.io"
+    }
+  }
+
+  var summaryKey: String {
+    switch self {
+    case .cpu: return "process.summary.cpu"
+    case .memory: return "process.summary.memory"
+    case .network: return "process.summary.network"
+    case .io: return "process.summary.io"
     }
   }
 
@@ -43,44 +53,227 @@ public enum ProcessListMetricType: String, Identifiable, CaseIterable {
   }
 }
 
-// MARK: - Process List Sheet
+// MARK: - Provider
 
-/// 进程列表弹窗 - 显示系统进程的资源使用情况
-public struct ProcessListSheet: View {
-  let metricType: ProcessListMetricType
+protocol ProcessDataProviding: Sendable {
+  func getProcesses(sortBy: ProcessSortKey, limit: Int) async -> [SystemProcessInfo]
+  func killProcess(_ pid: pid_t) throws
+}
 
-  @StateObject private var viewModel = ProcessListViewModel()
-  @Environment(\.dismiss) private var dismiss
-  @State private var selectedProcess: SystemProcessInfo?  // For detail drawer
+struct LiveProcessDataProvider: ProcessDataProviding {
+  func getProcesses(sortBy: ProcessSortKey, limit: Int) async -> [SystemProcessInfo] {
+    await ProcessMonitor.shared.getProcesses(sortBy: sortBy, limit: limit)
+  }
 
-  public init(metricType: ProcessListMetricType) {
-    self.metricType = metricType
+  func killProcess(_ pid: pid_t) throws {
+    try ProcessMonitor.shared.killProcess(pid)
+  }
+}
+
+// MARK: - View Model
+
+@MainActor
+final class ProcessMonitorViewModel: ObservableObject {
+  @Published var processes: [SystemProcessInfo] = []
+  @Published var isLoading = false
+  @Published var sortKey: ProcessSortKey
+  @Published var selectedMetric: ProcessListMetricType
+  @Published var selectedProcess: SystemProcessInfo?
+
+  @Published var error: Error?
+  @Published var showedErrorAlert = false
+  @Published var processToKill: SystemProcessInfo?
+  @Published var showConfirmAlert = false
+
+  let availableSortKeys: [ProcessSortKey] = [.cpu, .memory, .name]
+
+  private let provider: any ProcessDataProviding
+  private let limit: Int
+  private var timer: Timer?
+  private var processHistory: [pid_t: [ProcessSnapshot]] = [:]
+  private let maxHistoryCount = 5
+
+  init(
+    initialMetric: ProcessListMetricType,
+    provider: any ProcessDataProviding = LiveProcessDataProvider(),
+    limit: Int = 30
+  ) {
+    self.selectedMetric = initialMetric
+    self.sortKey = initialMetric.sortKey
+    self.provider = provider
+    self.limit = limit
+  }
+
+  var titleKey: String {
+    selectedMetric.titleKey
+  }
+
+  var summaryKey: String {
+    selectedMetric.summaryKey
+  }
+
+  func selectMetric(_ metric: ProcessListMetricType) {
+    guard selectedMetric != metric else { return }
+    selectedMetric = metric
+    sortKey = metric.sortKey
+    refresh()
+  }
+
+  func updateSortKey(_ sortKey: ProcessSortKey) {
+    guard self.sortKey != sortKey else { return }
+    self.sortKey = sortKey
+    refresh()
+  }
+
+  func selectProcess(_ process: SystemProcessInfo) {
+    selectedProcess = process
+  }
+
+  func clearSelection() {
+    selectedProcess = nil
+  }
+
+  func refreshForTesting() async {
+    await runRefresh()
+  }
+
+  func refresh() {
+    Task {
+      await runRefresh()
+    }
+  }
+
+  func startAutoRefresh() {
+    refresh()
+    timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+      Task { @MainActor [weak self] in
+        self?.refresh()
+      }
+    }
+  }
+
+  func stopAutoRefresh() {
+    timer?.invalidate()
+    timer = nil
+  }
+
+  func confirmKill(_ process: SystemProcessInfo) {
+    processToKill = process
+    showConfirmAlert = true
+  }
+
+  func executeKill() {
+    guard let process = processToKill else { return }
+
+    Task {
+      do {
+        try provider.killProcess(process.id)
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        await runRefresh()
+      } catch {
+        self.error = error
+        self.showedErrorAlert = true
+      }
+
+      self.processToKill = nil
+    }
+  }
+
+  func getHistory(for pid: pid_t) -> [ProcessSnapshot] {
+    processHistory[pid] ?? []
+  }
+
+  private func runRefresh() async {
+    if processes.isEmpty {
+      isLoading = true
+    }
+
+    let result = await provider.getProcesses(sortBy: sortKey, limit: limit)
+    processes = result
+    isLoading = false
+
+    for process in result {
+      updateHistory(for: process)
+    }
+
+    guard let current = selectedProcess else { return }
+    selectedProcess = result.first(where: { $0.id == current.id })
+  }
+
+  private func updateHistory(for process: SystemProcessInfo) {
+    let snapshot = ProcessSnapshot(from: process)
+    var history = processHistory[process.id] ?? []
+    history.append(snapshot)
+
+    if history.count > maxHistoryCount {
+      history.removeFirst(history.count - maxHistoryCount)
+    }
+
+    processHistory[process.id] = history
+  }
+}
+
+// MARK: - Main View
+
+struct ProcessMonitorView: View {
+  @Binding var selection: ContentView.NavigationItem?
+  @Binding var selectedMetric: ProcessListMetricType
+  @StateObject private var viewModel: ProcessMonitorViewModel
+
+  init(
+    selection: Binding<ContentView.NavigationItem?>,
+    selectedMetric: Binding<ProcessListMetricType>
+  ) {
+    _selection = selection
+    _selectedMetric = selectedMetric
+    _viewModel = StateObject(
+      wrappedValue: ProcessMonitorViewModel(initialMetric: selectedMetric.wrappedValue)
+    )
   }
 
   public var body: some View {
-    VStack(spacing: 0) {
-      // Header
-      header
+    HStack(spacing: Spacing.xl) {
+      VStack(alignment: .leading, spacing: Spacing.lg) {
+        header
+        content
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-      Divider()
-
-      // Process Table
-      if viewModel.isLoading {
-        loadingView
-      } else if viewModel.processes.isEmpty {
-        emptyView
-      } else {
-        processTable
+      ProcessInspectorPane(
+        process: viewModel.selectedProcess,
+        history: inspectorHistory,
+        onKill: {
+          guard let process = viewModel.selectedProcess else { return }
+          viewModel.confirmKill(process)
+        },
+        onClearSelection: {
+          viewModel.clearSelection()
+        }
+      )
+      .frame(width: 360)
+    }
+    .padding()
+    .navigationTitle("process.monitor.title".localized)
+    .toolbar {
+      ToolbarItem(placement: .navigation) {
+        Button(action: { selection = .status }) {
+          Label("process.monitor.back".localized, systemImage: "chevron.left")
+        }
       }
     }
-    .frame(minWidth: 650, minHeight: 400)
-    .frame(maxWidth: 900, maxHeight: 600)
     .onAppear {
-      viewModel.load(sortBy: metricType.sortKey)
       viewModel.startAutoRefresh()
     }
     .onDisappear {
       viewModel.stopAutoRefresh()
+    }
+    .onChange(of: selectedMetric) { newValue in
+      viewModel.selectMetric(newValue)
+    }
+    .onChange(of: viewModel.selectedMetric) { newValue in
+      if selectedMetric != newValue {
+        selectedMetric = newValue
+      }
     }
     .alert(isPresented: $viewModel.showConfirmAlert) {
       Alert(
@@ -101,249 +294,214 @@ public struct ProcessListSheet: View {
         dismissButton: .default(Text("OK"))
       )
     }
-    .overlay(alignment: .trailing) {
-      // Detail Drawer Overlay
-      if let process = selectedProcess {
-        Color.black.opacity(0.3)
-          .ignoresSafeArea()
-          .onTapGesture {
-            selectedProcess = nil
-          }
-
-        ProcessDetailDrawer(
-          process: process,
-          history: viewModel.getHistory(for: process.id),
-          onKill: {
-            viewModel.confirmKill(process)
-            selectedProcess = nil
-          },
-          onClose: {
-            selectedProcess = nil
-          }
-        )
-        .transition(.move(edge: .trailing))
-        .zIndex(1)
-      }
-    }
-    .animation(.easeInOut(duration: 0.25), value: selectedProcess != nil)
   }
 
-  // MARK: - Subviews
+  private var inspectorHistory: [ProcessSnapshot] {
+    guard let process = viewModel.selectedProcess else { return [] }
+    return viewModel.getHistory(for: process.id)
+  }
 
   private var header: some View {
-    VStack(spacing: 12) {
-      HStack {
-        HStack(spacing: 8) {
-          Image(systemName: metricType.icon)
-            .font(.title2)
-            .foregroundColor(.accentColor)
-
-          // 使用 LocalizedStringKey 确保动态字符串能被本地化
-          Text(LocalizedStringKey(metricType.titleKey))
-            .font(.headline)
-        }
-
-        Spacer()
-
-        Button(action: { dismiss() }) {
-          Image(systemName: "xmark.circle.fill")
-            .foregroundColor(.secondary)
-            .font(.system(size: 20))
-        }
-        .buttonStyle(.borderless)
+    HStack(alignment: .top, spacing: Spacing.lg) {
+      VStack(alignment: .leading, spacing: Spacing.sm) {
+        Text("process.monitor.title".localized)
+          .font(.title2.weight(.semibold))
+        Text(LocalizedStringKey(viewModel.summaryKey))
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
       }
 
-      // 第二行放控制控件，避免拥挤
-      HStack {
-        Text("Sort by")
-          .font(.caption)
-          .foregroundColor(.secondary)
+      Spacer()
 
-        Picker("", selection: $viewModel.sortKey) {
-          ForEach(ProcessSortKey.allCases, id: \.self) { key in
-            Text(key.rawValue).tag(key)
-          }
+      Picker("", selection: Binding(
+        get: { viewModel.selectedMetric },
+        set: { metric in
+          selectedMetric = metric
         }
-        .pickerStyle(.segmented)
-        .frame(width: 240)
-        .onChange(of: viewModel.sortKey) { newValue in
-          viewModel.load(sortBy: newValue)
+      )) {
+        ForEach(ProcessListMetricType.primaryCases) { metric in
+          Text(metric.rawValue).tag(metric)
         }
+      }
+      .pickerStyle(.segmented)
+      .frame(width: 220)
 
-        Spacer()
+      Spacer()
 
-        Button(action: { viewModel.load(sortBy: viewModel.sortKey) }) {
-          Label("Refresh", systemImage: "arrow.clockwise")
-        }
-        .buttonStyle(.borderless)
-        .font(.caption)
+      Button(action: { viewModel.refresh() }) {
+        Label(L10n.Common.refresh.localized, systemImage: "arrow.clockwise")
       }
     }
-    .padding()
+    .cardStyle()
+  }
+
+  @ViewBuilder
+  private var content: some View {
+    if viewModel.isLoading {
+      loadingView
+    } else if viewModel.processes.isEmpty {
+      emptyView
+    } else {
+      processTable
+    }
   }
 
   private var loadingView: some View {
     VStack {
       Spacer()
       ProgressView()
-        .progressViewStyle(.circular)
       Text("process.loading")
         .font(.caption)
-        .foregroundColor(.secondary)
+        .foregroundStyle(.secondary)
         .padding(.top, 8)
       Spacer()
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .cardStyle()
   }
 
   private var emptyView: some View {
-    VStack {
+    VStack(spacing: Spacing.md) {
       Spacer()
       Image(systemName: "tray")
         .font(.largeTitle)
-        .foregroundColor(.secondary)
+        .foregroundStyle(.secondary)
       Text("process.empty")
         .font(.caption)
-        .foregroundColor(.secondary)
-        .padding(.top, 8)
+        .foregroundStyle(.secondary)
       Spacer()
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .cardStyle()
   }
 
   private var processTable: some View {
-    ScrollView {
-      LazyVStack(spacing: 0) {
-        // Table Header
-        tableHeader
+    VStack(spacing: 0) {
+      processTableHeader
+      Divider()
 
-        Divider()
+      ScrollView {
+        LazyVStack(spacing: 0) {
+          ForEach(viewModel.processes) { process in
+            ProcessTableRow(
+              process: process,
+              highlightedMetric: viewModel.selectedMetric,
+              isSelected: viewModel.selectedProcess?.id == process.id
+            )
+            .contentShape(Rectangle())
+            .onTapGesture {
+              viewModel.selectProcess(process)
+            }
 
-        // Process Rows
-        ForEach(viewModel.processes) { process in
-          ProcessRow(process: process, metricType: metricType) {
-            viewModel.confirmKill(process)
+            Divider()
           }
-          .contentShape(Rectangle())
-          .onTapGesture {
-            selectedProcess = process
-          }
-          Divider()
         }
       }
     }
+    .cardStyle()
   }
 
-  private var tableHeader: some View {
+  private var processTableHeader: some View {
     HStack(spacing: 12) {
-      Text("process.column.name")
-        .frame(maxWidth: .infinity, alignment: .leading)  // 自适应宽度
+      sortButton("process.column.name", key: .name, enabled: true)
+        .frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
 
       Text("process.column.pid")
-        .frame(width: 60, alignment: .trailing)
-
-      Text("process.column.user")
-        .frame(width: 80, alignment: .leading)
-
-      Text("process.column.cpu")
         .frame(width: 70, alignment: .trailing)
 
-      Text("process.column.memory")
-        .frame(width: 80, alignment: .trailing)
+      sortButton("process.column.cpu", key: .cpu, enabled: true)
+        .frame(width: 88, alignment: .trailing)
 
-      Text("process.column.network")
-        .frame(width: 120, alignment: .trailing)
+      sortButton("process.column.memory", key: .memory, enabled: true)
+        .frame(width: 110, alignment: .trailing)
 
-      Text("process.column.io")
-        .frame(width: 120, alignment: .trailing)
+      Text("process.column.user")
+        .frame(width: 120, alignment: .leading)
     }
     .font(.caption)
-    .foregroundColor(.secondary)
-    .padding(.horizontal)
-    .padding(.vertical, 8)
-    .background(Color(nsColor: .controlBackgroundColor))
+    .foregroundStyle(.secondary)
+    .padding(.horizontal, Spacing.lg)
+    .padding(.vertical, Spacing.md)
   }
 
+  @ViewBuilder
+  private func sortButton(_ titleKey: String, key: ProcessSortKey, enabled: Bool) -> some View {
+    if enabled {
+      Button(action: { viewModel.updateSortKey(key) }) {
+        HStack(spacing: 4) {
+          Text(LocalizedStringKey(titleKey))
+          if viewModel.sortKey == key {
+            Image(systemName: "arrow.down")
+              .font(.system(size: 10, weight: .semibold))
+          }
+        }
+      }
+      .buttonStyle(.plain)
+    } else {
+      Text(LocalizedStringKey(titleKey))
+    }
+  }
 }
 
-// MARK: - Process Row
+// MARK: - Table Row
 
-struct ProcessRow: View {
+private struct ProcessTableRow: View {
   let process: SystemProcessInfo
-  let metricType: ProcessListMetricType
-  let onKill: () -> Void
-
-  @State private var isHovered = false
+  let highlightedMetric: ProcessListMetricType
+  let isSelected: Bool
 
   var body: some View {
     HStack(spacing: 12) {
-      // Process Name
-      HStack(spacing: 6) {
+      HStack(spacing: 8) {
         Image(systemName: "terminal")
           .font(.caption)
-          .foregroundColor(.secondary)
+          .foregroundStyle(.secondary)
         Text(process.name)
           .lineLimit(1)
           .truncationMode(.middle)
       }
-      .frame(maxWidth: .infinity, alignment: .leading)  // 自适应宽度
+      .frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
 
-      // PID
       Text("\(process.id)")
         .font(.system(.body, design: .monospaced))
-        .foregroundColor(.secondary)
-        .frame(width: 60, alignment: .trailing)
+        .foregroundStyle(.secondary)
+        .frame(width: 70, alignment: .trailing)
 
-      // User
-      Text(process.user)
-        .font(.caption)
-        .foregroundColor(.secondary)
-        .frame(width: 80, alignment: .leading)
-        .lineLimit(1)
+      Text(String(format: "%.1f%%", process.cpuUsage))
+        .font(.system(.body, design: .monospaced))
+        .foregroundStyle(highlightedMetric == .cpu ? cpuColor(process.cpuUsage) : .primary)
+        .frame(width: 88, alignment: .trailing)
 
-      // CPU
-      HStack(spacing: 4) {
-        Text(String(format: "%.1f%%", process.cpuUsage))
-          .font(.system(.body, design: .monospaced))
-          .foregroundColor(metricType == .cpu ? cpuColor(process.cpuUsage) : .primary)
-      }
-      .frame(width: 70, alignment: .trailing)
-
-      // Memory
       Text(formatBytes(process.memoryUsage))
         .font(.system(.body, design: .monospaced))
-        .foregroundColor(metricType == .memory ? memoryColor(process.memoryUsage) : .primary)
-        .frame(width: 80, alignment: .trailing)
+        .foregroundStyle(highlightedMetric == .memory ? memoryColor(process.memoryUsage) : .primary)
+        .frame(width: 110, alignment: .trailing)
 
-      // Network
-      Text(formatNetwork(process.networkBytesIn, process.networkBytesOut))
-        .font(.system(.body, design: .monospaced))
-        .foregroundColor(metricType == .network ? .accentColor : .primary)
+      Text(process.user)
+        .font(.caption)
+        .foregroundStyle(.secondary)
         .lineLimit(1)
-        .frame(width: 120, alignment: .trailing)
-
-      // Disk I/O (show rates, not cumulative totals)
-      Text(formatDiskIORate(process.diskReadRate, process.diskWriteRate))
-        .font(.system(.body, design: .monospaced))
-        .foregroundColor(metricType == .io ? .accentColor : .primary)
-        .lineLimit(1)
-        .frame(width: 120, alignment: .trailing)
-
-      // Kill Button (Hover only)
-      if isHovered {
-        Button(action: onKill) {
-          Image(systemName: "xmark.circle.fill")
-            .foregroundColor(.secondary)
-        }
-        .buttonStyle(.borderless)
-        .frame(width: 20, alignment: .center)
-      } else {
-        Spacer()
-          .frame(width: 20)
-      }
+        .frame(width: 120, alignment: .leading)
     }
-    .padding(.horizontal)
-    .padding(.vertical, 8)
-    .background(isHovered ? Color(nsColor: .selectedControlColor).opacity(0.1) : Color.clear)
-    .onHover { isHovered = $0 }
+    .padding(.horizontal, Spacing.lg)
+    .padding(.vertical, Spacing.md)
+    .background(
+      RoundedRectangle(cornerRadius: Radius.md)
+        .fill(isSelected ? Color.accentColor.opacity(0.10) : Color.clear)
+    )
+    .padding(.horizontal, Spacing.sm)
+    .padding(.vertical, 2)
+  }
+
+  private func formatBytes(_ bytes: Int64) -> String {
+    let mb = Double(bytes) / (1024 * 1024)
+    if mb < 1 {
+      return String(format: "%.0f KB", Double(bytes) / 1024)
+    }
+    if mb > 1024 {
+      return String(format: "%.1f GB", mb / 1024)
+    }
+    return String(format: "%.1f MB", mb)
   }
 
   private func cpuColor(_ usage: Double) -> Color {
@@ -360,182 +518,50 @@ struct ProcessRow: View {
     if mb > 100 { return .yellow }
     return .green
   }
-
-  private func formatBytes(_ bytes: Int64) -> String {
-    let mb = Double(bytes) / (1024 * 1024)
-    if mb < 1 {
-      let kb = Double(bytes) / 1024
-      return String(format: "%.0f KB", kb)
-    }
-    if mb > 1024 {
-      let gb = mb / 1024
-      return String(format: "%.1f GB", gb)
-    }
-    return String(format: "%.1f MB", mb)
-  }
-
-  private func formatNetwork(_ bytesIn: Int64, _ bytesOut: Int64) -> String {
-    let inbound = formatCompactBytes(bytesIn)
-    let outbound = formatCompactBytes(bytesOut)
-    return "Rx \(inbound) / Tx \(outbound)"
-  }
-
-  private func formatDiskIO(_ readBytes: Int64, _ writeBytes: Int64) -> String {
-    let readText = formatCompactBytes(readBytes)
-    let writeText = formatCompactBytes(writeBytes)
-    return "R \(readText) / W \(writeText)"
-  }
-
-  private func formatDiskIORate(_ readRate: Double, _ writeRate: Double) -> String {
-    // Show "–" when no I/O activity
-    if readRate < 1 && writeRate < 1 {
-      return "–"
-    }
-    let readText = formatSpeed(readRate)
-    let writeText = formatSpeed(writeRate)
-    return "↓\(readText) ↑\(writeText)"
-  }
-
-  private func formatSpeed(_ bytesPerSec: Double) -> String {
-    if bytesPerSec < 1 {
-      return "0"
-    }
-    let kb = bytesPerSec / 1024
-    if kb < 1 {
-      return String(format: "%.0fB/s", bytesPerSec)
-    }
-    let mb = kb / 1024
-    if mb < 1 {
-      return String(format: "%.0fK/s", kb)
-    }
-    let gb = mb / 1024
-    if gb < 1 {
-      return String(format: "%.1fM/s", mb)
-    }
-    return String(format: "%.1fG/s", gb)
-  }
-
-  private func formatCompactBytes(_ bytes: Int64) -> String {
-    let kb = Double(bytes) / 1024
-    if kb < 1 {
-      return "0K"
-    }
-    let mb = kb / 1024
-    if mb < 1 {
-      return String(format: "%.0fK", kb)
-    }
-    let gb = mb / 1024
-    if gb < 1 {
-      return String(format: "%.1fM", mb)
-    }
-    return String(format: "%.1fG", gb)
-  }
 }
 
-// MARK: - View Model
+// MARK: - Inspector
 
-@MainActor
-class ProcessListViewModel: ObservableObject {
-  @Published var processes: [SystemProcessInfo] = []
-  @Published var isLoading = false
-  @Published var sortKey: ProcessSortKey = .cpu
+private struct ProcessInspectorPane: View {
+  let process: SystemProcessInfo?
+  let history: [ProcessSnapshot]
+  let onKill: () -> Void
+  let onClearSelection: () -> Void
 
-  @Published var error: Error?
-  @Published var showedErrorAlert = false
-
-  @Published var processToKill: SystemProcessInfo?
-  @Published var showConfirmAlert = false
-
-  private var timer: Timer?
-
-  // Process history: PID -> [最近 5 次快照]
-  private var processHistory: [pid_t: [ProcessSnapshot]] = [:]
-  private let maxHistoryCount = 5
-
-  func load(sortBy: ProcessSortKey) {
-    self.sortKey = sortBy
-    refresh()
-  }
-
-  func confirmKill(_ process: SystemProcessInfo) {
-    processToKill = process
-    showConfirmAlert = true
-  }
-
-  func executeKill() {
-    guard let process = processToKill else { return }
-
-    Task {
-      do {
-        try ProcessMonitor.shared.killProcess(process.id)
-        // 成功后延迟稍许刷新
-        try? await Task.sleep(nanoseconds: 200_000_000)
-        refresh()
-      } catch {
-        await MainActor.run {
-          self.error = error
-          self.showedErrorAlert = true
+  var body: some View {
+    Group {
+      if let process {
+        ProcessDetailDrawer(
+          process: process,
+          history: history,
+          onKill: onKill,
+          onClose: onClearSelection,
+          showsCloseButton: true,
+          embedded: true
+        )
+      } else {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+          Image(systemName: "sidebar.right")
+            .font(.system(size: 28))
+            .foregroundStyle(.secondary)
+          Text("process.details.empty.title".localized)
+            .font(.headline)
+          Text("process.details.empty.body".localized)
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+          Spacer()
         }
-      }
-
-      await MainActor.run {
-        self.processToKill = nil
-      }
-    }
-  }
-
-  func startAutoRefresh() {
-    refresh()
-    timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-      Task { @MainActor [weak self] in
-        self?.refresh()
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(Spacing.lg)
+        .cardStyle()
       }
     }
-  }
-
-  func stopAutoRefresh() {
-    timer?.invalidate()
-    timer = nil
-  }
-
-  private func refresh() {
-    // 只有第一次加载显示 loading，后续静默刷新
-    if processes.isEmpty {
-      isLoading = true
-    }
-
-    Task {
-      let result = await ProcessMonitor.shared.getProcesses(sortBy: sortKey, limit: 30)
-      self.processes = result
-      self.isLoading = false
-
-      // Update history for each process
-      for process in result {
-        updateHistory(for: process)
-      }
-    }
-  }
-
-  func getHistory(for pid: pid_t) -> [ProcessSnapshot] {
-    return processHistory[pid] ?? []
-  }
-
-  private func updateHistory(for process: SystemProcessInfo) {
-    let snapshot = ProcessSnapshot(from: process)
-    var history = processHistory[process.id] ?? []
-    history.append(snapshot)
-
-    // Keep only last N snapshots
-    if history.count > maxHistoryCount {
-      history.removeFirst(history.count - maxHistoryCount)
-    }
-
-    processHistory[process.id] = history
   }
 }
-
-// MARK: - Preview
 
 #Preview {
-  ProcessListSheet(metricType: .cpu)
+  ProcessMonitorView(
+    selection: .constant(.processMonitor),
+    selectedMetric: .constant(.cpu)
+  )
 }

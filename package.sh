@@ -4,7 +4,7 @@
 APP_NAME="SwiftSweep"
 EXECUTABLE_NAME="SwiftSweepApp"
 BUNDLE_ID="com.swiftsweep.app"
-VERSION="0.3.0"
+VERSION="1.7.6"
 BUILD_DIR=".build/release"
 OUTPUT_DIR="Output"
 APP_BUNDLE="${OUTPUT_DIR}/${APP_NAME}.app"

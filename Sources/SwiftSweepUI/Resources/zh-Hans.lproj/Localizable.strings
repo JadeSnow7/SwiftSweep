@@ -122,6 +122,14 @@
 "process.list.title.memory" = "各进程内存使用情况";
 "process.list.title.network" = "各进程网络使用情况";
 "process.list.title.io" = "各进程磁盘 I/O 情况";
+"process.monitor.title" = "进程监视";
+"process.monitor.back" = "返回状态页";
+"process.summary.cpu" = "聚焦高 CPU 占用进程，并快速对比最近采样趋势。";
+"process.summary.memory" = "聚焦高内存占用进程，并查看当前资源明细。";
+"process.summary.network" = "聚焦高网络占用进程，并查看当前资源明细。";
+"process.summary.io" = "聚焦高磁盘占用进程，并查看当前资源明细。";
+"process.details.empty.title" = "选择一个进程";
+"process.details.empty.body" = "点击左侧列表行后，可在这里查看历史采样、网络活动和磁盘 I/O。";
 "process.loading" = "正在加载进程...";
 "process.empty" = "未找到进程";
 "process.column.name" = "进程名称";
