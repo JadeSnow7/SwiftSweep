@@ -49,7 +49,7 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMinor(from: "1.6.0")),
-    .package(url: "https://github.com/apple/swift-log", .upToNextMinor(from: "1.6.0")),
+    .package(url: "https://github.com/apple/swift-log", .upToNextMinor(from: "1.11.0")),
     .package(path: "Packages/SwiftSweepAppInventory"),
   ],
   targets: [
