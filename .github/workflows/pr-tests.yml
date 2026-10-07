@@ -13,7 +13,7 @@ permissions:
 jobs:
   lint:
     name: SwiftLint
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Checkout
@@ -30,7 +30,7 @@ jobs:
 
   format:
     name: SwiftFormat
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Checkout
@@ -47,7 +47,7 @@ jobs:
 
   build:
     name: Build
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Checkout
@@ -56,7 +56,13 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.0'
+          xcode-version: '16.4'
+
+      - name: Show Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          uname -m
 
       - name: Build (Debug)
         run: swift build -c debug
@@ -66,7 +72,7 @@ jobs:
 
   test:
     name: Test with Coverage
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Checkout
@@ -75,7 +81,13 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.0'
+          xcode-version: '16.4'
+
+      - name: Show Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          uname -m
 
       - name: Run Tests
         run: swift test --enable-code-coverage
@@ -103,7 +115,7 @@ jobs:
 
   security:
     name: Security Checks
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Checkout
